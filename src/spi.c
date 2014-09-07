@@ -19,9 +19,9 @@
 #define SS_HIGH() GPIOSetBitValue(PORT,SS_PIN,1)
 #define SS_LOW() GPIOSetBitValue(PORT,SS_PIN,0)
 
-#define MOSI_HIGH() __NOP()
-#define MOSI_LOW() __NOP()
-#define MISO_READ() 1
+#define MOSI_HIGH() GPIOSetBitValue(PORT,MOSI_PIN,1)
+#define MOSI_LOW() GPIOSetBitValue(PORT,MOSI_PIN,0)
+#define MISO_READ() GPIOGetPinValue(PORT,MISO_PIN)
 
 /**
  * Initialize SPI using bigbang (without SSP0 peripheral).

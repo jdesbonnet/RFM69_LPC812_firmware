@@ -67,24 +67,6 @@ int main(void) {
 
 	GPIOInit();
 
-/*
-	GPIOSetDir(0,15, 1);
-	GPIOSetDir(0,9, 1);
-	GPIOSetDir(0,8, 1);
-	GPIOSetDir(0,7, 1);
-
-	while (1) {
-		GPIOSetBitValue(0,15,0);
-		GPIOSetBitValue(0,9,0);
-		GPIOSetBitValue(0,8,0);
-		GPIOSetBitValue(0,7,0);
-
-		GPIOSetBitValue(0,9,1);
-		GPIOSetBitValue(0,15,1);
-		GPIOSetBitValue(0,8,1);
-		GPIOSetBitValue(0,7,1);
-	}
-*/
 	spi_init();
 
 	rfm69_init();
@@ -106,13 +88,18 @@ int main(void) {
 
 	int i = 0;
 	while (1) {
-		//GPIOSetBitValue(0,PIN,1);
-		rfm69_register_read(0x01);
 
-		print_hex(LPC_USART0,i++);
-		MyUARTSendStringZ (LPC_USART0, (uint8_t*)"test\r\n");
 
-		//GPIOSetBitValue(0,PIN,0);
+		// Read register file in single mode
+		for (i = 1; i < 0x6f; i++) {
+			MyUARTSendStringZ(LPC_USART0,"reg[");
+			print_hex8(LPC_USART0,i);
+			MyUARTSendStringZ (LPC_USART0,"]=");
+			print_hex8(LPC_USART0,rfm69_register_read(i));
+			MyUARTSendStringZ (LPC_USART0,"\r\n");
+		}
+
+
 	}
 
 }
