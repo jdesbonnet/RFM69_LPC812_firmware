@@ -13,7 +13,7 @@
 
 volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 volatile uint32_t uart_rxi=0;
-volatile uint32_t uart_buf_flags;
+volatile uint32_t uart_buf_flags=0;
 
 /*****************************************************************************
 ** Function name:		UARTInit
@@ -92,6 +92,10 @@ void MyUARTSendString (LPC_USART_TypeDef *UARTx, uint8_t *buf, uint32_t len) {
 		MyUARTSendByte(UARTx, buf[i]);
 	}
 }
+
+/**
+ * Send zero-terminated string.
+ */
 void MyUARTSendStringZ (LPC_USART_TypeDef *UARTx, uint8_t *buf) {
 	while (*buf != 0) {
 		MyUARTSendByte(UARTx, *buf);
@@ -118,7 +122,7 @@ void UART0_IRQHandler(void)
 		// If CR flag EOL
 		if (uart_rxbuf[uart_rxi]=='\r') {
 			uart_buf_flags |= UART_BUF_FLAG_EOL;
-			uart_rxbuf[uart_rxi]=0;
+			uart_rxbuf[uart_rxi]=0; // zero-terminate buffer
 		} else {
 			uart_rxi++;
 			if (uart_rxi == UART_BUF_SIZE) {
@@ -159,6 +163,7 @@ uint32_t MyUARTBufCopy(uint8_t *buf) {
 void MyUARTBufReset() {
 	uart_rxi=0;
 
+	// Zero the buffer
 	// The loop is more space efficient than using memset()
 	//memset((void*)uart_rxbuf,0,UART_BUF_SIZE);
 	int i;
@@ -166,6 +171,7 @@ void MyUARTBufReset() {
 		uart_rxbuf[i]=0;
 	}
 
+	// Rest flags
 	uart_buf_flags = 0;
 }
 
@@ -256,16 +262,4 @@ int getLength (uint8_t *s) {
 	int len=0;
 	while (*s++) len++;
 	return len;
-}
-void execute_cmd (uint8_t *cmd) {
-
-	switch (*cmd) {
-
-	case 'V': {
-		MyUARTSendStringZ (LPC_USART0, (uint8_t*)"PiPM 0.1.3\r\n");
-	}
-	break;
-
-	} // end switch
-
 }

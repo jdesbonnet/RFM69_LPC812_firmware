@@ -15,7 +15,7 @@
 // Need this for bit constants
 #include "lpc8xx_uart.h"
 
-#define UART_BUF_SIZE (16)
+#define UART_BUF_SIZE (80)
 
 /* UART status register bit definition. */
 #define UART_STAT_RXRDY         (0x01<<0)
@@ -26,6 +26,7 @@
 #define UART_STAT_CTS_DELTA     (0x01<<5)
 #define UART_STAT_TXINT_DIS     (0x01<<6)
 
+// End of line flag
 #define UART_BUF_FLAG_EOL (0x01<<0)
 
 void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate);
@@ -49,6 +50,5 @@ void MyUARTPrintDecimal(LPC_USART_TypeDef *UARTx, int32_t i);
 int isDigit(uint8_t v);
 int parse_dec(uint8_t *buf, uint8_t **end);
 void print_dec(uint8_t *buf, uint32_t v);
-void execute_cmd(uint8_t *buf);
 
 #endif /* MYUART_H_ */
