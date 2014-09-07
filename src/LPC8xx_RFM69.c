@@ -12,6 +12,7 @@
 
 #define LPC812
 //#define LPC810
+//#define USE_SYSTICK
 
 #ifdef __USE_CMSIS
 #include "LPC8xx.h"
@@ -32,7 +33,6 @@
 volatile uint32_t TimeTick = 0;
 
 
-
 int8_t node_addr = 0x7e;
 uint8_t promiscuous_mode = 0;
 //uint8_t current_lat[16], current_lon[16];
@@ -42,36 +42,11 @@ uint8_t current_loc[32];
 
 
 
-
-/* SysTick interrupt happens every 10 ms */
-void SysTick_Handler(void)
-{
-  TimeTick++;
+void loopDelay(uint32_t i) {
+	while (--i!=0) {
+		__NOP();
+	}
 }
-
-void delaySysTick(uint32_t tick)
-{
-  uint32_t timetick;
-
-  /* Clear SysTick Counter */
-  SysTick->VAL = 0;
-  /* Enable the SysTick Counter */
-  SysTick->CTRL |= (0x1<<0);
-
-  timetick = TimeTick;
-  while ((TimeTick - timetick) < tick);
-
-  /* Disable SysTick Counter */
-  SysTick->CTRL &= ~(0x1<<0);
-  /* Clear SysTick Counter */
-  SysTick->VAL = 0;
-  return;
-}
-
-
-
-
-
 
 
 void SwitchMatrix_Init()
@@ -112,13 +87,6 @@ void SwitchMatrix_Init()
 #endif
 
 int main(void) {
-
-	//while (1) ;
-
-	SystemCoreClockUpdate();
-
-	/* Called for system library in core_cmx.h(x=0 or 3). */
-	SysTick_Config( SYSTICK_DELAY );
 
 	SwitchMatrix_Init();
 
@@ -187,22 +155,51 @@ int main(void) {
 					payload[1] = 'r';
 					memcpy(payload+2,current_loc,payload_len-2);
 
-					delaySysTick(1000);
+					loopDelay(5000000);
 
 					MyUARTSendStringZ(LPC_USART0,current_loc);
 					MyUARTSendStringZ(LPC_USART0,"\r\n");
 
 					rfm69_frame_tx(payload, payload_len);
 				}
+				// Remote register read
+				case 'X' : {
+					uint8_t base_addr = frxbuf[2];
+					uint8_t read_len = frxbuf[3];
+					uint8_t payload[read_len+3];
+					payload[0] = node_addr;
+					payload[1] = 'x';
+					payload[2] = base_addr;
+					for (i = base_addr; i < (base_addr+read_len); i++) {
+						payload[i+3] = rfm69_register_read(i);
+					}
+					rfm69_frame_tx(payload, read_len+3);
+				}
+				// Remote register write
+				case 'Y' : {
+					uint8_t base_addr = frxbuf[2];
+					uint8_t write_len = frxbuf[3];
+					int i;
+					for (i = base_addr; i < (base_addr+write_len); i++) {
+						rfm69_register_write(i,frxbuf[i+4]);
+					}
+					uint8_t payload[2];
+					payload[0] = node_addr;
+					payload[1] = 'y';
+					rfm69_frame_tx(payload, 2);
+				}
+				default: {
+
+					MyUARTSendStringZ(LPC_USART0, "p ");
+
+					int i;
+					for (i = 0; i < frame_len; i++) {
+						print_hex8(LPC_USART0,frxbuf[i]);
+					}
+					MyUARTSendStringZ(LPC_USART0,"\r\n");
+				}
 				}
 
-				MyUARTSendStringZ(LPC_USART0, "p ");
-
-				int i;
-				for (i = 0; i < frame_len; i++) {
-					print_hex8(LPC_USART0,frxbuf[i]);
-				}
-				MyUARTSendStringZ(LPC_USART0,"\r\n");
 			} else {
 				MyUARTSendStringZ(LPC_USART0,"Ignoring packet from ");
 				MyUARTPrintHex(LPC_USART0,addr);
