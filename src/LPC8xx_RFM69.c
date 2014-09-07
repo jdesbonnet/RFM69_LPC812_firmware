@@ -17,6 +17,8 @@
 
 #include <cr_section_macros.h>
 
+#include <string.h>
+
 #include "lpc8xx_spi.h"
 //#include "lpc8xx_uart.h"
 #include "myuart.h"
@@ -85,6 +87,8 @@ int main(void) {
 	uint8_t *args[8];
 	int argc;
 
+	uint8_t current_lat[16], current_lon[16];
+
 	while (1) {
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
@@ -114,6 +118,24 @@ int main(void) {
 				MyUARTSendStringZ(LPC_USART0,"arg: ");
 				MyUARTSendStringZ(LPC_USART0,args[i]);
 				MyUARTSendStringZ(LPC_USART0,"\r\n");
+			}
+
+			switch (*args[0]) {
+			case 'L' :
+				// +1 on len to include zero terminator
+				memcpy(current_lat,args[1],strlen(args[1])+1);
+				memcpy(current_lon,args[2],strlen(args[2])+1);
+				break;
+			case 'R' :
+				MyUARTSendStringZ(LPC_USART0,"R command");
+				break;
+			case 'T' :
+				MyUARTSendStringZ(LPC_USART0,"T command ");
+				MyUARTSendStringZ(LPC_USART0,current_lat);
+				MyUARTSendStringZ(LPC_USART0," ");
+				MyUARTSendStringZ(LPC_USART0,current_lon);
+				MyUARTSendStringZ(LPC_USART0,"\r\n");
+				break;
 			}
 
 			MyUARTBufReset();
