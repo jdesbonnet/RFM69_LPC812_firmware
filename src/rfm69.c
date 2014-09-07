@@ -138,12 +138,13 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	// TODO: we shouldn't need a delay
 	//delay (10000);
 
-	// Back to standby mode
+	// Back to receive mode
 	// REG_OP_MODE §6.2, page 63
 	// OP_MODE[4:2] Mode 0x1 = STDBY
+	// OP_MODE[4:2] Mode 0x4 = RX
 	regVal = rfm69_register_read(RFM69_OPMODE);
 	regVal &= ~RFM69_OPMODE_Mode_MASK;
-	regVal |= RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_STDBY);
+	regVal |= RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX);
 	rfm69_register_write(RFM69_OPMODE,regVal);
 
 	// Wait until STDBY mode ready

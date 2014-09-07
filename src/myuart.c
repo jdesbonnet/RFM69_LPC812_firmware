@@ -213,6 +213,7 @@ void MyUARTPrintHex (LPC_USART_TypeDef *UARTx, uint32_t v) {
 	}
 }
 
+#ifdef BLAH
 int parse_dec(uint8_t *buf, uint8_t **end) {
 	int v=0;
 	while (isDigit(*buf)) {
@@ -223,6 +224,7 @@ int parse_dec(uint8_t *buf, uint8_t **end) {
 	*end = buf;
 	return v;
 }
+#endif
 
 #ifdef BLAH
 void print_dec(uint8_t *buf, uint32_t v) {

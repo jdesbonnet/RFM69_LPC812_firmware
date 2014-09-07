@@ -48,7 +48,6 @@ void MyUARTPrintDecimal(LPC_USART_TypeDef *UARTx, int32_t i);
 
 
 int isDigit(uint8_t v);
-int parse_dec(uint8_t *buf, uint8_t **end);
 void print_dec(uint8_t *buf, uint32_t v);
 
 #endif /* MYUART_H_ */

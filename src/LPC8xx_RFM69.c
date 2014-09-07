@@ -26,8 +26,54 @@
 #include "myuart.h"
 #include "print_util.h"
 #include "rfm69.h"
+#include "cmd.h"
+
+#define SYSTICK_DELAY		(SystemCoreClock/100)
+volatile uint32_t TimeTick = 0;
+
+
+
+int8_t node_addr = 0x7e;
+uint8_t promiscuous_mode = 0;
+//uint8_t current_lat[16], current_lon[16];
+uint8_t current_loc[32];
 
 #ifdef LPC812
+
+
+
+
+/* SysTick interrupt happens every 10 ms */
+void SysTick_Handler(void)
+{
+  TimeTick++;
+}
+
+void delaySysTick(uint32_t tick)
+{
+  uint32_t timetick;
+
+  /* Clear SysTick Counter */
+  SysTick->VAL = 0;
+  /* Enable the SysTick Counter */
+  SysTick->CTRL |= (0x1<<0);
+
+  timetick = TimeTick;
+  while ((TimeTick - timetick) < tick);
+
+  /* Disable SysTick Counter */
+  SysTick->CTRL &= ~(0x1<<0);
+  /* Clear SysTick Counter */
+  SysTick->VAL = 0;
+  return;
+}
+
+
+
+
+
+
+
 void SwitchMatrix_Init()
 {
     /* Enable SWM clock */
@@ -69,6 +115,11 @@ int main(void) {
 
 	//while (1) ;
 
+	SystemCoreClockUpdate();
+
+	/* Called for system library in core_cmx.h(x=0 or 3). */
+	SysTick_Config( SYSTICK_DELAY );
+
 	SwitchMatrix_Init();
 
 	GPIOInit();
@@ -87,8 +138,7 @@ int main(void) {
 
 	int i;
 
-	uint8_t boat_addr=0x63;
-	uint8_t current_lat[16], current_lon[16];
+
 	uint8_t rssi;
 
 	uint8_t *rxbuf;
@@ -106,20 +156,58 @@ int main(void) {
 
 	while (1) {
 
-
-		//print_hex8(LPC_USART0,rfm69_register_read(RFM69_IRQFLAGS1));
-		//print_hex8(LPC_USART0,rfm69_register_read(RFM69_IRQFLAGS2));
-		//MyUARTSendStringZ(LPC_USART0,"\r\n");
-
-		// Check for packet
+		// Check for received packet
 		if (rfm69_payload_ready()) {
-			MyUARTSendStringZ(LPC_USART0, "p ");
 			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
+
+			/*
 			int i;
 			for (i = 0; i < frame_len; i++) {
 				print_hex8(LPC_USART0,frxbuf[i]);
 			}
 			MyUARTSendStringZ(LPC_USART0,"\r\n");
+			*/
+
+			// First byte is node address
+			uint8_t addr = frxbuf[0];
+			if (addr == 0xff || addr == node_addr) {
+
+				// This is for us!
+				uint8_t msgType = frxbuf[1];
+				switch (msgType) {
+				// Message requesting position report
+				case 0x23 :
+				{
+					MyUARTSendStringZ(LPC_USART0,"Sending loc: ");
+
+					// report position
+					int payload_len = strlen(current_loc) + 2;
+					uint8_t payload[payload_len];
+					payload[0] = node_addr;
+					payload[1] = 'r';
+					memcpy(payload+2,current_loc,payload_len-2);
+
+					delaySysTick(1000);
+
+					MyUARTSendStringZ(LPC_USART0,current_loc);
+					MyUARTSendStringZ(LPC_USART0,"\r\n");
+
+					rfm69_frame_tx(payload, payload_len);
+				}
+				}
+
+				MyUARTSendStringZ(LPC_USART0, "p ");
+
+				int i;
+				for (i = 0; i < frame_len; i++) {
+					print_hex8(LPC_USART0,frxbuf[i]);
+				}
+				MyUARTSendStringZ(LPC_USART0,"\r\n");
+			} else {
+				MyUARTSendStringZ(LPC_USART0,"Ignoring packet from ");
+				MyUARTPrintHex(LPC_USART0,addr);
+				MyUARTSendStringZ(LPC_USART0,"\r\n");
+			}
 		}
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
@@ -153,15 +241,18 @@ int main(void) {
 				rfm69_config();
 				break;
 			}
-			case 'I' :
-			{
-				// Parse args[1]
-				boat_addr = 0x66;
-			}
 			case 'L' : {
 				// +1 on len to include zero terminator
-				memcpy(current_lat,args[1],strlen(args[1])+1);
-				memcpy(current_lon,args[2],strlen(args[2])+1);
+				memcpy(current_loc,args[1],strlen(args[1])+1);
+				break;
+			}
+			case 'N' :
+			{
+				cmd_set_node_addr(argc, args);
+				break;
+			}
+			case 'P' : {
+				cmd_promiscuous_mode(argc, args);
 				break;
 			}
 			case 'R' : {
@@ -172,15 +263,13 @@ int main(void) {
 				MyUARTSendStringZ(LPC_USART0,"\r\n");
 				break;
 			}
+			// Transmit arbitrary packet
 			case 'T' : {
-				MyUARTSendStringZ(LPC_USART0,"T command ");
-				MyUARTSendStringZ(LPC_USART0,current_lat);
-				MyUARTSendStringZ(LPC_USART0," ");
-				MyUARTSendStringZ(LPC_USART0,current_lon);
-				MyUARTSendStringZ(LPC_USART0,"\r\n");
-
-				uint8_t buf[] = {0x11, 0x23, 0x37, 0x55, 0x55, 0x55};
-				rfm69_frame_tx (buf,6);
+				cmd_packet_transmit(argc, args);
+				// Back to RX mode
+				rfm69_register_write(RFM69_OPMODE,
+						RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
+						);
 				break;
 			}
 			case 'V' : {
