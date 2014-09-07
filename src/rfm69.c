@@ -35,6 +35,13 @@ uint8_t rfm69_rssi () {
 	return rfm69_register_read(RFM69_RSSIVALUE);
 }
 
+/**
+ * Check if packet has been received and is ready to read from FIFO.
+ * @return zero if no packet available, non-zero if packet available.
+ */
+uint8_t rfm69_payload_ready() {
+	return rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK;
+}
 
 /**
  * Retrieve a frame. If successful returns length of frame. If not an error code (negative value).
@@ -135,6 +142,7 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	// REG_OP_MODE §6.2, page 63
 	// OP_MODE[4:2] Mode 0x1 = STDBY
 	regVal = rfm69_register_read(RFM69_OPMODE);
+	regVal &= ~RFM69_OPMODE_Mode_MASK;
 	regVal |= RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_STDBY);
 	rfm69_register_write(RFM69_OPMODE,regVal);
 

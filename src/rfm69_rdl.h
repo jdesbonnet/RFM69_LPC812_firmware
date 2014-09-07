@@ -135,9 +135,9 @@
 #define RFM69_PALEVEL_Pa1On (1<<6)                /* Enables PA1 */
 #define RFM69_PALEVEL_Pa1On_MASK (0x1<<6)         /* Pa1On bit mask */
 #define RFM69_PALEVEL_Pa1On_VALUE(x) (((x)<<6)&RFM69_PALEVEL_Pa1On_MASK)
-#define RFM69_PALEVEL_Pa1On (1<<5)                /* Enables PA2 */
-#define RFM69_PALEVEL_Pa1On_MASK (0x1<<5)         /* Pa1On bit mask */
-#define RFM69_PALEVEL_Pa1On_VALUE(x) (((x)<<5)&RFM69_PALEVEL_Pa1On_MASK)
+#define RFM69_PALEVEL_Pa2On (1<<5)                /* Enables PA2 */
+#define RFM69_PALEVEL_Pa2On_MASK (0x1<<5)         /* Pa2On bit mask */
+#define RFM69_PALEVEL_Pa2On_VALUE(x) (((x)<<5)&RFM69_PALEVEL_Pa2On_MASK)
 #define RFM69_PALEVEL_OutputPower_MASK (0x1f)     /* OutputPower bit mask */
 #define RFM69_PALEVEL_OutputPower_VALUE(x) (((x)<<0)&RFM69_PALEVEL_OutputPower_MASK)
 

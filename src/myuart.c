@@ -160,6 +160,9 @@ uint32_t MyUARTBufCopy(uint8_t *buf) {
 	return uart_rxi;
 }
 
+/**
+ * Reset command buffer after command has been processed.
+ */
 void MyUARTBufReset() {
 	uart_rxi=0;
 
@@ -221,6 +224,7 @@ int parse_dec(uint8_t *buf, uint8_t **end) {
 	return v;
 }
 
+#ifdef BLAH
 void print_dec(uint8_t *buf, uint32_t v) {
 	if (v==0) {
 		*buf='0';
@@ -247,6 +251,7 @@ void print_dec(uint8_t *buf, uint32_t v) {
 	}
 
 }
+#endif
 
 /**
  * Return 1 if v is a decimal digit. Else return 0.

@@ -8,6 +8,8 @@
 ===============================================================================
 */
 
+#define VERSION "WRSC_RFM69_Controller 0.1.0"
+
 #define LPC812
 //#define LPC810
 
@@ -70,35 +72,45 @@ int main(void) {
 
 	GPIOInit();
 
-	spi_init();
-
-	rfm69_init();
-	rfm69_config();
-
 	MyUARTInit(LPC_USART0, 115200);
 
+
+	spi_init();
+
+	// Configure hardware interface to radio modile
+	rfm69_init();
+
+	// Configure registers for this application
+	rfm69_config();
+
+
 	int i;
-	//for (i = 0; i < 10; i++) {
-	//	MyUARTSendStringZ (LPC_USART0, (uint8_t*)"WRSC2014 RFM69\r\n");
-	//}
 
-	uint8_t *rxbuf = MyUARTGetBuf();
+	uint8_t boat_addr=0x63;
+	uint8_t current_lat[16], current_lon[16];
+	uint8_t rssi;
 
+	uint8_t *rxbuf;
 	uint8_t *args[8];
+
+	uint8_t frxbuf[66];
+	uint8_t frame_len;
+
 	int argc;
 
-	uint8_t current_lat[16], current_lon[16];
-
 	while (1) {
+
+		// Check for packet
+		if (rfm69_payload_ready()) {
+			MyUARTSendStringZ(LPC_USART0, "Packet received ");
+			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
+			MyUARTPrintHex(LPC_USART0, frame_len);
+			MyUARTSendStringZ(LPC_USART0,"\r\n");
+		}
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
 			rxbuf = MyUARTGetBuf();
-
-			// Echo command
-			MyUARTSendStringZ(LPC_USART0,"[");
-			MyUARTSendStringZ(LPC_USART0,rxbuf);
-			MyUARTSendStringZ(LPC_USART0,"]\r\n");
 
 			// Parse command line
 			argc = 1;
@@ -121,21 +133,56 @@ int main(void) {
 			}
 
 			switch (*args[0]) {
-			case 'L' :
+
+			case 'C' :
+			{
+				rfm69_config();
+				break;
+			}
+			case 'I' :
+			{
+				// Parse args[1]
+				boat_addr = 0x66;
+			}
+			case 'L' : {
 				// +1 on len to include zero terminator
 				memcpy(current_lat,args[1],strlen(args[1])+1);
 				memcpy(current_lon,args[2],strlen(args[2])+1);
 				break;
-			case 'R' :
-				MyUARTSendStringZ(LPC_USART0,"R command");
+			}
+			case 'R' : {
+				// Parameter is register address
+				uint8_t *b;
+				int regAddr = parse_dec(args[1],&b);
+				print_hex8 (LPC_USART0, rfm69_register_read(regAddr));
+				MyUARTSendStringZ(LPC_USART0,"\r\n");
 				break;
-			case 'T' :
+			}
+			case 'T' : {
 				MyUARTSendStringZ(LPC_USART0,"T command ");
 				MyUARTSendStringZ(LPC_USART0,current_lat);
 				MyUARTSendStringZ(LPC_USART0," ");
 				MyUARTSendStringZ(LPC_USART0,current_lon);
 				MyUARTSendStringZ(LPC_USART0,"\r\n");
+
+				uint8_t buf[] = {0x11, 0x23, 0x37, 0x55, 0x55, 0x55};
+				rfm69_frame_tx (buf,6);
 				break;
+			}
+			case 'V' : {
+				MyUARTSendStringZ(LPC_USART0,VERSION);
+				break;
+			}
+			case 'W' : {
+				// Parameter is register address
+				uint8_t *b;
+				int regAddr = parse_dec(args[1],&b);
+				int regValue = parse_dec(args[2],&b);
+				rfm69_register_write(regAddr,regValue);
+				MyUARTSendStringZ(LPC_USART0,"OK\r\n");
+				break;
+			}
+
 			}
 
 			MyUARTBufReset();
@@ -144,16 +191,6 @@ int main(void) {
 		}
 		__WFI();
 
-/*
-		// Read register file in single mode
-		for (i = 1; i < 0x6f; i++) {
-			MyUARTSendStringZ(LPC_USART0,"reg[");
-			print_hex8(LPC_USART0,i);
-			MyUARTSendStringZ (LPC_USART0,"]=");
-			print_hex8(LPC_USART0,rfm69_register_read(i));
-			MyUARTSendStringZ (LPC_USART0,"\r\n");
-		}
-*/
 
 	}
 
