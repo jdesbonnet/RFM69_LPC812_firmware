@@ -25,6 +25,7 @@
 //#include "lpc8xx_uart.h"
 #include "myuart.h"
 #include "print_util.h"
+#include "rfm69.h"
 
 #ifdef LPC812
 void SwitchMatrix_Init()
@@ -98,13 +99,26 @@ int main(void) {
 
 	int argc;
 
+	rfm69_register_write(RFM69_OPMODE,
+			RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
+			);
+
+
 	while (1) {
+
+
+		//print_hex8(LPC_USART0,rfm69_register_read(RFM69_IRQFLAGS1));
+		//print_hex8(LPC_USART0,rfm69_register_read(RFM69_IRQFLAGS2));
+		//MyUARTSendStringZ(LPC_USART0,"\r\n");
 
 		// Check for packet
 		if (rfm69_payload_ready()) {
-			MyUARTSendStringZ(LPC_USART0, "Packet received ");
+			MyUARTSendStringZ(LPC_USART0, "p ");
 			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
-			MyUARTPrintHex(LPC_USART0, frame_len);
+			int i;
+			for (i = 0; i < frame_len; i++) {
+				print_hex8(LPC_USART0,frxbuf[i]);
+			}
 			MyUARTSendStringZ(LPC_USART0,"\r\n");
 		}
 
@@ -189,7 +203,7 @@ int main(void) {
 
 
 		}
-		__WFI();
+		//__WFI();
 
 
 	}
