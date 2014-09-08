@@ -11,11 +11,12 @@
 #include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"
+#include "err.h"
 
 extern uint32_t flags;
 
 /**
- * Enter/leave promiscuous mode
+ * Set/get generic mode flags
  * Args: <node-addr>
  */
 int cmd_flags (int argc, uint8_t **argv) {

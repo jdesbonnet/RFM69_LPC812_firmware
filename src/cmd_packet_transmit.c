@@ -7,13 +7,12 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "lpc8xx_spi.h"
-//#include "lpc8xx_uart.h"
 #include "myuart.h"
 #include "print_util.h"
 #include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"
+#include "err.h"
 
 extern uint8_t node_addr;
 

@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "WRSC_RFM69_Controller 0.1.0"
+#define VERSION "WRSC_RFM69_Controller 0.1.1"
 
 // Version of MCU used (LPC812, LPC810 supported)
 //#define LPC812
@@ -10,7 +10,7 @@
 //#define LPC810
 
 // LPC810 preserving RESET and SWD (but no SPI bus)
-#define LPC810_NOSPI
+#define LPC810
 
 
 
@@ -27,8 +27,8 @@
 #if defined(LPC810) || defined(LPC810_NOSPI)
 #define SCK_PIN 3  // package pin 3
 #define SS_PIN 5   // package pin 1
-#define MOSI_PIN 2 // package pin 4
-#define MISO_PIN 7 // package pin 2
+#define MOSI_PIN 4 // package pin 4
+#define MISO_PIN 2 // package pin 2
 #endif
 
 

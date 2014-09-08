@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "rfm69.h"
+#include "err.h"
 
 
 extern const uint8_t RFM69_CONFIG[][2];
@@ -75,6 +76,11 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 
 	// Read frame length;
     frame_length = spi_transfer_byte(0);
+
+    // Probably SPI bus problem
+	if (frame_length == 0xff) {
+		return E_SPI;
+	}
 
     if (frame_length > 66) {
     	// error condition really

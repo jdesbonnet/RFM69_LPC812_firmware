@@ -22,6 +22,8 @@
 #include "print_util.h"
 #include "rfm69.h"
 #include "cmd.h"
+#include "err.h"
+#include "flags.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 volatile uint32_t TimeTick = 0;
@@ -61,8 +63,8 @@ void SwitchMatrix_Init()
 }
 #endif
 
-#ifdef LPC810_NOSPI
-void SwitchMatrix_Init()
+#ifdef LPC810
+void SwitchMatrix_NoSpi_Init()
 {
     /* Enable SWM clock */
     LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
@@ -91,7 +93,7 @@ void SwitchMatrix_Init()
  * To re-flash will need to access ISP
  * by holding PIO0_? low and cycling power.
  */
-void SwitchMatrix_Init()
+void SwitchMatrix_Spi_Init()
 {
     /* Enable SWM clock */
     LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
@@ -129,7 +131,7 @@ void report_error (uint8_t cmd, int32_t code) {
 
 int main(void) {
 
-	SwitchMatrix_Init();
+	SwitchMatrix_NoSpi_Init();
 
 	GPIOInit();
 
@@ -171,8 +173,13 @@ int main(void) {
 	while (1) {
 
 		// Check for received packet
-		if ( (flags&1) && rfm69_payload_ready()) {
+		if ( (flags&FLAG_RADIO_MODULE_ON) && rfm69_payload_ready()) {
 			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
+
+			// SPI error
+			if (frame_len>0) {
+
+
 
 			// All fames will have these:
 			// First byte is to_node address
@@ -184,7 +191,7 @@ int main(void) {
 			uint8_t msgType = frxbuf[2];
 
 			// 0xff is broadcast
-			if ( (flags&2) || to_addr == 0xff || to_addr == node_addr) {
+			if ( (flags&FLAG_PROMISCUOUS_MODE) || to_addr == 0xff || to_addr == node_addr) {
 
 				// This is for us!
 
@@ -267,6 +274,9 @@ int main(void) {
 				MyUARTSendCRLF(LPC_USART0);
 
 			}
+
+
+			} // end frame len valid check
 		}
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
@@ -349,6 +359,29 @@ int main(void) {
 				break;
 			}
 
+			case 'S' : {
+				if (args[1][0]=='1') {
+					// Note will disconnect SWD
+					SwitchMatrix_Spi_Init();
+					spi_init();
+/*
+					while (1) {
+						GPIOSetBitValue(0,5,0);
+						GPIOSetBitValue(0,5,1);
+						GPIOSetBitValue(0,4,0);
+						GPIOSetBitValue(0,4,1);
+						GPIOSetBitValue(0,3,0);
+						GPIOSetBitValue(0,3,1);
+						GPIOSetBitValue(0,2,0);
+						GPIOSetBitValue(0,2,1);
+					}
+*/
+				} else {
+					SwitchMatrix_NoSpi_Init();
+				}
+				break;
+			}
+
 			// Transmit arbitrary packet
 			case 'T' : {
 				int status = cmd_packet_transmit(argc, args);
@@ -376,6 +409,9 @@ int main(void) {
 				int regValue = parse_hex(args[2]);
 				rfm69_register_write(regAddr,regValue);
 				break;
+			}
+			default : {
+				report_error(*args[0], E_INVALID_CMD);
 			}
 
 			}

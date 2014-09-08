@@ -12,6 +12,7 @@ void rfm69_frame_tx(uint8_t *buf, int len);
 uint8_t rfm69_register_read (uint8_t reg_addr);
 void rfm69_register_write (uint8_t reg_addr, uint8_t reg_value);
 
+uint8_t rfm69_payload_ready(void);
 
 // Interface with SPI bus
 void rfm69_nss_assert(void);

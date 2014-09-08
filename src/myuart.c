@@ -44,7 +44,7 @@ void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 
 
 	UARTSysClk = SystemCoreClock/LPC_SYSCON->UARTCLKDIV;
-	UARTx->CFG = DATA_LENG_8|PARITY_NONE|STOP_BIT_1; /* 8 bits, no Parity, 1 Stop bit */
+	UARTx->CFG = UART_CFG_DATA_LENG_8|UART_CFG_PARITY_NONE|UART_CFG_STOP_BIT_1; /* 8 bits, no Parity, 1 Stop bit */
 	UARTx->BRG = UARTSysClk/16/baudrate-1;	/* baud rate */
 		/*
 			Integer divider:
@@ -60,7 +60,7 @@ void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 	LPC_SYSCON->UARTFRGDIV = 0xFF;
 	LPC_SYSCON->UARTFRGMULT = (((UARTSysClk / 16) * (LPC_SYSCON->UARTFRGDIV + 1)) / (baudrate * (UARTx->BRG + 1))) - (LPC_SYSCON->UARTFRGDIV + 1);
 
-	UARTx->STAT = CTS_DELTA | DELTA_RXBRK;		/* Clear all status bits. */
+	UARTx->STAT = UART_STAT_CTS_DELTA | UART_STAT_DELTA_RXBRK;		/* Clear all status bits. */
   /* Enable the UART Interrupt. */
 	if (UARTx == LPC_USART0) {
 		NVIC_EnableIRQ(UART0_IRQn);
@@ -69,8 +69,8 @@ void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 	} else if (UARTx == LPC_USART2) {
 		NVIC_EnableIRQ(UART2_IRQn);
 	}
-	UARTx->INTENSET = RXRDY | TXRDY | DELTA_RXBRK;	/* Enable UART interrupt */
-	UARTx->CFG |= UART_EN;
+	UARTx->INTENSET = UART_STAT_RXRDY | UART_STAT_TXRDY | UART_STAT_DELTA_RXBRK;	/* Enable UART interrupt */
+	UARTx->CFG |= UART_CFG_UART_EN;
 	return;
 }
 
