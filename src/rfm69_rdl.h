@@ -52,8 +52,8 @@
 /** Register RFM69_FDEVMSB (MSB of frequency deviation) at address 0x05 **/
 #define RFM69_FDEVMSB (0x05)                      /* FDEVMSB register address */
 
-/** Register RFM69_FDEVMSB (LSB of frequency deviation) at address 0x06 **/
-#define RFM69_FDEVMSB (0x06)                      /* FDEVMSB register address */
+/** Register RFM69_FDEVLSB (LSB of frequency deviation) at address 0x06 **/
+#define RFM69_FDEVLSB (0x06)                      /* FDEVLSB register address */
 
 /** Register RFM69_FRFMSB (MSB of the RF carrier frequency) at address 0x07 **/
 #define RFM69_FRFMSB (0x07)                       /* FRFMSB register address */
