@@ -76,6 +76,11 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 	// Read frame length;
     frame_length = spi_transfer_byte(0);
 
+    if (frame_length > 66) {
+    	// error condition really
+    	frame_length = 66;
+    }
+
     for (i = 0; i < frame_length; i++) {
     	if (i == maxlen) {
     		return -2; // frame too long
