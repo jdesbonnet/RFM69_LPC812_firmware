@@ -33,8 +33,7 @@ int8_t node_addr = 0x7e;
 uint8_t current_loc[32];
 
 // For master controller: forward all received packets in promiscuous mode
-uint8_t promiscuous_mode = 0;
-
+uint32_t flags = 0;
 
 
 void loopDelay(uint32_t i) {
@@ -137,7 +136,9 @@ int main(void) {
 	MyUARTInit(LPC_USART0, UART_BPS);
 
 
+#if !defined (LPC810_NOSPI)
 	spi_init();
+#endif
 
 	// Configure hardware interface to radio module
 	rfm69_init();
@@ -170,7 +171,7 @@ int main(void) {
 	while (1) {
 
 		// Check for received packet
-		if (rfm69_payload_ready()) {
+		if ( (flags&1) && rfm69_payload_ready()) {
 			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
 
 			// All fames will have these:
@@ -183,7 +184,7 @@ int main(void) {
 			uint8_t msgType = frxbuf[2];
 
 			// 0xff is broadcast
-			if (promiscuous_mode || to_addr == 0xff || to_addr == node_addr) {
+			if ( (flags&2) || to_addr == 0xff || to_addr == node_addr) {
 
 				// This is for us!
 
@@ -298,6 +299,12 @@ int main(void) {
 				break;
 			}
 
+			// Read set various flags
+			case 'F' : {
+				cmd_flags(argc, args);
+				break;
+			}
+
 			// Set current location
 			case 'L' : {
 				// +1 on len to include zero terminator
@@ -312,11 +319,14 @@ int main(void) {
 				break;
 			}
 
+
 			// Promiscuous mode
+			/*
 			case 'P' : {
 				cmd_promiscuous_mode(argc, args);
 				break;
 			}
+			*/
 
 			// Read RFM69 register
 			case 'R' : {
