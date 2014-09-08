@@ -347,18 +347,17 @@ int main(void) {
 
 			// RFM69 controller (this) firmware
 			case 'V' : {
-				MyUARTSendStringZ(LPC_USART0,VERSION);
+				cmd_version(1,NULL);
 				break;
 			}
 
 			// Write RFM69 register
 			case 'W' : {
 				// Parameter is register address
-				uint8_t *b;
-				int regAddr = parse_dec(args[1],&b);
-				int regValue = parse_dec(args[2],&b);
+				//uint8_t *b;
+				int regAddr = parse_hex(args[1]);
+				int regValue = parse_hex(args[2]);
 				rfm69_register_write(regAddr,regValue);
-				MyUARTSendStringZ(LPC_USART0,"OK\r\n");
 				break;
 			}
 
