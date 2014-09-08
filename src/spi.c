@@ -6,13 +6,11 @@
 #include "LPC8xx.h"
 #endif
 
+#include "config.h"
 #include "lpc8xx_gpio.h"
 
 #define PORT 0
-#define SCK_PIN 15
-#define SS_PIN 9
-#define MOSI_PIN 8
-#define MISO_PIN 7
+
 
 #define SCK_HIGH() GPIOSetBitValue(PORT,SCK_PIN,1)
 #define SCK_LOW() GPIOSetBitValue(PORT,SCK_PIN,0)

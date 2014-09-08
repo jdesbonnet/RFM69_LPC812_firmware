@@ -33,6 +33,7 @@ void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate);
 void MyUARTSendByte(LPC_USART_TypeDef *UARTx, uint8_t v);
 void MyUARTSendString(LPC_USART_TypeDef *UARTx, uint8_t *buf, uint32_t len);
 void MyUARTSendStringZ(LPC_USART_TypeDef *UARTx, uint8_t *buf);
+void MyUARTSendCRLF(LPC_USART_TypeDef *UARTx);
 void MyUARTSendDrain(LPC_USART_TypeDef *UARTx);
 
 // Not sure if external users of buffer need the 'volatile' qualifier

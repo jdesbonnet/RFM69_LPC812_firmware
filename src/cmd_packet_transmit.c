@@ -5,6 +5,7 @@
 #include <cr_section_macros.h>
 
 #include <string.h>
+#include <stdint.h>
 
 #include "lpc8xx_spi.h"
 //#include "lpc8xx_uart.h"
@@ -13,6 +14,8 @@
 #include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"
+
+extern uint8_t node_addr;
 
 /**
  * Command to transmit arbitrary packet
@@ -30,16 +33,19 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 		return E_PKT_TOO_LONG;
 	}
 
-	uint8_t buf[payload_len+1];
+	uint8_t buf[payload_len+2];
 
-	// Node address
+	// To  address
 	buf[0] = parse_hex(argv[1]);
+
+	// From address
+	buf[1] = node_addr;
 
 	int i;
 	for (i = 0; i < payload_len; i++) {
-		buf[i+1] = parse_hex(argv[2][i*2]);
+		buf[i+2] = parse_hex(argv[2][i*2]);
 	}
 
 	// Transmit frame
-	rfm69_frame_tx (buf,payload_len+1);
+	rfm69_frame_tx (buf,payload_len+2);
 }

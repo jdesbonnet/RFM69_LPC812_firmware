@@ -104,6 +104,10 @@ void MyUARTSendStringZ (LPC_USART_TypeDef *UARTx, uint8_t *buf) {
 }
 
 
+void MyUARTSendCRLF(LPC_USART_TypeDef *UARTx) {
+	MyUARTSendStringZ(UARTx,"\r\n");
+}
+
 void UART0_IRQHandler(void)
 {
 
