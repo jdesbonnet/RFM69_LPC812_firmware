@@ -62,7 +62,7 @@ void SwitchMatrix_Init()
 }
 #endif
 
-#ifdef LPC810
+#ifdef LPC810_NOSPI
 void SwitchMatrix_Init()
 {
     /* Enable SWM clock */
@@ -78,6 +78,32 @@ void SwitchMatrix_Init()
     /* SWDIO */
     /* RESET */
     LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+}
+#endif
+
+
+#ifdef LPC810
+/**
+ * TXD PIO0_0 (package pin 8)
+ * RXD PIO0_1 (package pin 5)
+ * package pins 1 - 4 as PIO0_5, PIO0_4, PIO0_3, PIO0_2
+ *
+ * Note: this configuration disables RESET and SWD.
+ * To re-flash will need to access ISP
+ * by holding PIO0_? low and cycling power.
+ */
+void SwitchMatrix_Init()
+{
+    /* Enable SWM clock */
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+
+    /* Pin Assign 8 bit Configuration */
+    /* U0_TXD */
+    /* U0_RXD */
+    LPC_SWM->PINASSIGN0 = 0xffff0100UL;
+
+    /* Pin Assign 1 bit Configuration */
+    LPC_SWM->PINENABLE0 = 0xffffffffUL;
 }
 #endif
 
