@@ -18,8 +18,8 @@
 extern uint8_t node_addr;
 
 /**
- * Command to transmit arbitrary packet
- * Args: <node-addr> <packet-payload>
+ * Command to transmit arbitrary packet.
+ * Args: <to-node-addr> <packet-payload>
  */
 int cmd_packet_transmit (int argc, uint8_t **argv) {
 
@@ -42,10 +42,16 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 	buf[1] = node_addr;
 
 	int i;
+	uint8_t tt[3];
+	tt[3]=0;
 	for (i = 0; i < payload_len; i++) {
-		buf[i+2] = parse_hex(argv[2][i*2]);
+		tt[0] = argv[2][i*2];
+		tt[1] = argv[2][i*2+1];
+		buf[i+2] = parse_hex(tt);
 	}
 
 	// Transmit frame
 	rfm69_frame_tx (buf,payload_len+2);
+
+	return E_OK;
 }

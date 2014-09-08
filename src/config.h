@@ -25,6 +25,25 @@
 #define MISO_PIN 7 // package pin 2
 #endif
 
+#ifdef LPC810
+void SwitchMatrix_Init()
+{
+    /* Enable SWM clock */
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+
+    /* Pin Assign 8 bit Configuration */
+    /* U0_TXD */
+    /* U0_RXD */
+    LPC_SWM->PINASSIGN0 = 0xffff0100UL;
+
+    /* Pin Assign 1 bit Configuration */
+    /* SWCLK */
+    /* SWDIO */
+    /* RESET */
+    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+}
+#endif
+
 
 // UART speed ('baud rate')
 #define UART_BPS (115200)

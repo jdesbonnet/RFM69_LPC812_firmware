@@ -119,6 +119,15 @@ uint32_t get_mcu_serial_number () {
 	return (uint32_t)result[1];
 }
 
+void report_error (uint8_t cmd, int32_t code) {
+	if (code<0) code = -code;
+	MyUARTSendStringZ(LPC_USART0,"e ");
+	MyUARTSendByte(LPC_USART0,cmd);
+	MyUARTSendStringZ(LPC_USART0," ");
+	MyUARTPrintHex(LPC_USART0,code);
+	MyUARTSendCRLF(LPC_USART0);
+}
+
 int main(void) {
 
 	SwitchMatrix_Init();
@@ -325,7 +334,10 @@ int main(void) {
 
 			// Transmit arbitrary packet
 			case 'T' : {
-				cmd_packet_transmit(argc, args);
+				int status = cmd_packet_transmit(argc, args);
+				if ( status ) {
+					report_error('T', status);
+				}
 				// Back to RX mode
 				rfm69_register_write(RFM69_OPMODE,
 						RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
