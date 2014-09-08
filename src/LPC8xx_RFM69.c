@@ -182,13 +182,16 @@ int main(void) {
 			uint8_t from_addr = frxbuf[1];
 			uint8_t msgType = frxbuf[2];
 
+			// 0xff is broadcast
 			if (promiscuous_mode || to_addr == 0xff || to_addr == node_addr) {
 
 				// This is for us!
 
 				switch (msgType) {
-				// Message requesting position report
-				case 0x23 :
+
+				// Message requesting position report. This will return the string
+				// set by the UART 'L' command verbatim.
+				case 'R' :
 				{
 					MyUARTSendStringZ(LPC_USART0,"Sending loc: ");
 
@@ -237,6 +240,7 @@ int main(void) {
 					payload[2] = 'y';
 					rfm69_frame_tx(payload, 2);
 				}
+				// If none of the above cases match, output packet to UART
 				default: {
 
 					MyUARTSendStringZ(LPC_USART0, "p ");
@@ -281,6 +285,9 @@ int main(void) {
 				}
 				rxbuf++;
 			}
+
+			// TODO: using an array of functions may be more space efficient than
+			// switch statement.
 
 			switch (*args[0]) {
 
