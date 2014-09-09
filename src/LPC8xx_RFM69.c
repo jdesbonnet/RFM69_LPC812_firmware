@@ -220,15 +220,18 @@ int main(void) {
 				case 'R' :
 				{
 					MyUARTSendStringZ(LPC_USART0,"i Sending loc to ");
-					MyUARTPrintHex(node_addr);
-
+					MyUARTSendStringZ(LPC_USART0," ");
+					MyUARTPrintHex(LPC_USART0,node_addr);
+					MyUARTSendStringZ(LPC_USART0," len=");
+					int loc_len = strlen(current_loc);
+					MyUARTPrintHex(LPC_USART0, loc_len);
 					// report position
-					int payload_len = strlen(current_loc) + 3;
+					int payload_len = loc_len + 3;
 					uint8_t payload[payload_len];
 					payload[0] = from_addr;
 					payload[1] = node_addr;
 					payload[2] = 'r';
-					memcpy(payload+3,current_loc,payload_len-3);
+					memcpy(payload+3,current_loc,loc_len);
 
 					loopDelay(5000000);
 
@@ -237,6 +240,7 @@ int main(void) {
 
 
 					rfm69_frame_tx(payload, payload_len);
+					break;
 				}
 				// Remote register read
 				case 'X' : {
@@ -252,7 +256,9 @@ int main(void) {
 						payload[i+4] = rfm69_register_read(i);
 					}
 					rfm69_frame_tx(payload, read_len+4);
+					break;
 				}
+
 				// Remote register write
 				case 'Y' : {
 					uint8_t base_addr = frxbuf[3];
@@ -267,6 +273,7 @@ int main(void) {
 					payload[1] = node_addr;
 					payload[2] = 'y';
 					rfm69_frame_tx(payload, 2);
+					break;
 				}
 
 				// If none of the above cases match, output packet to UART
