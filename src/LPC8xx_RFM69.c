@@ -171,12 +171,13 @@ int main(void) {
 	// Display firmware version on boot
 	cmd_version(1,NULL);
 
+	/*
 	rfm69_register_write(RFM69_OPMODE,
 			RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
 			);
+	*/
 
-
-	// Diagnostic LED
+	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 #ifdef FEATURE_LED
 	GPIOSetDir(0,LED_PIN,1);
 	for (i = 0; i < 3; i++)	{
@@ -233,7 +234,7 @@ int main(void) {
 					payload[2] = 'r';
 					memcpy(payload+3,current_loc,loc_len);
 
-					loopDelay(5000000);
+					//loopDelay(5000000);
 
 					MyUARTSendStringZ(LPC_USART0,current_loc);
 					MyUARTSendCRLF(LPC_USART0);
@@ -252,8 +253,8 @@ int main(void) {
 					payload[1] = node_addr;
 					payload[2] = 'x';
 					payload[3] = base_addr;
-					for (i = base_addr; i < (base_addr+read_len); i++) {
-						payload[i+4] = rfm69_register_read(i);
+					for (i = 0; i < read_len; i++) {
+						payload[i+4] = rfm69_register_read(base_addr+i);
 					}
 					rfm69_frame_tx(payload, read_len+4);
 					break;
@@ -262,17 +263,17 @@ int main(void) {
 				// Remote register write
 				case 'Y' : {
 					uint8_t base_addr = frxbuf[3];
-					uint8_t write_len = frxbuf[4];
-
+					uint8_t write_len = frame_len - 4;
+					if (write_len > 16) write_len = 16;
 					int i;
-					for (i = base_addr; i < (base_addr+write_len); i++) {
-						rfm69_register_write(i,frxbuf[i+5]);
+					for (i = 0; i < write_len; i++) {
+						rfm69_register_write(base_addr+i,frxbuf[i+4]);
 					}
 					uint8_t payload[2];
 					payload[0] = from_addr;
 					payload[1] = node_addr;
 					payload[2] = 'y';
-					rfm69_frame_tx(payload, 2);
+					rfm69_frame_tx(payload, 3);
 					break;
 				}
 
