@@ -130,6 +130,18 @@ void report_error (uint8_t cmd, int32_t code) {
 	MyUARTSendCRLF(LPC_USART0);
 }
 
+#ifdef FEATURE_LED
+void ledBlink () {
+	int i;
+	for (i = 0; i < 3; i++)	{
+			GPIOSetBitValue(0,LED_PIN,1);
+			loopDelay(200000);
+			GPIOSetBitValue(0,LED_PIN,0);
+			loopDelay(200000);
+	}
+}
+#endif
+
 int main(void) {
 
 #ifdef LPC810
@@ -151,8 +163,7 @@ int main(void) {
 	// Configure hardware interface to radio module
 	rfm69_init();
 
-	// Configure RFM69 registers for this application
-	rfm69_config();
+
 
 
 	int i;
@@ -180,13 +191,12 @@ int main(void) {
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 #ifdef FEATURE_LED
 	GPIOSetDir(0,LED_PIN,1);
-	for (i = 0; i < 3; i++)	{
-		GPIOSetBitValue(0,LED_PIN,1);
-		loopDelay(200000);
-		GPIOSetBitValue(0,LED_PIN,0);
-		loopDelay(200000);
-	}
+	ledBlink();
 #endif
+
+	// Configure RFM69 registers for this application
+	rfm69_config();
+	loopDelay(200000);
 
 
 	while (1) {
@@ -220,12 +230,16 @@ int main(void) {
 				// set by the UART 'L' command verbatim.
 				case 'R' :
 				{
+					int loc_len = strlen(current_loc);
+
+#ifdef FEATURE_DEBUG
 					MyUARTSendStringZ(LPC_USART0,"i Sending loc to ");
 					MyUARTSendStringZ(LPC_USART0," ");
 					MyUARTPrintHex(LPC_USART0,node_addr);
 					MyUARTSendStringZ(LPC_USART0," len=");
-					int loc_len = strlen(current_loc);
 					MyUARTPrintHex(LPC_USART0, loc_len);
+#endif
+
 					// report position
 					int payload_len = loc_len + 3;
 					uint8_t payload[payload_len];
@@ -234,11 +248,10 @@ int main(void) {
 					payload[2] = 'r';
 					memcpy(payload+3,current_loc,loc_len);
 
-					//loopDelay(5000000);
-
+#ifdef FEATURE_DEBUG
 					MyUARTSendStringZ(LPC_USART0,current_loc);
 					MyUARTSendCRLF(LPC_USART0);
-
+#endif
 
 					rfm69_frame_tx(payload, payload_len);
 					break;
@@ -276,6 +289,20 @@ int main(void) {
 					rfm69_frame_tx(payload, 3);
 					break;
 				}
+
+#ifdef FEATURE_LED
+				// Remote LED blink
+				case 'U' : {
+					uint8_t payload[2];
+					payload[0] = from_addr;
+					payload[1] = node_addr;
+					payload[2] = 'u';
+					rfm69_frame_tx(payload, 3);
+					ledBlink();
+					break;
+				}
+#endif
+
 
 				// If none of the above cases match, output packet to UART
 				default: {
