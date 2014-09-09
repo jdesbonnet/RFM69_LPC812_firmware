@@ -21,7 +21,7 @@
  */
 const uint8_t RFM69_CONFIG[][2] = {
 	{ RFM69_OPMODE,
-			RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_STDBY)
+			RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
 	},
 
 	// Data operations mode and modulation settings §6.2 Table 24, page 63
