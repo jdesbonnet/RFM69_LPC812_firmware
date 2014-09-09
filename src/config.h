@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "WRSC_RFM69_Controller 0.1.1"
+#define VERSION "WRSC_RFM69_Controller 0.1.2"
 
 // Version of MCU used (LPC812, LPC810 supported)
 //#define LPC812
@@ -9,9 +9,12 @@
 // LPC810 using all available pins for UART, SPI
 //#define LPC810
 
-// LPC810 preserving RESET and SWD (but no SPI bus)
-#define LPC810
+#define LPC812
 
+#ifdef LPC812
+#define FEATURE_LED
+#define LED_PIN 14
+#endif
 
 
 //
