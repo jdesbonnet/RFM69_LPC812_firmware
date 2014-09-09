@@ -118,16 +118,17 @@ void UART0_IRQHandler(void)
 	// Bit 2 TXRDY: 1 = data may be written to TXDATA
 	if (uart_status & UART_STAT_RXRDY ) {
 
-		uart_rxbuf[uart_rxi] = LPC_USART0->RXDATA;
-
-		// echo
-		MyUARTSendByte(LPC_USART0,uart_rxbuf[uart_rxi]);
+		uint8_t c = LPC_USART0->RXDATA;
 
 		// If CR flag EOL
-		if (uart_rxbuf[uart_rxi]=='\r') {
+		if (c=='\r') {
 			uart_buf_flags |= UART_BUF_FLAG_EOL;
 			uart_rxbuf[uart_rxi]=0; // zero-terminate buffer
-		} else {
+		} else if (c>31){
+			// echo
+			MyUARTSendByte(LPC_USART0,c);
+
+			uart_rxbuf[uart_rxi] = c;
 			uart_rxi++;
 			if (uart_rxi == UART_BUF_SIZE) {
 				MyUARTBufReset();
