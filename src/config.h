@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "WRSC_RFM69_Controller 0.1.4"
+#define VERSION "WRSC_RFM69_Controller 0.1.5"
 
 // Version of MCU used (LPC812, LPC810 supported)
 //#define LPC812
