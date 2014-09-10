@@ -441,7 +441,7 @@ int main(void) {
 			case 'R' : {
 				// Parameter is register address
 				uint8_t *b;
-				int regAddr = parse_dec(args[1],&b);
+				int regAddr = parse_hex(args[1],&b);
 				MyUARTSendStringZ(LPC_USART0,"r ");
 				print_hex8 (LPC_USART0, regAddr);
 				MyUARTSendStringZ(LPC_USART0," ");
