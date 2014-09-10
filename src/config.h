@@ -7,9 +7,9 @@
 //#define LPC812
 
 // LPC810 using all available pins for UART, SPI
-//#define LPC810
+#define LPC810
+//#define LPC812
 
-#define LPC812
 
 #ifdef LPC812
 #define FEATURE_LED
@@ -27,7 +27,7 @@
 #define MISO_PIN 7
 #endif
 
-#if defined(LPC810) || defined(LPC810_NOSPI)
+#ifdef LPC810
 #define SCK_PIN 3  // package pin 3
 #define SS_PIN 5   // package pin 1
 #define MOSI_PIN 4 // package pin 4
@@ -38,10 +38,12 @@
 
 
 // UART speed ('baud rate')
-#define UART_BPS (115200)
+#define UART_BPS (9600)
+//#define UART_BPS (115200)
 
 
 //#define USE_SYSTICK
 
+#define FEATURE_SPI_FEEDBACK_TEST
 
 #endif

@@ -1,10 +1,10 @@
 /*
 ===============================================================================
  Name        : LPC8xx_RFM69.c
- Author      : $(author)
+ Author      : Joe Desbonnet, jdesbonnet@gmail.com
  Version     :
- Copyright   : $(copyright)
- Description : main definition
+ Copyright   : BSD licence. TODO: add licence to header.
+ Description : TODO
 ===============================================================================
 */
 
@@ -65,6 +65,14 @@ void SwitchMatrix_Init()
 #endif
 
 #ifdef LPC810
+/**
+ * On boot initialize LPC810 SwitchMatrix preserving SWD functionality. For SPI operation
+ * we need to forfeit SWCLK, SWDIO and RESET functions due to lack of available pins.
+ * Instead delay configuring these pins for SPI either by
+ * switching pins to SPI by UART command or by delay so as to provide opportunity
+ * to reprogram the device using SWD (else will have to use awkward ISP entry via
+ * powercycling to reprogram the device).
+ */
 void SwitchMatrix_NoSpi_Init()
 {
     /* Enable SWM clock */
@@ -81,10 +89,7 @@ void SwitchMatrix_NoSpi_Init()
     /* RESET */
     LPC_SWM->PINENABLE0 = 0xffffffb3UL;
 }
-#endif
 
-
-#ifdef LPC810
 /**
  * TXD PIO0_0 (package pin 8)
  * RXD PIO0_1 (package pin 5)
@@ -121,6 +126,9 @@ uint32_t get_mcu_serial_number () {
 	return (uint32_t)result[1];
 }
 
+/**
+ * Print error code 'code' while executing command 'cmd' to UART.
+ */
 void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
 	MyUARTSendStringZ(LPC_USART0,"e ");
@@ -131,6 +139,9 @@ void report_error (uint8_t cmd, int32_t code) {
 }
 
 #ifdef FEATURE_LED
+/**
+ * Blink diagnostic LED. Optional feature (edit config.h to define hardware configuration).
+ */
 void ledBlink () {
 	int i;
 	for (i = 0; i < 3; i++)	{
@@ -144,10 +155,15 @@ void ledBlink () {
 
 int main(void) {
 
+	/*
+	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
+	 * This setups up the pins in a way that's convenient for our physical circuit layout.
+	 * In the case of the LPC810, use of SPI (which necessitates loss of SWD functionality)
+	 * is delayed to allow opportunity to reprogram device via SWD.
+	 */
 #ifdef LPC810
 	SwitchMatrix_NoSpi_Init();
-#endif
-#ifdef LPC812
+#elif LPC812
 	SwitchMatrix_Init();
 #endif
 
@@ -156,9 +172,7 @@ int main(void) {
 	MyUARTInit(LPC_USART0, UART_BPS);
 
 
-//#if !defined (LPC810_NOSPI)
 	spi_init();
-//#endif
 
 	// Configure hardware interface to radio module
 	rfm69_init();
@@ -182,47 +196,45 @@ int main(void) {
 	// Display firmware version on boot
 	cmd_version(1,NULL);
 
-	/*
-	rfm69_register_write(RFM69_OPMODE,
-			RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
-			);
-	*/
-
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 #ifdef FEATURE_LED
 	GPIOSetDir(0,LED_PIN,1);
 	ledBlink();
 #endif
 
-	// Configure RFM69 registers for this application
+	// Configure RFM69 registers for this application. I found that it was necessary
+	// to delay a short period after powerup before configuring registers.
 	loopDelay(200000);
 	rfm69_config();
 
-
+	// Main program loop
 	while (1) {
 
-		// Check for received packet
+		// Check for received packet on RFM69
 		if ( (flags&FLAG_RADIO_MODULE_ON) && rfm69_payload_ready()) {
+
+			// Yes, frame ready to be read from FIFO
 			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
 
+			// TODO: tidy this
 			// SPI error
 			if (frame_len>0) {
 
 
 
-			// All fames will have these:
-			// First byte is to_node address
-			// Second byte is from node_addess (0 = master controller, 0xff = broadcast)
-			// Third is message type
+			// All frames have a common header
+			// 8 bit to address
+			// 8 bit from address
+			// 8 bit message type
 
 			uint8_t to_addr = frxbuf[0];
 			uint8_t from_addr = frxbuf[1];
 			uint8_t msgType = frxbuf[2];
 
-			// 0xff is broadcast
+			// 0xff is the broadcast address
 			if ( (flags&FLAG_PROMISCUOUS_MODE) || to_addr == 0xff || to_addr == node_addr) {
 
-				// This is for us!
+				// This frame is for us! Examine messageType field for appropriate action.
 
 				switch (msgType) {
 
@@ -256,6 +268,7 @@ int main(void) {
 					rfm69_frame_tx(payload, payload_len);
 					break;
 				}
+#ifdef FEATURE_REMOTE_REG_RW
 				// Remote register read
 				case 'X' : {
 					uint8_t base_addr = frxbuf[3];
@@ -289,6 +302,7 @@ int main(void) {
 					rfm69_frame_tx(payload, 3);
 					break;
 				}
+#endif
 
 #ifdef FEATURE_LED
 				// Remote LED blink
@@ -418,25 +432,23 @@ int main(void) {
 
 
 #ifdef LPC810
+			// SPI pin initialize (delayed to keep SWD on bootup)
 			case 'S' : {
 				if (args[1][0]=='1') {
 					// Note will disconnect SWD
 					SwitchMatrix_Spi_Init();
 					spi_init();
-/*
-					while (1) {
-						GPIOSetBitValue(0,5,0);
-						GPIOSetBitValue(0,5,1);
-						GPIOSetBitValue(0,4,0);
-						GPIOSetBitValue(0,4,1);
-						GPIOSetBitValue(0,3,0);
-						GPIOSetBitValue(0,3,1);
-						GPIOSetBitValue(0,2,0);
-						GPIOSetBitValue(0,2,1);
-					}
-*/
 				} else {
 					SwitchMatrix_NoSpi_Init();
+				}
+				// TOD0 temporary hack: SPI loopback test
+				if (args[1][0]=='L') {
+					for (i = 0; i < 255; i++) {
+						if (spi_transfer_byte(i) != i) {
+							report_error('S',E_SPI);
+							break;
+						}
+					}
 				}
 				break;
 			}
@@ -485,10 +497,19 @@ int main(void) {
 
 			}
 
+			// Reset UART command line buffer ready for next command
 			MyUARTBufReset();
 
 
 		}
+
+		// TODO: we could save some MCU power by delaying and entering sleep
+		// state before polling RFM69 for reception of another packet. An
+		// possible alternative approach is to configure RFM69 digital IO
+		// pins to trigger interrupt on MCU on packet reception. However in the
+		// case of LPC810 there are no available pins for this (unless we try
+		// something clever by piggybacking this on another line. Probably not
+		// worth the effort as this MCU current requirements are modest.
 		//__WFI();
 
 
