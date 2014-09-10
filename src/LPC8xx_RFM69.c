@@ -73,6 +73,24 @@ void SwitchMatrix_Init()
  * to reprogram the device using SWD (else will have to use awkward ISP entry via
  * powercycling to reprogram the device).
  */
+
+void SwitchMatrix_NoSpi_Init_old()
+{
+    /* Enable SWM clock */
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+
+    /* Pin Assign 8 bit Configuration */
+    /* U0_TXD */
+    /* U0_RXD */
+    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
+
+    /* Pin Assign 1 bit Configuration */
+    /* SWCLK */
+    /* SWDIO */
+    /* RESET */
+    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+}
+// reset disabled
 void SwitchMatrix_NoSpi_Init()
 {
     /* Enable SWM clock */
@@ -81,19 +99,17 @@ void SwitchMatrix_NoSpi_Init()
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
     /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0100UL;
+    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
 
     /* Pin Assign 1 bit Configuration */
     /* SWCLK */
     /* SWDIO */
-    /* RESET */
-    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+    LPC_SWM->PINENABLE0 = 0xfffffff3UL;
 }
 
+
 /**
- * TXD PIO0_0 (package pin 8)
- * RXD PIO0_1 (package pin 5)
- * package pins 1 - 4 as PIO0_5, PIO0_4, PIO0_3, PIO0_2
+ *
  *
  * Note: this configuration disables RESET and SWD.
  * To re-flash will need to access ISP
@@ -107,11 +123,13 @@ void SwitchMatrix_Spi_Init()
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
     /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0100UL;
+    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
 
     /* Pin Assign 1 bit Configuration */
     LPC_SWM->PINENABLE0 = 0xffffffffUL;
 }
+
+
 #endif
 
 #define IAP_LOCATION 0x1fff1ff1
@@ -339,9 +357,12 @@ int main(void) {
 				}
 
 			} else {
+
+#ifdef FEATURE_DEBUG
 				MyUARTSendStringZ(LPC_USART0,"i Ignoring packet from ");
 				MyUARTPrintHex(LPC_USART0,to_addr);
 				MyUARTSendCRLF(LPC_USART0);
+#endif
 
 			}
 
@@ -434,6 +455,36 @@ int main(void) {
 #ifdef LPC810
 			// SPI pin initialize (delayed to keep SWD on bootup)
 			case 'S' : {
+
+				// TOD0 temporary hack: SPI loopback test
+				if (args[1][0]=='L') {
+					/*
+					for (i = 0; i < 255; i++) {
+						if (spi_transfer_byte(i) != i) {
+							report_error('S',E_SPI);
+							break;
+						}
+					}
+					*/
+					for (i = 0; i < 100000; i++) {
+					GPIOSetBitValue(0,MOSI_PIN,1);
+					loopDelay(10);
+					GPIOSetBitValue(0,MOSI_PIN,0);
+					loopDelay(10);
+					GPIOSetBitValue(0,SCK_PIN,1);
+					loopDelay(10);
+					GPIOSetBitValue(0,SCK_PIN,0);
+					loopDelay(10);
+					GPIOSetBitValue(0,SS_PIN,1);
+					loopDelay(10);
+					GPIOSetBitValue(0,SS_PIN,0);
+					loopDelay(10);
+
+					}
+
+
+				}
+
 				if (args[1][0]=='1') {
 					// Note will disconnect SWD
 					SwitchMatrix_Spi_Init();
@@ -441,15 +492,8 @@ int main(void) {
 				} else {
 					SwitchMatrix_NoSpi_Init();
 				}
-				// TOD0 temporary hack: SPI loopback test
-				if (args[1][0]=='L') {
-					for (i = 0; i < 255; i++) {
-						if (spi_transfer_byte(i) != i) {
-							report_error('S',E_SPI);
-							break;
-						}
-					}
-				}
+
+
 				break;
 			}
 #endif
