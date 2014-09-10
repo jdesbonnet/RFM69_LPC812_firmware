@@ -456,35 +456,6 @@ int main(void) {
 			// SPI pin initialize (delayed to keep SWD on bootup)
 			case 'S' : {
 
-				// TOD0 temporary hack: SPI loopback test
-				if (args[1][0]=='L') {
-					/*
-					for (i = 0; i < 255; i++) {
-						if (spi_transfer_byte(i) != i) {
-							report_error('S',E_SPI);
-							break;
-						}
-					}
-					*/
-					for (i = 0; i < 100000; i++) {
-					GPIOSetBitValue(0,MOSI_PIN,1);
-					loopDelay(10);
-					GPIOSetBitValue(0,MOSI_PIN,0);
-					loopDelay(10);
-					GPIOSetBitValue(0,SCK_PIN,1);
-					loopDelay(10);
-					GPIOSetBitValue(0,SCK_PIN,0);
-					loopDelay(10);
-					GPIOSetBitValue(0,SS_PIN,1);
-					loopDelay(10);
-					GPIOSetBitValue(0,SS_PIN,0);
-					loopDelay(10);
-
-					}
-
-
-				}
-
 				if (args[1][0]=='1') {
 					// Note will disconnect SWD
 					SwitchMatrix_Spi_Init();
