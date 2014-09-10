@@ -15,7 +15,7 @@
 #define FEATURE_REMOTE_REG_RW
 
 // Remote packet broadcast
-#define FEATURE_REMOTE_PKT_BCAST
+#define FEATURE_REMOTE_PKT_TX
 
 // Support NMEA sentences for location
 #define FEATURE_NMEA_INPUT

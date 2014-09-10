@@ -256,8 +256,8 @@ int main(void) {
 
 				switch (msgType) {
 
-#ifdef FEATURE_REMOTE_PKT_BCAST
-				// Experimental remote packet broadcast
+#ifdef FEATURE_REMOTE_PKT_TX
+				// Experimental remote packet transmit / relay
 				case 'B' : {
 					int payload_len = frame_len - 3;
 					uint8_t payload[payload_len];
