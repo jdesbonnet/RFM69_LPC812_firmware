@@ -4,13 +4,23 @@
 #define VERSION "WRSC_RFM69_Controller 0.1.5"
 
 // Version of MCU used (LPC812, LPC810 supported)
-//#define LPC812
-
-// LPC810 using all available pins for UART, SPI
 #define LPC810
 //#define LPC812
 
+//
+// Optional Features
+//
 
+// Remote register read/write
+#define FEATURE_REMOTE_REG_RW
+
+// Remote packet broadcast
+#define FEATURE_REMOTE_PKT_BCAST
+
+// Support NMEA sentences for location
+#define FEATURE_NMEA_INPUT
+
+// Diagnostic LED (only available on LPC812)
 #ifdef LPC812
 #define FEATURE_LED
 #define LED_PIN 14
@@ -18,7 +28,7 @@
 
 
 //
-// Pins used for SPI
+// Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
 //
 #ifdef LPC812
 #define SCK_PIN 15
@@ -44,6 +54,5 @@
 
 //#define USE_SYSTICK
 
-#define FEATURE_SPI_FEEDBACK_TEST
 
 #endif

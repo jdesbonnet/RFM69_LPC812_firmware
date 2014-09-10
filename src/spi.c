@@ -29,7 +29,6 @@ void spi_init () {
 	GPIOSetDir(PORT, SCK_PIN, 1);
 	GPIOSetDir(PORT, MOSI_PIN, 1);
 	GPIOSetDir(PORT, MISO_PIN, 0); // input
-	LPC_IOCON->PIO0_5 = 0;
 }
 
 

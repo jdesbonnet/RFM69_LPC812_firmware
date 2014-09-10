@@ -256,6 +256,16 @@ int main(void) {
 
 				switch (msgType) {
 
+#ifdef FEATURE_REMOTE_PKT_BCAST
+				// Experimental remote packet broadcast
+				case 'B' : {
+					int payload_len = frame_len - 3;
+					uint8_t payload[payload_len];
+					memcpy(payload,frxbuf+3,payload_len);
+					rfm69_frame_tx(payload, payload_len);
+					break;
+				}
+#endif
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
