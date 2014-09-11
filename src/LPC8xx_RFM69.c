@@ -46,6 +46,10 @@ void loopDelay(uint32_t i) {
 }
 
 #ifdef LPC812
+/**
+ * UART RXD on SOIC package pin 19
+ * UART TXD on SOIC package pin 5
+ */
 void SwitchMatrix_Init()
 {
     /* Enable SWM clock */
@@ -180,7 +184,12 @@ int main(void) {
 	 * is delayed to allow opportunity to reprogram device via SWD.
 	 */
 #ifdef LPC810
-	SwitchMatrix_NoSpi_Init();
+
+	// Delay to allow debug probe to reflash
+	loopDelay(5000000);
+
+	// Won't be able to use debug probe from this point on (unless UART S 0 command used)
+	SwitchMatrix_Spi_Init();
 #elif LPC812
 	SwitchMatrix_Init();
 #endif
