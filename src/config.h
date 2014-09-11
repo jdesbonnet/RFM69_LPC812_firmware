@@ -38,10 +38,10 @@
 #endif
 
 #ifdef LPC810
-#define SCK_PIN 3  // package pin 3
+#define MISO_PIN 3  // package pin 3
 #define SS_PIN 5   // package pin 1
-#define MOSI_PIN 2 // package pin 4
-#define MISO_PIN 1 // package pin 5
+#define SCK_PIN 2 // package pin 4
+#define MOSI_PIN 1 // package pin 5
 #endif
 
 
