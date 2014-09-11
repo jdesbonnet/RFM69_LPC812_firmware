@@ -36,7 +36,8 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags = FLAG_RADIO_MODULE_ON;
+uint32_t flags = FLAG_RADIO_MODULE_ON
+		| FLAG_BEACON_ENABLE;
 
 
 void loopDelay(uint32_t i) {
@@ -218,6 +219,9 @@ int main(void) {
 	uint8_t frxbuf[66];
 	uint8_t frame_len;
 
+	// Acts as a crude clock
+	uint32_t loopCounter = 0;
+
 	int argc;
 
 	// Display firmware version on boot
@@ -236,6 +240,18 @@ int main(void) {
 
 	// Main program loop
 	while (1) {
+
+		loopCounter++;
+
+		// Send beacon signal every 10s or so
+		if ( (flags&FLAG_BEACON_ENABLE) && (loopCounter & 0x1FFF) == 0) {
+			uint8_t payload[3];
+			payload[0] = 0xff;
+			payload[1] = node_addr;
+			payload[2] = 'B';
+			rfm69_frame_tx(payload,3);
+			MyUARTSendStringZ(LPC_USART0,"b\r\n");
+		}
 
 		// Check for received packet on RFM69
 		if ( (flags&FLAG_RADIO_MODULE_ON) && rfm69_payload_ready()) {

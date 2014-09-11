@@ -1,10 +1,11 @@
 #ifndef ERR_H_
 #define ERR_H_
 
-#define E_OK (0)
-#define E_INVALID_CMD (-1)
-#define E_INVALID_ARG (-2)
-#define E_WRONG_ARGC (-3)
-#define E_PKT_TOO_LONG (-4)
-#define E_SPI (-5)
+#define E_OK (0)            /* 0 indicates no error */
+#define E_INVALID_CMD (-1)  /* Invalid command code */
+#define E_INVALID_ARG (-2)  /* Invalid argument to command */
+#define E_WRONG_ARGC (-3)   /* Wrong number of arguments */
+#define E_PKT_TOO_LONG (-4) /* Packet too long */
+#define E_SPI (-5)          /* SPI related error */
+
 #endif
