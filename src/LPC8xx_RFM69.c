@@ -248,9 +248,9 @@ int main(void) {
 			uint8_t payload[3];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
-			payload[2] = 'B';
+			payload[2] = 'k';
 			rfm69_frame_tx(payload,3);
-			MyUARTSendStringZ(LPC_USART0,"b\r\n");
+			MyUARTSendStringZ(LPC_USART0,"k\r\n");
 		}
 
 		// Check for received packet on RFM69
