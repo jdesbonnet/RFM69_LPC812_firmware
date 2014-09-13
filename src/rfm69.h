@@ -5,6 +5,7 @@
 #include "rfm69_rdl.h"
 
 void rfm69_init(void);
+void rfm69_mode(uint8_t mode);
 
 int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi);
 void rfm69_frame_tx(uint8_t *buf, int len);
