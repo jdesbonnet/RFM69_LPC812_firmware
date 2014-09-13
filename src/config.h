@@ -20,6 +20,9 @@
 // Support NMEA sentences for location
 #define FEATURE_NMEA_INPUT
 
+// Supoort radio and MCU sleeping to conserve power
+#define FEATURE_SLEEP
+
 // Diagnostic LED (only available on LPC812)
 #ifdef LPC812
 #define FEATURE_LED
