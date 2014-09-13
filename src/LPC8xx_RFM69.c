@@ -37,7 +37,7 @@ uint8_t current_loc[32];
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
 uint32_t flags = FLAG_RADIO_MODULE_ON
-		| FLAG_BEACON_ENABLE;
+		| FLAG_HEARTBEAT_ENABLE;
 
 
 void loopDelay(uint32_t i) {
@@ -243,8 +243,8 @@ int main(void) {
 
 		loopCounter++;
 
-		// Send beacon signal every 10s or so
-		if ( (flags&FLAG_BEACON_ENABLE) && (loopCounter & 0x1FFF) == 0) {
+		// Send heartbeat signal every 10s or so
+		if ( (flags&FLAG_HEARTBEAT_ENABLE) && (loopCounter & 0x1FFF) == 0) {
 			uint8_t payload[3];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
