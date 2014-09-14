@@ -31,8 +31,8 @@ void rfm69_config() {
  */
 void rfm69_mode(uint8_t mode) {
 	uint8_t regVal = rfm69_register_read(RFM69_OPMODE);
-	regVal &= RFM69_OPMODE_Mode_MASK;
-	regVal |= RFM69_OPMODE_ListenOn_VALUE(mode);
+	regVal &= ~RFM69_OPMODE_Mode_MASK;
+	regVal |= RFM69_OPMODE_Mode_VALUE(mode);
 	rfm69_register_write(RFM69_OPMODE,regVal);
 }
 
