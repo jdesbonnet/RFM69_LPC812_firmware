@@ -1,9 +1,9 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.1.8"
+#define VERSION "RFM69 0.1.9"
 
-#define DEFAULT_NODE_ADDR 0x41
+#define DEFAULT_NODE_ADDR 0x42
 
 // Version of MCU used (LPC812, LPC810 supported)
 #define LPC810
@@ -15,16 +15,16 @@
 //
 
 // Remote register read/write
-#define FEATURE_REMOTE_REG_RW
+//#define FEATURE_REMOTE_REG_RW
 
 // Remote packet broadcast
-#define FEATURE_REMOTE_PKT_TX
+//#define FEATURE_REMOTE_PKT_TX
 
 // Support NMEA sentences for location
 #define FEATURE_NMEA_INPUT
 
 // Support radio and MCU sleeping to conserve power
-//#define FEATURE_SLEEP
+#define FEATURE_SLEEP
 
 // Periodic heartbeat packet transmitted
 #define FEATURE_HEARTBEAT
@@ -32,6 +32,9 @@
 // Reset radio and MCU if no packet received in X time (allows for remote experimentation
 // without fear of permanent loss of communication)
 //#define FEATURE_LINK_LOSS_RESET
+
+// Allow full UART command to be executed remotely
+#define FEATURE_REMOTE_COMMAND
 
 // Allow change of UART speed from default 9600
 #define FEATURE_UART_SPEED

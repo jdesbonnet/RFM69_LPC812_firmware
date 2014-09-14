@@ -70,16 +70,6 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 
 	int i;
 
-	// Set mode RX
-	// REG_OP_MODE §6.2, page 63
-	// OP_MODE[4:2] Mode 0x4 = RX
-
-	/*
-	uint8_t regVal = rfm69_register_read(RFM69_OPMODE);
-	regVal &= 0xE3;
-	regVal |= 0x4 << 2;
-	rfm69_register_write(RFM69_OPMODE,regVal);
-	*/
 	// TODO: this shouldn't be necessary
 	rfm69_mode(RFM69_OPMODE_Mode_RX);
 
@@ -129,16 +119,7 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 void rfm69_frame_tx(uint8_t *buf, int len) {
 
 	// Turn off receiver before writing to FIFO
-	// @register OPMODE
-	// REG_OP_MODE §6.2, page 63
-	/*
-	uint8_t regVal = rfm69_register_read(RFM69_OPMODE);
-	regVal |= RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_STDBY);
-	rfm69_register_write(RFM69_OPMODE,regVal);
-	*/
 	rfm69_mode(RFM69_OPMODE_Mode_STDBY);
-
-
 
 	// Write frame to FIFO
 	rfm69_nss_assert();
@@ -156,12 +137,6 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	rfm69_nss_deassert();
 
 	// Power up TX
-	// REG_OP_MODE §6.2, page 63
-	/*
-	regVal = rfm69_register_read(RFM69_OPMODE);
-	regVal |= RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_TX);
-	rfm69_register_write(RFM69_OPMODE,regVal);
-	*/
 	rfm69_mode(RFM69_OPMODE_Mode_TX);
 
 
@@ -171,25 +146,8 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 		// TODO: implement timeout
 	}
 
-	// TODO: we shouldn't need a delay
-	//delay (10000);
-
 	// Back to receive mode
-	// REG_OP_MODE §6.2, page 63
-	// OP_MODE[4:2] Mode 0x1 = STDBY
-	// OP_MODE[4:2] Mode 0x4 = RX
-	/*
-	regVal = rfm69_register_read(RFM69_OPMODE);
-	regVal &= ~RFM69_OPMODE_Mode_MASK;
-	regVal |= RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX);
-	rfm69_register_write(RFM69_OPMODE,regVal);
-	*/
 	rfm69_mode(RFM69_OPMODE_Mode_RX);
-
-	// Wait until STDBY mode ready
-	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
-	//while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) ;
-
 
 }
 

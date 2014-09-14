@@ -155,6 +155,10 @@ uint32_t MyUARTGetBufFlags(void) {
 	return uart_buf_flags;
 }
 
+void MyUARTSetBufFlags(uint32_t flags) {
+	uart_buf_flags = flags;
+}
+
 uint32_t MyUARTBufCopy(uint8_t *buf) {
 	//memcpy(buf, (void*)uart_rxbuf, uart_rxi);
 	int i;

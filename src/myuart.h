@@ -56,6 +56,7 @@ uint8_t* MyUARTGetBuf(void);
 uint32_t MyUARTGetBufIndex(void);
 
 uint32_t MyUARTGetBufFlags(void);
+void MyUARTSetBufFlags(uint32_t flags);
 
 void MyUARTBufReset(void);
 uint32_t MyUARTBufCopy(uint8_t *buf);

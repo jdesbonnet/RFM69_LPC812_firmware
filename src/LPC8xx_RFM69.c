@@ -6,6 +6,20 @@
  Copyright   : BSD licence. TODO: add licence to header.
  Description : TODO
 ===============================================================================
+
+TODO:
+For v0.2.0:
+* Move to 4 byte header. Having an extra byte for special flags (like ack at MAC level).
+* Also use struct: might enable greater code density.
+*
+* Change radio level remote register read/write with a remote command execution: ie take
+* bytes from radio packet and inject into UART receive buffer and trigger a command, as if
+* arriving from UART. To enable responses etc, have command to forward UART command responses
+* and errors via radio to one or more nodes. This can then replace the following features:
+* o Packet Forward (just exec a T command remotely)
+* o Register Read/Write
+* o Heartbeat interval set
+*
 */
 
 
@@ -186,14 +200,6 @@ void ledBlink () {
 }
 #endif
 
-/**
- * Use function to set flags because some flag changes require one-time actions
- * at the time of write.
- */
-/*
-void flags_set (uint32_t flagsValue) {
-}
-*/
 
 int main(void) {
 
@@ -314,9 +320,9 @@ int main(void) {
 				// 8 bit to address
 				// 8 bit from address
 				// 8 bit message type
-			uint8_t to_addr = frxbuf[0];
-			uint8_t from_addr = frxbuf[1];
-			uint8_t msgType = frxbuf[2];
+				uint8_t to_addr = frxbuf[0];
+				uint8_t from_addr = frxbuf[1];
+				uint8_t msgType = frxbuf[2];
 
 			// 0xff is the broadcast address
 			if ( (flags&FLAG_PROMISCUOUS_MODE) || to_addr == 0xff || to_addr == node_addr) {
@@ -408,6 +414,19 @@ int main(void) {
 					payload[1] = node_addr;
 					payload[2] = 'y';
 					rfm69_frame_tx(payload, 3);
+					break;
+				}
+
+
+#endif
+
+#ifdef FEATURE_REMOTE_COMMAND
+				case 'Z' : {
+					MyUARTBufReset();
+					int payload_len = frame_len - 3;
+					memcpy(cmdbuf,frxbuf+3,payload_len);
+					cmdbuf[payload_len] = 0; // zero terminate buffer
+					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
 				}
 #endif
