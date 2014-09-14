@@ -7,5 +7,5 @@
 #define E_WRONG_ARGC (-3)   /* Wrong number of arguments */
 #define E_PKT_TOO_LONG (-4) /* Packet too long */
 #define E_SPI (-5)          /* SPI related error */
-
+#define E_LINK_LOSS_RESET (-6) /* System is resetting due to loss of link */
 #endif

@@ -50,7 +50,9 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 	}
 
 	// Transmit frame
+	MyUARTSendByte(LPC_USART0,'[');
 	rfm69_frame_tx (buf,payload_len+2);
+	MyUARTSendByte(LPC_USART0,']');
 
 	return E_OK;
 }

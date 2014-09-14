@@ -10,6 +10,9 @@
 #include "rfm69.h"
 #include "err.h"
 
+#include "myuart.h"
+
+
 
 extern const uint8_t RFM69_CONFIG[][2];
 
@@ -104,7 +107,7 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 
     for (i = 0; i < frame_length; i++) {
     	if (i == maxlen) {
-    		return -2; // frame too long
+    		return E_PKT_TOO_LONG;
     	}
     	buf[i] = spi_transfer_byte(0);
     }
@@ -134,10 +137,13 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	rfm69_mode(RFM69_OPMODE_Mode_STDBY);
 
 
+MyUARTSendByte(LPC_USART0,'A');
 
 	// Wait until STDBY mode ready
 	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
 	while (rfm69_register_read(RFM69_IRQFLAGS1) & 0x80 == 0) ;
+
+MyUARTSendByte(LPC_USART0,'B');
 
 	// Write frame to FIFO
 	rfm69_nss_assert();
@@ -163,12 +169,15 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	*/
 	rfm69_mode(RFM69_OPMODE_Mode_TX);
 
+MyUARTSendByte(LPC_USART0,'C');
 
 	// REG_IRQFLAGS2 page 70
 	// IRQFLAGS2[3] PacketSent 1 when complete packet sent. Cleared when existing TX mode.
 	while ( (rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PacketSent_MASK) == 0x00){
 		// TODO: implement timeout
 	}
+
+MyUARTSendByte(LPC_USART0,'D');
 
 	// TODO: we shouldn't need a delay
 	//delay (10000);
@@ -187,7 +196,10 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 
 	// Wait until STDBY mode ready
 	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
-	while (rfm69_register_read(RFM69_IRQFLAGS1) & 0x80 == 0) ;
+	while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) ;
+
+MyUARTSendByte(LPC_USART0,'E');
+
 }
 
 uint8_t rfm69_register_read (uint8_t reg_addr) {

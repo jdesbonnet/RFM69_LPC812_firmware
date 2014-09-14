@@ -29,16 +29,21 @@
 volatile uint32_t TimeTick = 0;
 
 // Address of this node
-int8_t node_addr = 0x7e;
+int8_t node_addr = DEFAULT_NODE_ADDR;
 
 // Current location string specified by boat firmware. Format TBD.
 uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags = FLAG_RADIO_MODULE_ON
+uint32_t flags =
+		FLAG_RADIO_MODULE_ON
 		| FLAG_HEARTBEAT_ENABLE;
 
+
+#ifdef FEATURE_HEARTBEAT
+uint32_t heartbeat_interval = 0x1FFFF;
+#endif
 
 void loopDelay(uint32_t i) {
 	while (--i!=0) {
@@ -137,10 +142,14 @@ void SwitchMatrix_Spi_Init()
 
 #endif
 
+
+#ifdef FEATURE_MCU_UID
+/**
+ * Retrieve MCU unique ID
+ */
 #define IAP_LOCATION 0x1fff1ff1
 typedef void (*IAP)(unsigned int [],unsigned int[]);
 IAP iap_entry = (IAP)0x1fff1ff1;
-
 uint32_t get_mcu_serial_number () {
 	unsigned long command[5];
 	unsigned long result[4];
@@ -148,6 +157,7 @@ uint32_t get_mcu_serial_number () {
 	iap_entry (command, result);
 	return (uint32_t)result[1];
 }
+#endif
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
@@ -193,20 +203,31 @@ int main(void) {
 	 * In the case of the LPC810, use of SPI (which necessitates loss of SWD functionality)
 	 * is delayed to allow opportunity to reprogram device via SWD.
 	 */
+
 #ifdef LPC810
-
-	// Delay to allow debug probe to reflash
-	loopDelay(5000000);
-
-	// Won't be able to use debug probe from this point on (unless UART S 0 command used)
-	SwitchMatrix_Spi_Init();
+	SwitchMatrix_NoSpi_Init();
 #elif LPC812
 	SwitchMatrix_Init();
 #endif
 
 	GPIOInit();
-
 	MyUARTInit(LPC_USART0, UART_BPS);
+
+	// Display firmware version on boot
+	cmd_version(1,NULL);
+
+
+#ifdef LPC810
+	// Delay to allow debug probe to reflash
+	loopDelay(20000000);
+
+	// Won't be able to use debug probe from this point on (unless UART S 0 command used)
+	SwitchMatrix_Spi_Init();
+
+	// Hack:
+	// Display firmware version again to indicate SPI is in operation
+	cmd_version(1,NULL);
+#endif
 
 
 	spi_init();
@@ -214,27 +235,24 @@ int main(void) {
 	// Configure hardware interface to radio module
 	rfm69_init();
 
-
-
-
 	int i;
-
 
 	uint8_t rssi;
 
-	uint8_t *rxbuf;
+	uint8_t *cmdbuf;
 	uint8_t *args[8];
 
+	// Radio frame receive buffer
 	uint8_t frxbuf[66];
 	uint8_t frame_len;
 
 	// Acts as a crude clock
-	uint32_t loopCounter = 0;
+	uint32_t loop_counter = 0;
+	uint32_t last_frame_time = 0;
 
 	int argc;
 
-	// Display firmware version on boot
-	cmd_version(1,NULL);
+
 
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 #ifdef FEATURE_LED
@@ -250,23 +268,34 @@ int main(void) {
 	// Main program loop
 	while (1) {
 
-		loopCounter++;
+		loop_counter++;
 
 #ifdef FEATURE_SLEEP
+		// If the radio is off then sleep until next interrupt (probably from UART)
 		if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
 			__WFI();
 		}
 #endif
 
+#ifdef FEATURE_HEARTBEAT
 		// Send heartbeat signal every 10s or so
-		if ( (flags&FLAG_HEARTBEAT_ENABLE) && (loopCounter & 0x1FFF) == 0) {
+		if ( (flags&FLAG_RADIO_MODULE_ON) && (flags&FLAG_HEARTBEAT_ENABLE) && (loop_counter % heartbeat_interval) == 0) {
 			uint8_t payload[3];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
-			payload[2] = 'k';
+			payload[2] = 'h';
 			rfm69_frame_tx(payload,3);
-			MyUARTSendStringZ(LPC_USART0,"k\r\n");
+			MyUARTSendStringZ(LPC_USART0,"h\r\n");
 		}
+#endif
+
+#ifdef FEATURE_LINK_LOSS_RESET
+		if (loop_counter - last_frame_time > 0x8FFFF) {
+			report_error('$',E_LINK_LOSS_RESET);
+			loopDelay(200000);
+			NVIC_SystemReset();
+		}
+#endif
 
 		// Check for received packet on RFM69
 		if ( (flags&FLAG_RADIO_MODULE_ON) && rfm69_payload_ready()) {
@@ -278,13 +307,13 @@ int main(void) {
 			// SPI error
 			if (frame_len>0) {
 
+				// Mark time of last incoming good frame
+				last_frame_time = loop_counter;
 
-
-			// All frames have a common header
-			// 8 bit to address
-			// 8 bit from address
-			// 8 bit message type
-
+				// All frames have a common header
+				// 8 bit to address
+				// 8 bit from address
+				// 8 bit message type
 			uint8_t to_addr = frxbuf[0];
 			uint8_t from_addr = frxbuf[1];
 			uint8_t msgType = frxbuf[2];
@@ -306,6 +335,17 @@ int main(void) {
 					break;
 				}
 #endif
+
+#ifdef FEATURE_HEARTBEAT
+				case 'H' : {
+					heartbeat_interval = frxbuf[3]<<16;
+					MyUARTSendStringZ(LPC_USART0,"h ");
+					MyUARTPrintHex(heartbeat_interval);
+					MyUARTSendCRLF(LPC_USART0);
+					break;
+				}
+#endif
+
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
@@ -425,23 +465,30 @@ int main(void) {
 			MyUARTSendCRLF(LPC_USART0);
 
 
-			rxbuf = MyUARTGetBuf();
+			cmdbuf = MyUARTGetBuf();
 
 			// Parse command line
 			argc = 1;
-			args[0] = rxbuf;
-			while (*rxbuf != 0) {
-				if (*rxbuf == ' ') {
-					*rxbuf = 0;
-					args[argc++] = rxbuf+1;
+			args[0] = cmdbuf;
+			while (*cmdbuf != 0) {
+				if (*cmdbuf == ' ') {
+					*cmdbuf = 0;
+					args[argc++] = cmdbuf+1;
 				}
-				rxbuf++;
+				cmdbuf++;
 			}
 
 			// TODO: using an array of functions may be more space efficient than
 			// switch statement.
 
 			switch (*args[0]) {
+
+#ifdef FEATURE_UART_SPEED
+			case 'B' : {
+				cmd_set_uart_speed (argc, args);
+				break;
+			}
+#endif
 
 			// Reset RFM69 with default configuration
 			case 'C' :
@@ -457,12 +504,14 @@ int main(void) {
 			}
 
 			// Display MCU unique ID
+#ifdef FEATURE_MCU_UID
 			case 'I' : {
 				MyUARTSendStringZ(LPC_USART0,"u ");
 				MyUARTPrintHex(LPC_USART0,get_mcu_serial_number());
 				MyUARTSendCRLF(LPC_USART0);
 				break;
 			}
+#endif
 
 			// Set current location
 			case 'L' : {
