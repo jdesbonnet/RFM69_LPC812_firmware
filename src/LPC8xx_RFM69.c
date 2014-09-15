@@ -296,7 +296,7 @@ int main(void) {
 #endif
 
 #ifdef FEATURE_LINK_LOSS_RESET
-		if (loop_counter - last_frame_time > 0x8FFFF) {
+		if ( (loop_counter - last_frame_time) > 0x8FFFF) {
 			report_error('$',E_LINK_LOSS_RESET);
 			loopDelay(200000);
 			NVIC_SystemReset();
@@ -564,12 +564,12 @@ int main(void) {
 
 #ifdef FEATURE_SLEEP
 			case 'M' : {
-				if (args[1][0]=='1') {
+				if (args[1][0]=='0') {
 					flags &= ~FLAG_RADIO_MODULE_ON;
-					rfm69_mode(RFM69_OPMODE_Mode_RX);
+					rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
 				} else if (args[1][0]=='1') {
 					flags |= FLAG_RADIO_MODULE_ON;
-					rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+					rfm69_mode(RFM69_OPMODE_Mode_RX);
 				}
 			}
 #endif
