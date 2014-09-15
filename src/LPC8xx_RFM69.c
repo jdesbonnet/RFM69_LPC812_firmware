@@ -382,7 +382,7 @@ int main(void) {
 					rfm69_frame_tx(payload, payload_len);
 					break;
 				}
-#ifdef FEATURE_REMOTE_REG_RW
+#ifdef FEATURE_REMOTE_REG_READ
 				// Remote register read
 				case 'X' : {
 					uint8_t base_addr = frxbuf[3];
@@ -399,7 +399,9 @@ int main(void) {
 					rfm69_frame_tx(payload, read_len+4);
 					break;
 				}
+#endif
 
+#ifdef FEATURE_REMOTE_REG_WRITE
 				// Remote register write
 				case 'Y' : {
 					uint8_t base_addr = frxbuf[3];
@@ -422,10 +424,23 @@ int main(void) {
 
 #ifdef FEATURE_REMOTE_COMMAND
 				case 'Z' : {
-					MyUARTBufReset();
+					// If there is an uncompleted UART command in buffer then
+					// remote command takes priority and whatever is in the
+					// command buffer is dropped. Output an error to indicate
+					// this has happened.
+					// TODO: should we disable UART interrupt for this block?
+					// because incoming UART char between now and cmd parse could
+					// cause corruption of cmd buffer.
+					if (MyUARTGetBufIndex()>0) {
+						MyUARTBufReset();
+						report_error('Z',E_CMD_DROPPED);
+					}
+					MyUARTSendStringZ(LPC_USART0, "z ");
 					int payload_len = frame_len - 3;
 					memcpy(cmdbuf,frxbuf+3,payload_len);
 					cmdbuf[payload_len] = 0; // zero terminate buffer
+					MyUARTSendStringZ(LPC_USART0,cmdbuf);
+					MyUARTSendCRLF(LPC_USART0);
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
 				}
@@ -564,6 +579,12 @@ int main(void) {
 			{
 				cmd_set_node_addr(argc, args);
 				break;
+			}
+
+			// Experimental reset
+			case 'Q' : {
+				loopDelay(200000);
+				NVIC_SystemReset();
 			}
 
 

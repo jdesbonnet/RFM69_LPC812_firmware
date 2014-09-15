@@ -8,4 +8,5 @@
 #define E_PKT_TOO_LONG (-4) /* Packet too long */
 #define E_SPI (-5)          /* SPI related error */
 #define E_LINK_LOSS_RESET (-6) /* System is resetting due to loss of link */
+#define E_CMD_DROPPED (-7)  /* A UART command in the buffer was dropped due to incoming remote CMD */
 #endif

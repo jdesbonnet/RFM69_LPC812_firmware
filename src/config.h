@@ -15,7 +15,8 @@
 //
 
 // Remote register read/write
-//#define FEATURE_REMOTE_REG_RW
+#define FEATURE_REMOTE_REG_READ
+//#define FEATURE_REMOTE_REG_WRITE
 
 // Remote packet broadcast
 //#define FEATURE_REMOTE_PKT_TX
