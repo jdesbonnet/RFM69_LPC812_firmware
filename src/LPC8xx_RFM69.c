@@ -283,26 +283,28 @@ int main(void) {
 
 			// Experiment to allow wakup on async UART (temp switch RXD for SCLK
 			// and config UART for SYNC slave)
-			/*
+
 			LPC_USART0->CFG |= (1<<11); // SYNCEN for wakeup
-		    LPC_SWM->PINASSIGN0 = 0xffffff04UL;
-		    LPC_SWM->PINASSIGN1 = 0xffffff00UL;
-		    LPC_SWM->PINENABLE0 = 0xffffffffUL;
-			*/
+		    //LPC_SWM->PINASSIGN0 = 0xffffff04UL;
+		    //LPC_SWM->PINASSIGN1 = 0xffffff00UL;
+		    //LPC_SWM->PINENABLE0 = 0xffffffffUL;
+
+			// Try GPIO on RXD instead
+			LPC_SWM->PINASSIGN0 = 0xffffff04UL;
+			LPC_SWM->PINENABLE0 = 0xffffffffUL;
+
+
 			// Kinda works: but no UART during sleep making exiting sleep difficult
-
-
-
 			prepareForPowerDown();
 			LPC_WKT->COUNT = 10000;
 			LPC_WKT->CTRL = 1;
 			__WFI();
 			loopDelay(20000);
 
-			/*
+
 			LPC_USART0->CFG &= ~(1<<11); // SYNCEN disable for normal UART
 			SwitchMatrix_Spi_Init(); // Normal pin configuration again
-			*/
+
 
 			MyUARTSendStringZ(LPC_USART0,"Wake!\r\n");
 			MyUARTInit(LPC_USART0, UART_BPS);
