@@ -5,4 +5,5 @@
 #define FLAG_PROMISCUOUS_MODE (1<<1)
 #define FLAG_SPI_ENABLE (1<<2)
 #define FLAG_HEARTBEAT_ENABLE (1<<3)
+#define FLAG_DEEPSLEEP (1<<4)
 #endif

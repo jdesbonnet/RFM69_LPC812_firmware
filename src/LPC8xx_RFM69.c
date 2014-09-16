@@ -40,6 +40,9 @@ For v0.2.0:
 #include "err.h"
 #include "flags.h"
 
+#include "lpc8xx_pmu.h"
+
+
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 //volatile uint32_t TimeTick = 0;
 
@@ -277,39 +280,39 @@ int main(void) {
 
 		loop_counter++;
 
-#ifdef FEATURE_SLEEP
+#ifdef FEATURE_DEEPSLEEP
 		// If the radio is off then sleep until next interrupt (probably from UART)
-		if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
+		//if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
+		if (flags & FLAG_DEEPSLEEP) {
 
-			// Experiment to allow wakup on async UART (temp switch RXD for SCLK
-			// and config UART for SYNC slave)
-
-			LPC_USART0->CFG |= (1<<11); // SYNCEN for wakeup
-		    //LPC_SWM->PINASSIGN0 = 0xffffff04UL;
-		    //LPC_SWM->PINASSIGN1 = 0xffffff00UL;
-		    //LPC_SWM->PINENABLE0 = 0xffffffffUL;
-
-			// Try GPIO on RXD instead
-			LPC_SWM->PINASSIGN0 = 0xffffff04UL;
-			LPC_SWM->PINENABLE0 = 0xffffffffUL;
-
-
-			// Kinda works: but no UART during sleep making exiting sleep difficult
+			// Setup power management registers so that WFI causes DEEPSLEEP
 			prepareForPowerDown();
-			LPC_WKT->COUNT = 10000;
-			LPC_WKT->CTRL = 1;
+
+			// Writing into WKT counter automatically starts wakeup timer
+			LPC_WKT->COUNT = 20000; // 2s
+
+			// DeepSleep until WKT interrupt
 			__WFI();
+
+			// Allow time for clocks to stabilise after wake
 			loopDelay(20000);
 
+			// Indicator that DEEPSLEEP in progress, and notify of window to issue command
+			MyUARTSendStringZ(LPC_USART0,"z\r\n");
+			//MyUARTSendDrain(LPC_USART0);
 
-			LPC_USART0->CFG &= ~(1<<11); // SYNCEN disable for normal UART
-			SwitchMatrix_Spi_Init(); // Normal pin configuration again
-
-
-			MyUARTSendStringZ(LPC_USART0,"Wake!\r\n");
-			MyUARTInit(LPC_USART0, UART_BPS);
-			loopDelay(200000); // Small window of time in which UART works
-			//__WFI(); // regular sleep
+			// Small window of time to allow host to exit sleep mode by issuing command
+			// TODO: use WKT for this instead
+			//loopDelay(200000);
+			//LPC_PMU->PCON = 0x0;
+			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
+			LPC_WKT->COUNT = 500;
+			__WFI();
+		}
+#else
+		// If not using DEEPSLEEP, use regular SLEEP mode until next interrupt arrives
+		if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
+			__WFI();
 		}
 #endif
 
@@ -453,7 +456,7 @@ int main(void) {
 #endif
 
 #ifdef FEATURE_REMOTE_COMMAND
-				case 'Z' : {
+				case 'D' : {
 					// If there is an uncompleted UART command in buffer then
 					// remote command takes priority and whatever is in the
 					// command buffer is dropped. Output an error to indicate
@@ -463,9 +466,9 @@ int main(void) {
 					// cause corruption of cmd buffer.
 					if (MyUARTGetBufIndex()>0) {
 						MyUARTBufReset();
-						report_error('Z',E_CMD_DROPPED);
+						report_error('D',E_CMD_DROPPED);
 					}
-					MyUARTSendStringZ(LPC_USART0, "z ");
+					MyUARTSendStringZ(LPC_USART0, "d ");
 					int payload_len = frame_len - 3;
 					memcpy(cmdbuf,frxbuf+3,payload_len);
 					cmdbuf[payload_len] = 0; // zero terminate buffer
@@ -526,8 +529,14 @@ int main(void) {
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
-			MyUARTSendCRLF(LPC_USART0);
+#ifdef FEATURE_DEEPSLEEP
+			// Any command will clear deep sleep mode. Will allow a stream of CR chars
+			// from host to exit deepsleep mode (one of the CR chars will hit during
+			// the short wake period in sleep cycle).
+			flags &= ~FLAG_DEEPSLEEP;
+#endif
 
+			MyUARTSendCRLF(LPC_USART0);
 
 			cmdbuf = MyUARTGetBuf();
 
@@ -599,10 +608,11 @@ int main(void) {
 			case 'M' : {
 				if (args[1][0]=='0') {
 					flags &= ~FLAG_RADIO_MODULE_ON;
+					flags |= FLAG_DEEPSLEEP;
 					rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
-					spi_off();
+					//spi_off();
 				} else if (args[1][0]=='1') {
-					spi_init();
+					//spi_init();
 					flags |= FLAG_RADIO_MODULE_ON;
 					rfm69_mode(RFM69_OPMODE_Mode_RX);
 				}
@@ -618,7 +628,7 @@ int main(void) {
 
 			// Experimental reset
 			case 'Q' : {
-				loopDelay(200000);
+				//loopDelay(200000);
 				NVIC_SystemReset();
 			}
 
@@ -662,11 +672,6 @@ int main(void) {
 					report_error('T', status);
 				}
 				// Back to RX mode
-				/*
-				rfm69_register_write(RFM69_OPMODE,
-						RFM69_OPMODE_Mode_VALUE(RFM69_OPMODE_Mode_RX)
-						);
-				*/
 				rfm69_mode(RFM69_OPMODE_Mode_RX);
 				break;
 			}
@@ -705,18 +710,9 @@ int main(void) {
 			MyUARTBufReset();
 
 
-		}
-
-		// TODO: we could save some MCU power by delaying and entering sleep
-		// state before polling RFM69 for reception of another packet. An
-		// possible alternative approach is to configure RFM69 digital IO
-		// pins to trigger interrupt on MCU on packet reception. However in the
-		// case of LPC810 there are no available pins for this (unless we try
-		// something clever by piggybacking this on another line. Probably not
-		// worth the effort as this MCU current requirements are modest.
-		//__WFI();
+		} // end command switch block
 
 
-	}
+	} // end main loop
 
 }
