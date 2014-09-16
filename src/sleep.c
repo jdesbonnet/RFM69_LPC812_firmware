@@ -23,7 +23,8 @@ void prepareForPowerDown () {
 	// register must be set to 0x2 (power down mode)
 	// Ref UM10601 §5.6.1, Table 44,  p46.
 	// 0x1 Deep-sleep; 0x2 Power-down
-	LPC_PMU->PCON = 0x1;
+	//LPC_PMU->PCON = 0x1; // Getting ~ 200uA in this mode
+	LPC_PMU->PCON = 0x2; // Getting ~ 60uA in this mode
 
 
 
