@@ -25,12 +25,21 @@
  * Initialize SPI using bigbang (without SSP0 peripheral).
  */
 void spi_init () {
+	GPIOInit();
 	GPIOSetDir(PORT, SS_PIN, 1); // output
 	GPIOSetDir(PORT, SCK_PIN, 1);
 	GPIOSetDir(PORT, MOSI_PIN, 1);
 	GPIOSetDir(PORT, MISO_PIN, 0); // input
 }
 
+/**
+ * Disable SPI pins (for power saving)
+ */
+void spi_off () {
+	GPIOSetDir(PORT, SS_PIN, 0); // input
+	GPIOSetDir(PORT, SCK_PIN, 0);
+	GPIOSetDir(PORT, MOSI_PIN, 0);
+}
 
 static void spi_delay(void) {
 	int i = 0;

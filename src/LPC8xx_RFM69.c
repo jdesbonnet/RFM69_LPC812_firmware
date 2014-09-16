@@ -33,6 +33,7 @@ For v0.2.0:
 
 #include "config.h"
 #include "myuart.h"
+#include "sleep.h"
 #include "print_util.h"
 #include "rfm69.h"
 #include "cmd.h"
@@ -40,7 +41,7 @@ For v0.2.0:
 #include "flags.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
-volatile uint32_t TimeTick = 0;
+//volatile uint32_t TimeTick = 0;
 
 // Address of this node
 int8_t node_addr = DEFAULT_NODE_ADDR;
@@ -216,7 +217,7 @@ int main(void) {
 	SwitchMatrix_Init();
 #endif
 
-	GPIOInit();
+	//GPIOInit();
 	MyUARTInit(LPC_USART0, UART_BPS);
 
 	// Display firmware version on boot
@@ -279,7 +280,34 @@ int main(void) {
 #ifdef FEATURE_SLEEP
 		// If the radio is off then sleep until next interrupt (probably from UART)
 		if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
+
+			// Experiment to allow wakup on async UART (temp switch RXD for SCLK
+			// and config UART for SYNC slave)
+			/*
+			LPC_USART0->CFG |= (1<<11); // SYNCEN for wakeup
+		    LPC_SWM->PINASSIGN0 = 0xffffff04UL;
+		    LPC_SWM->PINASSIGN1 = 0xffffff00UL;
+		    LPC_SWM->PINENABLE0 = 0xffffffffUL;
+			*/
+			// Kinda works: but no UART during sleep making exiting sleep difficult
+
+
+
+			prepareForPowerDown();
+			LPC_WKT->COUNT = 10000;
+			LPC_WKT->CTRL = 1;
 			__WFI();
+			loopDelay(20000);
+
+			/*
+			LPC_USART0->CFG &= ~(1<<11); // SYNCEN disable for normal UART
+			SwitchMatrix_Spi_Init(); // Normal pin configuration again
+			*/
+
+			MyUARTSendStringZ(LPC_USART0,"Wake!\r\n");
+			MyUARTInit(LPC_USART0, UART_BPS);
+			loopDelay(200000); // Small window of time in which UART works
+			//__WFI(); // regular sleep
 		}
 #endif
 
@@ -553,6 +581,8 @@ int main(void) {
 				memcpy(current_loc,args[1],strlen(args[1])+1);
 				break;
 			}
+
+#ifdef FEATURE_NMEA_INPUT
 			// NMEA (only interested in $GPGLL)
 			case '$' : {
 				// +1 on len to include zero terminator
@@ -561,13 +591,16 @@ int main(void) {
 				}
 				break;
 			}
+#endif
 
 #ifdef FEATURE_SLEEP
 			case 'M' : {
 				if (args[1][0]=='0') {
 					flags &= ~FLAG_RADIO_MODULE_ON;
 					rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+					spi_off();
 				} else if (args[1][0]=='1') {
+					spi_init();
 					flags |= FLAG_RADIO_MODULE_ON;
 					rfm69_mode(RFM69_OPMODE_Mode_RX);
 				}

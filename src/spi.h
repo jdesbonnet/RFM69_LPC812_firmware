@@ -1,6 +1,8 @@
 #ifndef __SPI_H
 #define __SPI_H
 
+void spi_init(void);
+void spi_off(void);
 void spi_init_ssp0(void);
 void spi_init_bitbang(void);
 
