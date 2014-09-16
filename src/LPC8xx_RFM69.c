@@ -54,7 +54,7 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags = MODE_LOW_POWER_POLL;
+uint32_t flags = MODE_ALL_OFF;
 
 
 #ifdef FEATURE_HEARTBEAT
@@ -296,7 +296,9 @@ int main(void) {
 		loop_counter++;
 
 		if ( (flags&0xf) == MODE_AWAKE) {
-			rfm69_mode(RFM69_OPMODE_Mode_RX);
+			if ( rfm69_mode(RFM69_OPMODE_Mode_RX) != 0) {
+				MyUARTSendByte(LPC_USART0,"*");
+			}
 		}
 
 #ifdef FEATURE_DEEPSLEEP
@@ -336,7 +338,6 @@ int main(void) {
 		}
 #endif
 
-//#ifdef FEATURE_HEARTBEAT
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
 		//if ( (flags&FLAG_RADIO_MODULE_ON) && (flags&FLAG_HEARTBEAT_ENABLE) && (loop_counter % heartbeat_interval) == 0) {
 			uint8_t payload[3];
@@ -346,11 +347,11 @@ int main(void) {
 			rfm69_frame_tx(payload,3);
 
 			// Allow time for response (100ms)
-			LPC_WKT->COUNT = 1000;
+			rfm69_mode(RFM69_OPMODE_Mode_RX);
+			LPC_WKT->COUNT = 20000; //2s for testing
 			__WFI();
 
 		}
-//#endif
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( (loop_counter - last_frame_time) > 0x8FFFF) {
@@ -450,6 +451,7 @@ int main(void) {
 					payload[1] = node_addr;
 					payload[2] = 'x';
 					payload[3] = base_addr;
+					int i;
 					for (i = 0; i < read_len; i++) {
 						payload[i+4] = rfm69_register_read(base_addr+i);
 					}
@@ -555,9 +557,7 @@ int main(void) {
 
 #ifdef FEATURE_DEEPSLEEP
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
-			flags &= ~0xf;
-			flags |= MODE_AWAKE;
-			//rfm69_mode(RFM69_OPMODE_Mode_RX);
+			setOpMode(MODE_AWAKE);
 #endif
 
 			MyUARTSendCRLF(LPC_USART0);
@@ -628,20 +628,17 @@ int main(void) {
 			}
 #endif
 
-#ifdef FEATURE_SLEEP
 			case 'M' : {
 				flags &= ~0xf;
 				if (args[1][0]=='0') {
-					//rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+					// no action
 				} else if (args[1][0]=='2') {
 					flags |= MODE_LOW_POWER_POLL;
-					//rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
 				} else if (args[1][0]=='3') {
 					flags |= MODE_AWAKE;
-					//rfm69_mode(RFM69_OPMODE_Mode_RX);
 				}
+				break;
 			}
-#endif
 
 			// Set node address
 			case 'N' :
