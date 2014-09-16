@@ -54,9 +54,7 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags =
-		FLAG_RADIO_MODULE_ON
-		| FLAG_HEARTBEAT_ENABLE;
+uint32_t flags = MODE_LOW_POWER_POLL;
 
 
 #ifdef FEATURE_HEARTBEAT
@@ -205,6 +203,25 @@ void ledBlink () {
 #endif
 
 
+/**
+ * New radio system (RFM69 module + MCU) operating modes:
+ *
+ * Mode 0 : Radio off, MCU in deepsleep. Can be woken by host. Current
+ * drain ~60uA.
+ *
+ * Mode 1 : (reserved)
+ * Mode 2 : Radio in low power polling mode (poll, and listen, then sleep). MCU in
+ * deepsleep during sleep phase. The poll packet replaces the heartbeat feature.
+ *
+ * Mode 3 : Radio on RX, listening for packets. MCU polling radio module continuously.
+ *
+ * Mode is determined by bits 3:0 of 'flags'.
+ */
+void setOpMode (uint32_t mode) {
+	flags &= ~0xff;
+	flags |= mode;
+}
+
 int main(void) {
 
 	/*
@@ -245,8 +262,6 @@ int main(void) {
 	// Configure hardware interface to radio module
 	rfm69_init();
 
-	int i;
-
 	uint8_t rssi;
 
 	uint8_t *cmdbuf;
@@ -280,10 +295,18 @@ int main(void) {
 
 		loop_counter++;
 
+		if ( (flags&0xf) == MODE_AWAKE) {
+			rfm69_mode(RFM69_OPMODE_Mode_RX);
+		}
+
 #ifdef FEATURE_DEEPSLEEP
 		// If the radio is off then sleep until next interrupt (probably from UART)
 		//if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
-		if (flags & FLAG_DEEPSLEEP) {
+		// Test for MODE_OFF or MODE_LOW_POWER_POLL
+		if ( (flags&0x1) == 0) {
+
+			// Set radio in SLEEP mode
+			rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
 
 			// Setup power management registers so that WFI causes DEEPSLEEP
 			prepareForPowerDown();
@@ -295,38 +318,39 @@ int main(void) {
 			__WFI();
 
 			// Allow time for clocks to stabilise after wake
+			// TODO: can we use WKT and WFI?
 			loopDelay(20000);
 
-			// Indicator that DEEPSLEEP in progress, and notify of window to issue command
+			// Indicator to host there is a short time window to issue command
 			MyUARTSendStringZ(LPC_USART0,"z\r\n");
-			//MyUARTSendDrain(LPC_USART0);
 
-			// Small window of time to allow host to exit sleep mode by issuing command
-			// TODO: use WKT for this instead
-			//loopDelay(200000);
-			//LPC_PMU->PCON = 0x0;
+			// Small window of time to allow host to exit sleep mode by issuing command.
+			// Use WKT timer to wake from regular sleep mode (where UART works).
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
-			LPC_WKT->COUNT = 500;
-			__WFI();
+
 		}
 #else
 		// If not using DEEPSLEEP, use regular SLEEP mode until next interrupt arrives
-		if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
+		if ( (flags&0xf) != MODE_AWAKE ) {
 			__WFI();
 		}
 #endif
 
-#ifdef FEATURE_HEARTBEAT
-		// Send heartbeat signal every 10s or so
-		if ( (flags&FLAG_RADIO_MODULE_ON) && (flags&FLAG_HEARTBEAT_ENABLE) && (loop_counter % heartbeat_interval) == 0) {
+//#ifdef FEATURE_HEARTBEAT
+		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
+		//if ( (flags&FLAG_RADIO_MODULE_ON) && (flags&FLAG_HEARTBEAT_ENABLE) && (loop_counter % heartbeat_interval) == 0) {
 			uint8_t payload[3];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
 			payload[2] = 'h';
 			rfm69_frame_tx(payload,3);
-			MyUARTSendStringZ(LPC_USART0,"h\r\n");
+
+			// Allow time for response (100ms)
+			LPC_WKT->COUNT = 1000;
+			__WFI();
+
 		}
-#endif
+//#endif
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( (loop_counter - last_frame_time) > 0x8FFFF) {
@@ -337,7 +361,7 @@ int main(void) {
 #endif
 
 		// Check for received packet on RFM69
-		if ( (flags&FLAG_RADIO_MODULE_ON) && rfm69_payload_ready()) {
+		if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
 
 			// Yes, frame ready to be read from FIFO
 			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
@@ -530,10 +554,10 @@ int main(void) {
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
 #ifdef FEATURE_DEEPSLEEP
-			// Any command will clear deep sleep mode. Will allow a stream of CR chars
-			// from host to exit deepsleep mode (one of the CR chars will hit during
-			// the short wake period in sleep cycle).
-			flags &= ~FLAG_DEEPSLEEP;
+			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
+			flags &= ~0xf;
+			flags |= MODE_AWAKE;
+			//rfm69_mode(RFM69_OPMODE_Mode_RX);
 #endif
 
 			MyUARTSendCRLF(LPC_USART0);
@@ -606,15 +630,15 @@ int main(void) {
 
 #ifdef FEATURE_SLEEP
 			case 'M' : {
+				flags &= ~0xf;
 				if (args[1][0]=='0') {
-					flags &= ~FLAG_RADIO_MODULE_ON;
-					flags |= FLAG_DEEPSLEEP;
-					rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
-					//spi_off();
-				} else if (args[1][0]=='1') {
-					//spi_init();
-					flags |= FLAG_RADIO_MODULE_ON;
-					rfm69_mode(RFM69_OPMODE_Mode_RX);
+					//rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+				} else if (args[1][0]=='2') {
+					flags |= MODE_LOW_POWER_POLL;
+					//rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+				} else if (args[1][0]=='3') {
+					flags |= MODE_AWAKE;
+					//rfm69_mode(RFM69_OPMODE_Mode_RX);
 				}
 			}
 #endif
@@ -628,7 +652,6 @@ int main(void) {
 
 			// Experimental reset
 			case 'Q' : {
-				//loopDelay(200000);
 				NVIC_SystemReset();
 			}
 
@@ -649,18 +672,16 @@ int main(void) {
 
 
 #ifdef LPC810
-			// SPI pin initialize (delayed to keep SWD on bootup)
+			// Allow re-enabling of SWD from UART API to facilitate reflashing
 			case 'S' : {
-
 				if (args[1][0]=='1') {
 					// Note will disconnect SWD
 					SwitchMatrix_Spi_Init();
 					spi_init();
 				} else {
+					// Enable SWD pins
 					SwitchMatrix_NoSpi_Init();
 				}
-
-
 				break;
 			}
 #endif
@@ -672,7 +693,8 @@ int main(void) {
 					report_error('T', status);
 				}
 				// Back to RX mode
-				rfm69_mode(RFM69_OPMODE_Mode_RX);
+				// TODO: this should not be necessary
+				//rfm69_mode(RFM69_OPMODE_Mode_RX);
 				break;
 			}
 

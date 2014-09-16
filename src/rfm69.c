@@ -26,7 +26,7 @@ void rfm69_config() {
 /**
  * Set RFM69 operating mode. Use macro values RFM69_OPMODE_Mode_xxxx as arg.
  */
-void rfm69_mode(uint8_t mode) {
+int rfm69_mode(uint8_t mode) {
 	uint8_t regVal = rfm69_register_read(RFM69_OPMODE);
 	regVal &= ~RFM69_OPMODE_Mode_MASK;
 	regVal |= RFM69_OPMODE_Mode_VALUE(mode);
@@ -34,7 +34,12 @@ void rfm69_mode(uint8_t mode) {
 
 	// Wait until mode change is complete
 	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
-	while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) ;
+	int niter=10000;
+	while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) {
+		if (--niter == 0) {
+			return -1;
+		}
+	}
 
 }
 
@@ -71,7 +76,7 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 	int i;
 
 	// TODO: this shouldn't be necessary
-	rfm69_mode(RFM69_OPMODE_Mode_RX);
+	//rfm69_mode(RFM69_OPMODE_Mode_RX);
 
 
 	// Wait for IRQFLAGS2[2] PayloadReady
@@ -147,7 +152,8 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	}
 
 	// Back to receive mode
-	rfm69_mode(RFM69_OPMODE_Mode_RX);
+	// Let main loop manage transition back to default mode
+	//rfm69_mode(RFM69_OPMODE_Mode_RX);
 
 }
 
