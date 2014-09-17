@@ -10,7 +10,7 @@
 #define MODE_LOW_POWER_POLL (2)
 #define MODE_AWAKE (3)
 
-#define FLAG_PROMISCUOUS_MODE (1<<5)
+#define FLAG_PROMISCUOUS_MODE (1<<4)
 
 
 #endif

@@ -53,7 +53,7 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags = MODE_ALL_OFF
+uint32_t flags = MODE_LOW_POWER_POLL
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
 
@@ -217,7 +217,7 @@ void ledBlink () {
  * Mode is stored in bits 3:0 of 'flags'.
  */
 void setOpMode (uint32_t mode) {
-	flags &= ~0xff;
+	flags &= ~0xf;
 	flags |= mode;
 }
 
@@ -353,9 +353,12 @@ int main(void) {
 			payload[2] = 'z';
 			rfm69_frame_tx(payload,3);
 
-			// Allow time for response (100ms)
+			// Allow time for response (120ms)
+			// TODO: this is only long enough for a 4 or 5 bytes of payload.
+			// Need to check for incoming signal and delay longer if transmission
+			// in progress (or just delay longer.. which will affect battery drain).
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
-			LPC_WKT->COUNT = 1000;
+			LPC_WKT->COUNT = 1200;
 			__WFI();
 		}
 

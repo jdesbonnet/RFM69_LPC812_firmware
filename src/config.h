@@ -3,7 +3,7 @@
 
 #define VERSION "RFM69 0.2.0"
 
-#define DEFAULT_NODE_ADDR 0x42
+#define DEFAULT_NODE_ADDR 0x41
 
 // Version of MCU used (LPC812, LPC810 supported)
 #define LPC810
