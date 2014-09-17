@@ -231,6 +231,7 @@ int main(void) {
 	// tight for space on LPC810).
     LPC_SYSCON->SYSAHBCLKCTRL |=
     		(1<<7)    // Switch Matrix (SWM)
+    		| (1<<6)  // GPIO
     		| (1<<9)  // Wake Timer (WKT)
     		| (1<<14) // USART0
     		| (1<<17) // Watchdog timer
@@ -331,6 +332,8 @@ int main(void) {
 
 		//MyUARTPrintHex(LPC_USART0, LPC_WWDT->TV);
 		//MyUARTSendCRLF(LPC_USART0);
+
+		rfm69_temperature();
 
 		if ( (flags&0xf) == MODE_AWAKE) {
 			rfm69_mode(RFM69_OPMODE_Mode_RX);

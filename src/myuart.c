@@ -69,6 +69,8 @@ void MyUARTInit(uint32_t baudrate)
 
 	UARTx->STAT = UART_STAT_CTS_DELTA | UART_STAT_DELTA_RXBRK;		/* Clear all status bits. */
   /* Enable the UART Interrupt. */
+
+	/*
 	if (UARTx == LPC_USART0) {
 		NVIC_EnableIRQ(UART0_IRQn);
 	} else if (UARTx == LPC_USART1) {
@@ -76,6 +78,10 @@ void MyUARTInit(uint32_t baudrate)
 	} else if (UARTx == LPC_USART2) {
 		NVIC_EnableIRQ(UART2_IRQn);
 	}
+	*/
+
+	NVIC_EnableIRQ(UART0_IRQn);
+
 	UARTx->INTENSET = UART_STAT_RXRDY | UART_STAT_TXRDY | UART_STAT_DELTA_RXBRK;	/* Enable UART interrupt */
 	UARTx->CFG |= UART_CFG_UART_EN;
 	return;
@@ -111,8 +117,8 @@ void MyUARTSendStringZ (uint8_t *buf) {
 }
 
 
-void MyUARTSendCRLF(LPC_USART_TypeDef *UARTx) {
-	MyUARTSendStringZ("\r\n");
+void MyUARTSendCRLF(void) {
+	MyUARTSendStringZ((uint8_t *)"\r\n");
 }
 
 void UART0_IRQHandler(void)
@@ -194,6 +200,7 @@ void MyUARTBufReset() {
 	uart_buf_flags = 0;
 }
 
+/*
 void MyUARTPrintDecimal (int32_t i) {
 	uint8_t buf[16];
 	uint32_t j=0;
@@ -215,7 +222,7 @@ void MyUARTPrintDecimal (int32_t i) {
 		MyUARTSendByte(buf[--j]);
 	}
 }
-
+*/
 
 void MyUARTPrintHex (uint32_t v) {
 	int i,h;

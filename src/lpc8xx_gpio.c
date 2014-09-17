@@ -258,13 +258,14 @@ void PININT7_IRQHandler(void)
 *****************************************************************************/
 void GPIOInit( void )
 {
-  /* Enable AHB clock to the GPIO domain. */
-  LPC_SYSCON->SYSAHBCLKCTRL |= (1<<6);
+	/* Enable AHB clock to the GPIO domain. */
+	// Moved to main() for space efficiency
+	//LPC_SYSCON->SYSAHBCLKCTRL |= (1<<6);
 	
 	/* Peripheral reset control to GPIO and GPIO INT, a "1" bring it out of reset. */
 	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
 	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
-  return;
+	return;
 }
 
 /*****************************************************************************

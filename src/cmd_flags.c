@@ -21,11 +21,11 @@ extern uint32_t flags;
  */
 int cmd_flags (int argc, uint8_t **argv) {
 
-	if (argc != 2) {
+	if (argc > 2) {
 		return E_WRONG_ARGC;
 	}
 
-	if (argv[1][0]=='?') {
+	if (argc==1) {
 		MyUARTSendStringZ("f ");
 		MyUARTPrintHex(flags);
 		MyUARTSendCRLF();
