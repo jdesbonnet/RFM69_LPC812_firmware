@@ -44,7 +44,6 @@ For v0.2.0:
 
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
-//volatile uint32_t TimeTick = 0;
 
 // Address of this node
 int8_t node_addr = DEFAULT_NODE_ADDR;
@@ -56,10 +55,6 @@ uint8_t current_loc[32];
 // reduce code size and SRAM requirements).
 uint32_t flags = MODE_ALL_OFF;
 
-
-#ifdef FEATURE_HEARTBEAT
-uint32_t heartbeat_interval = 0x1FFFF;
-#endif
 
 void loopDelay(uint32_t i) {
 	while (--i!=0) {
@@ -177,12 +172,14 @@ uint32_t get_mcu_serial_number () {
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
+ * @param cmd  Command that generated the error
+ * @param code Error code (ref err.h)
  */
 void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
-	MyUARTSendStringZ(LPC_USART0,"e ");
+	MyUARTSendStringZ(LPC_USART0,(uint8_t *)"e ");
 	MyUARTSendByte(LPC_USART0,cmd);
-	MyUARTSendStringZ(LPC_USART0," ");
+	MyUARTSendStringZ(LPC_USART0,(uint8_t *)" ");
 	MyUARTPrintHex(LPC_USART0,code);
 	MyUARTSendCRLF(LPC_USART0);
 }
@@ -210,12 +207,13 @@ void ledBlink () {
  * drain ~60uA.
  *
  * Mode 1 : (reserved)
+ *
  * Mode 2 : Radio in low power polling mode (poll, and listen, then sleep). MCU in
  * deepsleep during sleep phase. The poll packet replaces the heartbeat feature.
  *
  * Mode 3 : Radio on RX, listening for packets. MCU polling radio module continuously.
  *
- * Mode is determined by bits 3:0 of 'flags'.
+ * Mode is stored in bits 3:0 of 'flags'.
  */
 void setOpMode (uint32_t mode) {
 	flags &= ~0xff;
@@ -245,7 +243,7 @@ int main(void) {
 
 
 #ifdef LPC810
-	// Delay to allow debug probe to reflash
+	// Long delay (10-20seconds) to allow debug probe to reflash. Remove in production.
 	loopDelay(20000000);
 
 	// Won't be able to use debug probe from this point on (unless UART S 0 command used)
@@ -296,9 +294,7 @@ int main(void) {
 		loop_counter++;
 
 		if ( (flags&0xf) == MODE_AWAKE) {
-			if ( rfm69_mode(RFM69_OPMODE_Mode_RX) != 0) {
-				MyUARTSendByte(LPC_USART0,"*");
-			}
+			rfm69_mode(RFM69_OPMODE_Mode_RX);
 		}
 
 #ifdef FEATURE_DEEPSLEEP
@@ -400,30 +396,11 @@ int main(void) {
 				}
 #endif
 
-#ifdef FEATURE_HEARTBEAT
-				case 'H' : {
-					heartbeat_interval = frxbuf[3]<<16;
-					MyUARTSendStringZ(LPC_USART0,"h ");
-					MyUARTPrintHex(heartbeat_interval);
-					MyUARTSendCRLF(LPC_USART0);
-					break;
-				}
-#endif
-
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
 				{
 					int loc_len = strlen(current_loc);
-
-#ifdef FEATURE_DEBUG
-					MyUARTSendStringZ(LPC_USART0,"i Sending loc to ");
-					MyUARTSendStringZ(LPC_USART0," ");
-					MyUARTPrintHex(LPC_USART0,node_addr);
-					MyUARTSendStringZ(LPC_USART0," len=");
-					MyUARTPrintHex(LPC_USART0, loc_len);
-#endif
-
 					// report position
 					int payload_len = loc_len + 3;
 					uint8_t payload[payload_len];
@@ -431,15 +408,10 @@ int main(void) {
 					payload[1] = node_addr;
 					payload[2] = 'r';
 					memcpy(payload+3,current_loc,loc_len);
-
-#ifdef FEATURE_DEBUG
-					MyUARTSendStringZ(LPC_USART0,current_loc);
-					MyUARTSendCRLF(LPC_USART0);
-#endif
-
 					rfm69_frame_tx(payload, payload_len);
 					break;
 				}
+
 #ifdef FEATURE_REMOTE_REG_READ
 				// Remote register read
 				case 'X' : {
@@ -628,6 +600,7 @@ int main(void) {
 			}
 #endif
 
+			// Set radio system mode
 			case 'M' : {
 				flags &= ~0xf;
 				if (args[1][0]=='0') {
@@ -650,6 +623,7 @@ int main(void) {
 			// Experimental reset
 			case 'Q' : {
 				NVIC_SystemReset();
+				// no need for break
 			}
 
 
@@ -689,9 +663,6 @@ int main(void) {
 				if ( status ) {
 					report_error('T', status);
 				}
-				// Back to RX mode
-				// TODO: this should not be necessary
-				//rfm69_mode(RFM69_OPMODE_Mode_RX);
 				break;
 			}
 
