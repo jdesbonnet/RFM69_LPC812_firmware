@@ -33,10 +33,6 @@
 // Periodic heartbeat packet transmitted
 //#define FEATURE_HEARTBEAT
 
-// Reset radio and MCU if no packet received in X time (allows for remote experimentation
-// without fear of permanent loss of communication)
-//#define FEATURE_LINK_LOSS_RESET
-
 // Allow full UART command to be executed remotely
 #define FEATURE_REMOTE_COMMAND
 

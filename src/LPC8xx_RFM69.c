@@ -230,7 +230,9 @@ int main(void) {
     		(1<<7)    // Switch Matrix (SWM)
     		| (1<<9)  // Wake Timer (WKT)
     		| (1<<14) // USART0
+    		| (1<<17) // Watchdog timer
     		;
+
 
 
 	/*
@@ -266,6 +268,22 @@ int main(void) {
 #endif
 
 
+	//
+    // Watchdog configuration
+	//
+	LPC_SYSCON->PDRUNCFG &= ~(0x1<<6);    /* Let WDT clock run */
+    /* Freq = 0.5Mhz, div_sel is 0x1F, divided by 64. WDT_OSC should be 7.8125khz */
+    LPC_SYSCON->WDTOSCCTRL = (0x1<<5)|0x1F;
+    LPC_WWDT->TC = 0x100000;
+    LPC_WWDT->MOD = (1<<0) // WDEN enable watchdog
+    			| (1<<1); // WDRESET : enable watchdog to reset on timeout
+    // Watchdog feed sequence
+    LPC_WWDT->FEED = 0xAA;
+    LPC_WWDT->FEED = 0x55;
+    /* Make sure feed sequence executed properly */
+    //loopDelay(1000);
+
+
 	spi_init();
 
 	// Configure hardware interface to radio module
@@ -282,7 +300,6 @@ int main(void) {
 
 	// Acts as a crude clock
 	uint32_t loop_counter = 0;
-	uint32_t last_frame_time = 0;
 
 	int argc;
 
@@ -303,6 +320,9 @@ int main(void) {
 	while (1) {
 
 		loop_counter++;
+
+		//MyUARTPrintHex(LPC_USART0, LPC_WWDT->TV);
+		//MyUARTSendCRLF(LPC_USART0);
 
 		if ( (flags&0xf) == MODE_AWAKE) {
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
@@ -362,13 +382,6 @@ int main(void) {
 			__WFI();
 		}
 
-#ifdef FEATURE_LINK_LOSS_RESET
-		if ( (loop_counter - last_frame_time) > 0x8FFFF) {
-			report_error('$',E_LINK_LOSS_RESET);
-			loopDelay(200000);
-			NVIC_SystemReset();
-		}
-#endif
 
 		// Check for received packet on RFM69
 		if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
@@ -380,8 +393,9 @@ int main(void) {
 			// SPI error
 			//if (frame_len>0) {
 
-				// Mark time of last incoming good frame
-				last_frame_time = loop_counter;
+				// Feed watchdog
+			    LPC_WWDT->FEED = 0xAA;
+			    LPC_WWDT->FEED = 0x55;
 
 				// All frames have a common header
 				// 8 bit to address
