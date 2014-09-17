@@ -2,17 +2,17 @@
 #include "print_util.h"
 #include "myuart.h"
 
-void print_decimal (LPC_USART_TypeDef *UARTx, int32_t i) {
+void print_decimal (int32_t i) {
 	uint8_t buf[16];
 	uint32_t j = 0;
 
 	if (i == 0) {
-		MyUARTSendByte(UARTx,'0');
+		MyUARTSendByte('0');
 		return;
 	}
 
 	if (i < 0) {
-		MyUARTSendByte(UARTx,'-');
+		MyUARTSendByte('-');
 		i *= -1;
 	}
 	while (i > 0) {
@@ -20,41 +20,41 @@ void print_decimal (LPC_USART_TypeDef *UARTx, int32_t i) {
 		i /= 10;
 	}
 	while (j > 0) {
-		MyUARTSendByte(UARTx,buf[--j]);
+		MyUARTSendByte(buf[--j]);
 	}
 }
 
-void print_hex(LPC_USART_TypeDef *UARTx, uint32_t v) {
+void print_hex(uint32_t v) {
 	int i, h;
 	for (i = 28; i >= 0; i -= 4) {
 		h = (v >> i) & 0x0f;
 		if (h < 10) {
-			MyUARTSendByte(UARTx,'0' + h);
+			MyUARTSendByte('0' + h);
 		} else {
-			MyUARTSendByte(UARTx,'A' + h - 10);
+			MyUARTSendByte('A' + h - 10);
 		}
 	}
 }
 
-void print_hex16(LPC_USART_TypeDef *UARTx, uint16_t v) {
+void print_hex16(uint16_t v) {
 	int i, h;
 	for (i = 12; i >= 0; i -= 4) {
 		h = (v >> i) & 0x0f;
 		if (h < 10) {
-			MyUARTSendByte(UARTx,'0' + h);
+			MyUARTSendByte('0' + h);
 		} else {
-			MyUARTSendByte(UARTx,'A' + h - 10);
+			MyUARTSendByte('A' + h - 10);
 		}
 	}
 }
-void print_hex8(LPC_USART_TypeDef *UARTx, uint8_t v) {
+void print_hex8(uint8_t v) {
 	int i, h;
 	for (i = 4; i >= 0; i -= 4) {
 		h = (v >> i) & 0x0f;
 		if (h < 10) {
-			MyUARTSendByte(UARTx,'0' + h);
+			MyUARTSendByte('0' + h);
 		} else {
-			MyUARTSendByte(UARTx,'A' + h - 10);
+			MyUARTSendByte('A' + h - 10);
 		}
 	}
 }

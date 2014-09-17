@@ -5,9 +5,9 @@
 #include "LPC8xx.h"
 #endif
 
-void print_decimal (LPC_USART_TypeDef *UARTx, int32_t i);
-void print_hex (LPC_USART_TypeDef *UARTx, uint32_t i);
-void print_hex16 (LPC_USART_TypeDef *UARTx, uint16_t i);
-void print_hex8 (LPC_USART_TypeDef *UARTx, uint8_t i);
+void print_decimal (int32_t i);
+void print_hex (uint32_t i);
+void print_hex16 (uint16_t i);
+void print_hex8 (uint8_t i);
 
 #endif

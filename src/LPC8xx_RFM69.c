@@ -181,11 +181,11 @@ uint32_t get_mcu_serial_number () {
  */
 void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
-	MyUARTSendStringZ(LPC_USART0,(uint8_t *)"e ");
-	MyUARTSendByte(LPC_USART0,cmd);
-	MyUARTSendStringZ(LPC_USART0,(uint8_t *)" ");
-	MyUARTPrintHex(LPC_USART0,code);
-	MyUARTSendCRLF(LPC_USART0);
+	MyUARTSendStringZ((uint8_t *)"e ");
+	MyUARTSendByte(cmd);
+	MyUARTSendStringZ((uint8_t *)" ");
+	MyUARTPrintHex(code);
+	MyUARTSendCRLF();
 }
 
 #ifdef FEATURE_LED
@@ -252,7 +252,7 @@ int main(void) {
 #endif
 
 	//GPIOInit();
-	MyUARTInit(LPC_USART0, UART_BPS);
+	MyUARTInit(UART_BPS);
 
 	// Display firmware version on boot
 	cmd_version(1,NULL);
@@ -360,7 +360,7 @@ int main(void) {
 			loopDelay(20000);
 
 			// Indicator to host there is a short time window to issue command
-			MyUARTSendStringZ(LPC_USART0,"z\r\n");
+			MyUARTSendStringZ("z\r\n");
 
 			// Small window of time to allow host to exit sleep mode by issuing command.
 			// Use WKT timer to wake from regular sleep mode (where UART works).
@@ -386,7 +386,11 @@ int main(void) {
 			// Need to check for incoming signal and delay longer if transmission
 			// in progress (or just delay longer.. which will affect battery drain).
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
-			LPC_WKT->COUNT = 1200;
+
+			// Experimental: trig temperature measurement
+			//rfm69_register_write(0x4E, 1<<3);
+
+			LPC_WKT->COUNT = 2000;
 			__WFI();
 		}
 
@@ -434,7 +438,7 @@ int main(void) {
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
-				case 'z' : // for testing only
+				//case 'z' : // for testing only
 				{
 					int loc_len = strlen(current_loc);
 					// report position
@@ -502,12 +506,12 @@ int main(void) {
 						MyUARTBufReset();
 						report_error('D',E_CMD_DROPPED);
 					}
-					MyUARTSendStringZ(LPC_USART0, "d ");
+					MyUARTSendStringZ("d ");
 					int payload_len = frame_len - 3;
 					memcpy(cmdbuf,frxbuf+3,payload_len);
 					cmdbuf[payload_len] = 0; // zero terminate buffer
-					MyUARTSendStringZ(LPC_USART0,cmdbuf);
-					MyUARTSendCRLF(LPC_USART0);
+					MyUARTSendStringZ(cmdbuf);
+					MyUARTSendCRLF();
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
 				}
@@ -529,19 +533,19 @@ int main(void) {
 				// If none of the above cases match, output packet to UART
 				default: {
 
-					MyUARTSendStringZ(LPC_USART0, "p ");
+					MyUARTSendStringZ("p ");
 
-					print_hex8(LPC_USART0,frxbuf[0]);
-					MyUARTSendStringZ(LPC_USART0, " ");
-					print_hex8(LPC_USART0,frxbuf[1]);
-					MyUARTSendStringZ(LPC_USART0, " ");
+					print_hex8(frxbuf[0]);
+					MyUARTSendStringZ(" ");
+					print_hex8(frxbuf[1]);
+					MyUARTSendStringZ(" ");
 
 					int i;
 					for (i = 2; i < frame_len; i++) {
-						print_hex8(LPC_USART0,frxbuf[i]);
+						print_hex8(frxbuf[i]);
 					}
-					MyUARTSendStringZ (LPC_USART0," ");
-					print_hex8(LPC_USART0, rssi);
+					MyUARTSendStringZ (" ");
+					print_hex8(rssi);
 					MyUARTSendCRLF(LPC_USART0);
 				}
 				}
@@ -671,10 +675,10 @@ int main(void) {
 				// Parameter is register address
 				uint8_t *b;
 				int regAddr = parse_hex(args[1],&b);
-				MyUARTSendStringZ(LPC_USART0,"r ");
-				print_hex8 (LPC_USART0, regAddr);
-				MyUARTSendStringZ(LPC_USART0," ");
-				print_hex8 (LPC_USART0, rfm69_register_read(regAddr));
+				MyUARTSendStringZ("r ");
+				print_hex8 (regAddr);
+				MyUARTSendStringZ(" ");
+				print_hex8 (rfm69_register_read(regAddr));
 				MyUARTSendCRLF(LPC_USART0);
 				break;
 			}

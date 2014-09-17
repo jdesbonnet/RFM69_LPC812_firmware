@@ -26,9 +26,9 @@ int cmd_flags (int argc, uint8_t **argv) {
 	}
 
 	if (argv[1][0]=='?') {
-		MyUARTSendStringZ(LPC_USART0,"f ");
-		MyUARTPrintHex(LPC_USART0, flags);
-		MyUARTSendCRLF(LPC_USART0);
+		MyUARTSendStringZ("f ");
+		MyUARTPrintHex(flags);
+		MyUARTSendCRLF();
 		return;
 	}
 

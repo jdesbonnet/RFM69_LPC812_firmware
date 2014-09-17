@@ -11,6 +11,7 @@
 
 #include "myuart.h"
 
+
 volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 volatile uint32_t uart_rxi=0;
 volatile uint32_t uart_buf_flags=0;
@@ -25,10 +26,12 @@ volatile uint32_t uart_buf_flags=0;
 ** Returned value:		None
 **
 *****************************************************************************/
-void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
+void MyUARTInit(uint32_t baudrate)
 {
-	uint32_t UARTSysClk;
 
+	LPC_USART_TypeDef *UARTx = LPC_USART0;
+
+	uint32_t UARTSysClk;
 
 	//UARTClock_Init( UARTx );
 	LPC_SYSCON->UARTCLKDIV = 1;     /* divided by 1 */
@@ -79,37 +82,37 @@ void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 }
 
 
-void MyUARTSendByte (LPC_USART_TypeDef *UARTx, uint8_t v) {
+void MyUARTSendByte (uint8_t v) {
 	  // wait until data can be written to TXDATA
 	  while ( ! (LPC_USART0->STAT & (1<<2)) );
 	  LPC_USART0->TXDATA = v;
 }
 
-void MyUARTSendDrain (LPC_USART_TypeDef *UARTx) {
+void MyUARTSendDrain () {
 	// Wait for TXIDLE flag to be asserted
 	while ( ! (LPC_USART0->STAT & (1<<3)) );
 }
 
-void MyUARTSendString (LPC_USART_TypeDef *UARTx, uint8_t *buf, uint32_t len) {
+void MyUARTSendString (uint8_t *buf, uint32_t len) {
 	int i;
 	for (i = 0; i < len; i++) {
-		MyUARTSendByte(UARTx, buf[i]);
+		MyUARTSendByte(buf[i]);
 	}
 }
 
 /**
  * Send zero-terminated string.
  */
-void MyUARTSendStringZ (LPC_USART_TypeDef *UARTx, uint8_t *buf) {
+void MyUARTSendStringZ (uint8_t *buf) {
 	while (*buf != 0) {
-		MyUARTSendByte(UARTx, *buf);
+		MyUARTSendByte(*buf);
 		buf++;
 	}
 }
 
 
 void MyUARTSendCRLF(LPC_USART_TypeDef *UARTx) {
-	MyUARTSendStringZ(UARTx,"\r\n");
+	MyUARTSendStringZ("\r\n");
 }
 
 void UART0_IRQHandler(void)
@@ -130,7 +133,7 @@ void UART0_IRQHandler(void)
 			uart_rxbuf[uart_rxi]=0; // zero-terminate buffer
 		} else if (c>31){
 			// echo
-			MyUARTSendByte(LPC_USART0,c);
+			MyUARTSendByte(c);
 
 			uart_rxbuf[uart_rxi] = c;
 			uart_rxi++;
@@ -191,17 +194,17 @@ void MyUARTBufReset() {
 	uart_buf_flags = 0;
 }
 
-void MyUARTPrintDecimal (LPC_USART_TypeDef *UARTx, int32_t i) {
+void MyUARTPrintDecimal (int32_t i) {
 	uint8_t buf[16];
 	uint32_t j=0;
 
 	if (i==0) {
-		MyUARTSendByte(UARTx,'0');
+		MyUARTSendByte('0');
 		return;
 	}
 
 	if (i<0) {
-		MyUARTSendByte(UARTx,'-');
+		MyUARTSendByte('-');
 		i *= -1;
 	}
 	while (i>0) {
@@ -209,19 +212,19 @@ void MyUARTPrintDecimal (LPC_USART_TypeDef *UARTx, int32_t i) {
 		i /= 10;
 	}
 	while (j>0) {
-		MyUARTSendByte(UARTx,buf[--j]);
+		MyUARTSendByte(buf[--j]);
 	}
 }
 
 
-void MyUARTPrintHex (LPC_USART_TypeDef *UARTx, uint32_t v) {
+void MyUARTPrintHex (uint32_t v) {
 	int i,h;
 	for (i = 28; i >=0 ; i-=4) {
 		h = (v>>i) & 0x0f;
 		if (h<10) {
-			MyUARTSendByte(UARTx,'0'+h);
+			MyUARTSendByte('0'+h);
 		} else{
-			MyUARTSendByte(UARTx,'A'+h-10);
+			MyUARTSendByte('A'+h-10);
 		}
 	}
 }

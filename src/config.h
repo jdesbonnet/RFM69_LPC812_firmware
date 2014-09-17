@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.2.0"
+#define VERSION "RFM69 0.2.1b"
 
 #define DEFAULT_NODE_ADDR 0x41
 
@@ -15,7 +15,7 @@
 //
 
 // Remote register read/write
-//#define FEATURE_REMOTE_REG_READ
+#define FEATURE_REMOTE_REG_READ
 //#define FEATURE_REMOTE_REG_WRITE
 
 // Remote packet broadcast

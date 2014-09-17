@@ -13,7 +13,7 @@
  */
 int cmd_version (int argc, uint8_t **argv) {
 
-	MyUARTSendStringZ(LPC_USART0,"v ");
-	MyUARTSendStringZ(LPC_USART0,VERSION);
+	MyUARTSendStringZ("v ");
+	MyUARTSendStringZ(VERSION);
 	MyUARTSendCRLF(LPC_USART0);
 }

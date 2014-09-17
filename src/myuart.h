@@ -44,12 +44,12 @@
 // End of line flag
 #define UART_BUF_FLAG_EOL (0x01<<0)
 
-void MyUARTInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate);
-void MyUARTSendByte(LPC_USART_TypeDef *UARTx, uint8_t v);
-void MyUARTSendString(LPC_USART_TypeDef *UARTx, uint8_t *buf, uint32_t len);
-void MyUARTSendStringZ(LPC_USART_TypeDef *UARTx, uint8_t *buf);
-void MyUARTSendCRLF(LPC_USART_TypeDef *UARTx);
-void MyUARTSendDrain(LPC_USART_TypeDef *UARTx);
+void MyUARTInit(uint32_t baudrate);
+void MyUARTSendByte(uint8_t v);
+void MyUARTSendString(uint8_t *buf, uint32_t len);
+void MyUARTSendStringZ(uint8_t *buf);
+void MyUARTSendCRLF();
+void MyUARTSendDrain();
 
 // Not sure if external users of buffer need the 'volatile' qualifier
 uint8_t* MyUARTGetBuf(void);
@@ -61,8 +61,8 @@ void MyUARTSetBufFlags(uint32_t flags);
 void MyUARTBufReset(void);
 uint32_t MyUARTBufCopy(uint8_t *buf);
 
-void MyUARTPrintDecimal(LPC_USART_TypeDef *UARTx, int32_t i);
-void MyUARTPrintHex(LPC_USART_TypeDef *UARTx, uint32_t i);
+void MyUARTPrintDecimal(int32_t i);
+void MyUARTPrintHex(uint32_t i);
 
 
 int isDigit(uint8_t v);
