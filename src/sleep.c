@@ -92,9 +92,6 @@ void prepareForPowerDown () {
 
 void WKT_IRQHandler(void)
 {
-  //if ( LPC_WKT->CTRL & 0x02 )
-  //{
-		LPC_WKT->CTRL |= 0x02;			/* clear interrupt flag */
-  //}
+	LPC_WKT->CTRL |= 0x02;			/* clear interrupt flag */
 }
 

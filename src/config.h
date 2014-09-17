@@ -29,10 +29,6 @@
 // Support MCU deep-sleep (~10uA)
 #define FEATURE_DEEPSLEEP
 
-
-// Periodic heartbeat packet transmitted
-//#define FEATURE_HEARTBEAT
-
 // Allow full UART command to be executed remotely
 #define FEATURE_REMOTE_COMMAND
 

@@ -62,7 +62,10 @@ void loopDelay(uint32_t i) {
 		__NOP();
 	}
 }
-
+void wktDelay(uint32_t i) {
+	LPC_WKT->COUNT = i;
+	__WFI();
+}
 #ifdef LPC812
 /**
  * UART RXD on SOIC package pin 19
@@ -257,6 +260,7 @@ int main(void) {
 
 #ifdef LPC810
 	// Long delay (10-20seconds) to allow debug probe to reflash. Remove in production.
+	// Tried using regular SLEEP mode for this, but seems debugger doesn't work in that mode.
 	loopDelay(20000000);
 
 	// Won't be able to use debug probe from this point on (unless UART S 0 command used)
@@ -271,7 +275,11 @@ int main(void) {
 	//
     // Watchdog configuration
 	//
-	LPC_SYSCON->PDRUNCFG &= ~(0x1<<6);    /* Let WDT clock run */
+
+	// Let WDT run while in power down mode
+	LPC_SYSCON->PDRUNCFG &= ~(0x1<<6);
+
+	// Setup watchdog oscillator frequency
     /* Freq = 0.5Mhz, div_sel is 0x1F, divided by 64. WDT_OSC should be 7.8125khz */
     LPC_SYSCON->WDTOSCCTRL = (0x1<<5)|0x1F;
     LPC_WWDT->TC = 0x100000;
@@ -299,7 +307,7 @@ int main(void) {
 	uint8_t frame_len;
 
 	// Acts as a crude clock
-	uint32_t loop_counter = 0;
+//	uint32_t loop_counter = 0;
 
 	int argc;
 
@@ -319,7 +327,7 @@ int main(void) {
 	// Main program loop
 	while (1) {
 
-		loop_counter++;
+		//loop_counter++;
 
 		//MyUARTPrintHex(LPC_USART0, LPC_WWDT->TV);
 		//MyUARTSendCRLF(LPC_USART0);

@@ -65,7 +65,8 @@ uint8_t rfm69_payload_ready() {
 
 /**
  * Retrieve a frame. If successful returns length of frame. If not an error code (negative value).
- * Frame is returned in buf but will not exceed length maxlen.
+ * Frame is returned in buf but will not exceed length maxlen. Should only be called when
+ * a frame is ready to download.
  *
  * @return frame_length if successful, else a negative value error code
  * Error codes:
@@ -81,7 +82,7 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
 
 	// Wait for IRQFLAGS2[2] PayloadReady
 	// TODO: implement timeout
-	while ((rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK) == 0) ;
+	//while ((rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK) == 0) ;
 
     uint8_t frame_length;
 
