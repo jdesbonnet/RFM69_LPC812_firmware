@@ -53,8 +53,9 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags = MODE_ALL_OFF;
-
+uint32_t flags = MODE_ALL_OFF
+		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
+		;
 
 void loopDelay(uint32_t i) {
 	while (--i!=0) {
@@ -98,7 +99,7 @@ void SwitchMatrix_Init()
 void SwitchMatrix_NoSpi_Init_old()
 {
     /* Enable SWM clock */
-    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
 
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
@@ -115,7 +116,7 @@ void SwitchMatrix_NoSpi_Init_old()
 void SwitchMatrix_NoSpi_Init()
 {
     /* Enable SWM clock */
-    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
 
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
@@ -139,7 +140,7 @@ void SwitchMatrix_NoSpi_Init()
 void SwitchMatrix_Spi_Init()
 {
     /* Enable SWM clock */
-    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
 
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
@@ -222,6 +223,16 @@ void setOpMode (uint32_t mode) {
 
 int main(void) {
 
+	// Enable MCU subsystems needed in this application in one step. Saves bytes.
+	// (it would be preferable to have in each subsystem init, but we're very
+	// tight for space on LPC810).
+    LPC_SYSCON->SYSAHBCLKCTRL |=
+    		(1<<7)    // Switch Matrix (SWM)
+    		| (1<<9)  // Wake Timer (WKT)
+    		| (1<<14) // USART0
+    		;
+
+
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
 	 * This setups up the pins in a way that's convenient for our physical circuit layout.
@@ -298,8 +309,6 @@ int main(void) {
 		}
 
 #ifdef FEATURE_DEEPSLEEP
-		// If the radio is off then sleep until next interrupt (probably from UART)
-		//if ( ! (flags & FLAG_RADIO_MODULE_ON)) {
 		// Test for MODE_OFF or MODE_LOW_POWER_POLL
 		if ( (flags&0x1) == 0) {
 
@@ -310,7 +319,10 @@ int main(void) {
 			prepareForPowerDown();
 
 			// Writing into WKT counter automatically starts wakeup timer
-			LPC_WKT->COUNT = 20000; // 2s
+			// Polling interval determined by bits 11:8 of flags.
+			// Ts = 0.5 * 2 ^ flags[11:8]
+			// is 500 ms x 2 to the power of this value (ie 0=500ms, 1=1s, 2=2s,3=4s,4=8s...)
+			LPC_WKT->COUNT = 5000 << ((flags>>8)&0xf);
 
 			// DeepSleep until WKT interrupt
 			__WFI();
@@ -325,7 +337,6 @@ int main(void) {
 			// Small window of time to allow host to exit sleep mode by issuing command.
 			// Use WKT timer to wake from regular sleep mode (where UART works).
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
-
 		}
 #else
 		// If not using DEEPSLEEP, use regular SLEEP mode until next interrupt arrives
@@ -334,19 +345,18 @@ int main(void) {
 		}
 #endif
 
+		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
-		//if ( (flags&FLAG_RADIO_MODULE_ON) && (flags&FLAG_HEARTBEAT_ENABLE) && (loop_counter % heartbeat_interval) == 0) {
 			uint8_t payload[3];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
-			payload[2] = 'h';
+			payload[2] = 'z';
 			rfm69_frame_tx(payload,3);
 
 			// Allow time for response (100ms)
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
-			LPC_WKT->COUNT = 20000; //2s for testing
+			LPC_WKT->COUNT = 1000;
 			__WFI();
-
 		}
 
 #ifdef FEATURE_LINK_LOSS_RESET
@@ -365,7 +375,7 @@ int main(void) {
 
 			// TODO: tidy this
 			// SPI error
-			if (frame_len>0) {
+			//if (frame_len>0) {
 
 				// Mark time of last incoming good frame
 				last_frame_time = loop_counter;
@@ -399,6 +409,7 @@ int main(void) {
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
+				case 'z' : // for testing only
 				{
 					int loc_len = strlen(current_loc);
 					// report position
@@ -490,7 +501,6 @@ int main(void) {
 				}
 #endif
 
-
 				// If none of the above cases match, output packet to UART
 				default: {
 
@@ -522,13 +532,14 @@ int main(void) {
 			}
 
 
-			} // end frame len valid check
+			//} // end frame len valid check
 		}
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
 #ifdef FEATURE_DEEPSLEEP
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
+			// TODO: will probably want to exclude remote commands
 			setOpMode(MODE_AWAKE);
 #endif
 
@@ -536,7 +547,7 @@ int main(void) {
 
 			cmdbuf = MyUARTGetBuf();
 
-			// Parse command line
+			// Split command line into parameters (separated by spaces)
 			argc = 1;
 			args[0] = cmdbuf;
 			while (*cmdbuf != 0) {
@@ -601,6 +612,8 @@ int main(void) {
 #endif
 
 			// Set radio system mode
+			// TODO is this necessary now? Use F command instead.
+			/*
 			case 'M' : {
 				flags &= ~0xf;
 				if (args[1][0]=='0') {
@@ -612,6 +625,7 @@ int main(void) {
 				}
 				break;
 			}
+			*/
 
 			// Set node address
 			case 'N' :

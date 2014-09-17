@@ -71,7 +71,7 @@ void prepareForPowerDown () {
 	  // Enable clock for WKT in System clock control register (SYSAHBCLKCTRL)
 	  // Ref UM10601 §4.6.13, p26
 	  // Bit 9: 1 = enable WKT
-	  LPC_SYSCON->SYSAHBCLKCTRL |= (0x1 << 9);
+	  //LPC_SYSCON->SYSAHBCLKCTRL |= (0x1 << 9);
 
 	  // Reset WKT by writing 0, and then 1 to bit 9 of Peripheral reset control register
 	  // Ref UM10601, §4.6.2, p20.
