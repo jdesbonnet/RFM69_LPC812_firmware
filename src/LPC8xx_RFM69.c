@@ -330,6 +330,8 @@ int main(void) {
 
 
 #ifdef FEATURE_TEMPERATURE
+
+		if ((flags&0xf)==MODE_LOW_POWER_POLL) {
 		// Must read temperature from STDBY or FS mode
 		rfm69_mode(RFM69_OPMODE_Mode_STDBY);
 
@@ -342,6 +344,8 @@ int main(void) {
 
 		// Hack: put temperature into unused register (AESKey1) for remote reading
 		rfm69_register_write(0x3E,rfm69_register_read(0x4F));
+		}
+
 #endif
 
 		if ( (flags&0xf) == MODE_AWAKE) {

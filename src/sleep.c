@@ -30,7 +30,7 @@ void prepareForPowerDown () {
 
 	  // Step 2: Select the power configuration in Power-down mode in the
 	  // PDSLEEPCFG (Table 35) register
-	  //LPC_SYSCON->PDSLEEPCFG = LPC_SYSCON->PDSLEEPCFG;
+	  LPC_SYSCON->PDSLEEPCFG = ~1<<6; // WDT on during deep sleep/power down
 
 
 	  // Step 3: Select the power configuration after wake-up in the
