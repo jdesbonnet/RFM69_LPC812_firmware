@@ -328,12 +328,21 @@ int main(void) {
 	// Main program loop
 	while (1) {
 
-		//loop_counter++;
 
-		//MyUARTPrintHex(LPC_USART0, LPC_WWDT->TV);
-		//MyUARTSendCRLF(LPC_USART0);
+#ifdef FEATURE_TEMPERATURE
+		// Must read temperature from STDBY or FS mode
+		rfm69_mode(RFM69_OPMODE_Mode_STDBY);
 
-		rfm69_temperature();
+		// Start temperature conversion
+		rfm69_register_write(0x4E,0x8);
+
+		// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
+		// space efficient (down to last few bytes of flash!)
+		loopDelay(10000);
+
+		// Hack: put temperature into unused register (AESKey1) for remote reading
+		rfm69_register_write(0x3E,rfm69_register_read(0x4F));
+#endif
 
 		if ( (flags&0xf) == MODE_AWAKE) {
 			rfm69_mode(RFM69_OPMODE_Mode_RX);

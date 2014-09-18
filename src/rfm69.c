@@ -74,6 +74,9 @@ uint8_t rfm69_temperature () {
 	// Must read temperature from STDBY or FS mode
 	rfm69_mode(RFM69_OPMODE_Mode_STDBY);
 	rfm69_register_write(0x4E,0x8);
+
+	// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
+	// space efficient (down to last few bytes of flash!)
 	loopDelay(10000);
 	uint8_t temperature = rfm69_register_read(0x4F);
 

@@ -1,9 +1,9 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.2.1"
+#define VERSION "RFM69 0.2.2"
 
-#define DEFAULT_NODE_ADDR 0x41
+#define DEFAULT_NODE_ADDR 0x47
 
 // Version of MCU used (LPC812, LPC810 supported)
 #define LPC810
@@ -34,6 +34,10 @@
 
 // Allow change of UART speed from default 9600
 //#define FEATURE_UART_SPEED
+
+// Read RFM69 temperature sensor
+//#define FEATURE_TEMPERATURE
+
 
 // Diagnostic LED (only available on LPC812)
 #ifdef LPC812

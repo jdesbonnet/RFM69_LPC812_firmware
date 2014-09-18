@@ -12,14 +12,26 @@
 #define PORT 0
 
 
-#define SCK_HIGH() GPIOSetBitValue(PORT,SCK_PIN,1)
-#define SCK_LOW() GPIOSetBitValue(PORT,SCK_PIN,0)
-#define SS_HIGH() GPIOSetBitValue(PORT,SS_PIN,1)
-#define SS_LOW() GPIOSetBitValue(PORT,SS_PIN,0)
+//#define SCK_HIGH() GPIOSetBitValue(PORT,SCK_PIN,1)
+//#define SCK_LOW() GPIOSetBitValue(PORT,SCK_PIN,0)
+//#define SS_HIGH() GPIOSetBitValue(PORT,SS_PIN,1)
+//#define SS_LOW() GPIOSetBitValue(PORT,SS_PIN,0)
+//#define MOSI_HIGH() GPIOSetBitValue(PORT,MOSI_PIN,1)
+//#define MOSI_LOW() GPIOSetBitValue(PORT,MOSI_PIN,0)
+//#define MISO_READ() GPIOGetPinValue(PORT,MISO_PIN)
 
-#define MOSI_HIGH() GPIOSetBitValue(PORT,MOSI_PIN,1)
-#define MOSI_LOW() GPIOSetBitValue(PORT,MOSI_PIN,0)
-#define MISO_READ() GPIOGetPinValue(PORT,MISO_PIN)
+
+#define SCK_HIGH() LPC_GPIO_PORT->SET0=(1<<SCK_PIN);
+#define SCK_LOW() LPC_GPIO_PORT->CLR0=(1<<SCK_PIN);
+
+#define SS_HIGH() LPC_GPIO_PORT->SET0=(1<<SS_PIN);
+#define SS_LOW() LPC_GPIO_PORT->CLR0=(1<<SS_PIN);
+
+#define MOSI_HIGH() LPC_GPIO_PORT->SET0=(1<<MOSI_PIN);
+#define MOSI_LOW() LPC_GPIO_PORT->CLR0=(1<<MOSI_PIN);
+
+
+#define MISO_READ() LPC_GPIO_PORT->PIN0&(1<<MISO_PIN)
 
 /**
  * Initialize SPI using bigbang (without SSP0 peripheral).
