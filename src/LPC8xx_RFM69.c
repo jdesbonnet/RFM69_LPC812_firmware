@@ -309,7 +309,7 @@ int main(void) {
 
 	// Acts as a crude clock
 //	uint32_t loop_counter = 0;
-
+	uint32_t sleep_counter = 0;
 	int argc;
 
 
@@ -391,11 +391,12 @@ int main(void) {
 
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
-			uint8_t payload[3];
+			uint8_t payload[4];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
 			payload[2] = 'z';
-			rfm69_frame_tx(payload,3);
+			payload[3] = sleep_counter++;
+			rfm69_frame_tx(payload,4);
 
 			// Allow time for response (120ms)
 			// TODO: this is only long enough for a 4 or 5 bytes of payload.
