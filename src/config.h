@@ -3,11 +3,11 @@
 
 #define VERSION "RFM69 0.2.3"
 
-#define DEFAULT_NODE_ADDR 0x49
+#define DEFAULT_NODE_ADDR 0x41
 
 // Version of MCU used (LPC812, LPC810 supported)
-#define LPC810
-//#define LPC812
+//#define LPC810
+#define LPC812
 
 //
 // Optional features are enabled by defining macro FEATURE_xxxxxx. As space is very
@@ -39,6 +39,8 @@
 #define FEATURE_TEMPERATURE
 
 
+
+
 // Diagnostic LED (only available on LPC812)
 #ifdef LPC812
 #define FEATURE_LED
@@ -54,6 +56,7 @@
 #define SS_PIN 9
 #define MOSI_PIN 8
 #define MISO_PIN 7
+#define TIPBUCKET_PIN 17
 #endif
 
 #ifdef LPC810
@@ -70,8 +73,11 @@
 #define UART_BPS (9600)
 //#define UART_BPS (115200)
 
-
-//#define USE_SYSTICK
-
+#ifdef LPC812
+// Enable ARM Cortex M SysTick timer
+#define FEATURE_SYSTICK
+// Experimental application to count rain tip bucket
+#define FEATURE_EVENT_COUNTER
+#endif
 
 #endif

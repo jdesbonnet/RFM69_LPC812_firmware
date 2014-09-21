@@ -53,9 +53,25 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
-uint32_t flags = MODE_LOW_POWER_POLL
+uint32_t flags =
+		//MODE_LOW_POWER_POLL
+		MODE_AWAKE
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
+
+#ifdef FEATURE_EVENT_COUNTER
+	volatile uint32_t event_counter ;
+	volatile uint32_t event_time = 0;
+#endif
+
+
+#ifdef FEATURE_SYSTICK
+	volatile uint32_t systick_counter = 0;
+	void SysTick_Handler(void) {
+		systick_counter++; // every 10ms
+	}
+#endif
+
 
 void loopDelay(uint32_t i) {
 	while (--i!=0) {
@@ -238,6 +254,9 @@ int main(void) {
     		;
 
 
+#ifdef FEATURE_SYSTICK
+    SysTick_Config( SYSTICK_DELAY );
+#endif
 
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
@@ -248,7 +267,8 @@ int main(void) {
 
 #ifdef LPC810
 	SwitchMatrix_NoSpi_Init();
-#elif LPC812
+#endif
+#ifdef LPC812
 	SwitchMatrix_Init();
 #endif
 
@@ -307,12 +327,27 @@ int main(void) {
 	uint8_t frxbuf[66];
 	uint8_t frame_len;
 
-	// Acts as a crude clock
-//	uint32_t loop_counter = 0;
-	uint32_t sleep_counter = 0;
+	// Use to ID each sleep ping packet. No need to init (saves 4 bytes).
+	uint32_t sleep_counter;
+
 	int argc;
 
+#ifdef FEATURE_EVENT_COUNTER
+	// Set TIPBUCKET_PIN as input
+	LPC_GPIO_PORT->DIR0 &= ~(1<<TIPBUCKET_PIN);
 
+	// Pulldown resistor
+	LPC_IOCON->PIO0_17=(0x1<<3);
+
+	// Set interrupt on this pin.
+	LPC_SYSCON->PINTSEL[0] = TIPBUCKET_PIN;
+	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
+	LPC_PIN_INT->ISEL &= ~(0x1<<0);	/* Edge trigger */
+	//LPC_PIN_INT->ISEL |= (0x1<<0); // Level trigger
+
+	LPC_PIN_INT->IENR |= (0x1<<0);	/* Rising edge */
+	//LPC_PIN_INT->SIENR = (0x1<<0);	/* Rising edge */
+#endif
 
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 #ifdef FEATURE_LED
@@ -583,6 +618,9 @@ int main(void) {
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
+			MyUARTPrintHex(event_counter);
+			MyUARTSendCRLF();
+
 #ifdef FEATURE_DEEPSLEEP
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
 			// TODO: will probably want to exclude remote commands
@@ -766,3 +804,41 @@ int main(void) {
 	} // end main loop
 
 }
+
+#ifdef FEATURE_EVENT_COUNTER
+void PININT0_IRQHandler (void) {
+
+	//NVIC_ClearPendingIRQ(PININT0_IRQn);
+
+	// Clear interrupt
+	if ( ! (LPC_PIN_INT->IST & 0x1)) {
+		return;
+	}
+
+	// Clear interrupt
+	//LPC_PIN_INT->RISE = 1<<0;
+	LPC_PIN_INT->IST = 1<<0;
+
+
+	// Reed switch closed ~60ms while tip in progress.
+	if (systick_counter - event_time < 100) {
+		return;
+	}
+
+
+
+	event_time = systick_counter;
+
+	// Printing event_counter in here results in very strange behavior.  Probably due to
+	// using MyUART inside ISR.
+
+	//MyUARTPrintHex(event_counter);
+
+	event_counter++;
+
+	//MyUARTPrintHex(event_counter);
+
+}
+#endif
+
+
