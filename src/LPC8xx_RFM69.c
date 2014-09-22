@@ -69,6 +69,7 @@ uint32_t flags =
 	volatile uint32_t systick_counter = 0;
 	void SysTick_Handler(void) {
 		systick_counter++; // every 10ms
+		//LPC_USART0->TXDATA='t';
 	}
 #endif
 
@@ -473,6 +474,16 @@ int main(void) {
 		rfm69_register_write(0x3E,rfm69_register_read(0x4F));
 		}
 
+#endif
+
+#ifdef FEATURE_EVENT_COUNTER
+		if ( (event_time != 0) && (systick_counter - event_time > 10) ) {
+			MyUARTSendStringZ("a ");
+			MyUARTPrintHex(event_counter);
+			MyUARTSendCRLF();
+			event_counter = 0;
+			event_time= 0;
+		}
 #endif
 
 		if ( (flags&0xf) == MODE_AWAKE) {
@@ -936,7 +947,13 @@ void CMP_IRQHandler (void) {
 	LPC_CMP->CTRL |= (1<<20);
 	LPC_CMP->CTRL &= ~(1<<20);
 
-	LPC_USART0->TXDATA='A';
+	//LPC_USART0->TXDATA='A';
+
+	event_counter++;
+
+	if (event_time == 0) {
+		event_time = systick_counter;
+	}
 }
 #endif
 
