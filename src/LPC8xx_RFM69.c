@@ -385,9 +385,7 @@ int main(void) {
 	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
 	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
 
-	LPC_CMP->LAD = (1<<0) // enable ladder
-			|  (4 << 1)   // vout = n * Vref/31
-			;
+
 
 	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
 			//| (0x2 << 8) // + of cmp to ACMP_input_2
@@ -404,6 +402,33 @@ int main(void) {
 			MyUARTSendStringZ("V(mv)=");
 			MyUARTPrintDecimal(27900/k); // 900mV*31/k
 			MyUARTSendCRLF();
+			break;
+
+		}
+	}
+	}
+
+	LPC_CMP->LAD = (1<<0) // enable ladder
+			|  (16 << 1)   // vout = n * Vref/31
+			;
+
+	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
+			| (0x2 << 8) // + of cmp to ACMP_input_2
+			//| (0x6 << 8)  // bandgap
+			| (0x0 << 11) // - of cmp to voltage ladder
+			;
+
+
+	{int k;
+	for (k = 0; k <32; k++) {
+		LPC_CMP->LAD = 1 | (k<<1);
+		__WFI(); // allow to settle
+		if ( ! (LPC_CMP->CTRL & (1<<21))) {
+			MyUARTSendStringZ("L=");
+			MyUARTPrintDecimal(k);
+			MyUARTSendCRLF();
+			MyUARTSendCRLF();
+
 			break;
 
 		}
