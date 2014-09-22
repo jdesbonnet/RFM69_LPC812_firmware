@@ -103,6 +103,26 @@ void SwitchMatrix_Init()
     /* RESET */
     LPC_SWM->PINENABLE0 = 0xffffffb3UL;
 }
+
+/**
+ * UART RXD on SOIC package pin 19
+ * UART TXD on SOIC package pin 5
+ * ACMP_2 on SOIC package pin 12
+ */
+void SwitchMatrix_Acmp_Init()
+{
+    /* Pin Assign 8 bit Configuration */
+    /* U0_TXD */
+    /* U0_RXD */
+    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
+
+    /* Pin Assign 1 bit Configuration */
+    /* ACMP_I2 */
+    /* SWCLK */
+    /* SWDIO */
+    /* RESET */
+    LPC_SWM->PINENABLE0 = 0xffffffb1UL;
+}
 #endif
 
 #ifdef LPC810
@@ -242,6 +262,10 @@ void setOpMode (uint32_t mode) {
 
 int main(void) {
 
+
+
+
+
 	// Enable MCU subsystems needed in this application in one step. Saves bytes.
 	// (it would be preferable to have in each subsystem init, but we're very
 	// tight for space on LPC810).
@@ -251,6 +275,7 @@ int main(void) {
     		| (1<<9)  // Wake Timer (WKT)
     		| (1<<14) // USART0
     		| (1<<17) // Watchdog timer
+    		| (1<<19) // Analog comparator
     		;
 
 
@@ -269,7 +294,7 @@ int main(void) {
 	SwitchMatrix_NoSpi_Init();
 #endif
 #ifdef LPC812
-	SwitchMatrix_Init();
+	SwitchMatrix_Acmp_Init();
 #endif
 
 	//GPIOInit();
@@ -347,6 +372,46 @@ int main(void) {
 
 	LPC_PIN_INT->IENR |= (0x1<<0);	/* Rising edge */
 	//LPC_PIN_INT->SIENR = (0x1<<0);	/* Rising edge */
+
+
+	//
+	// Analog comparator configure
+	//
+
+	/* Comparator should be powered up first. Use of comparator requires BOD */
+	LPC_SYSCON->PDRUNCFG &= ~( (0x1 << 15) | (0x1 << 3) );
+
+	// Analog comparator reset
+	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
+	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
+
+	LPC_CMP->LAD = (1<<0) // enable ladder
+			|  (4 << 1)   // vout = n * Vref/31
+			;
+
+	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
+			//| (0x2 << 8) // + of cmp to ACMP_input_2
+			| (0x6 << 8)  // bandgap
+			| (0x0 << 11) // - of cmp to voltage ladder
+			;
+
+	// Measure Vdd relative to bandgap
+	{int k;
+	for (k = 0; k <32; k++) {
+		LPC_CMP->LAD = 1 | (k<<1);
+		__WFI(); // allow to settle
+		if ( ! (LPC_CMP->CTRL & (1<<21))) {
+			MyUARTSendStringZ("V(mv)=");
+			MyUARTPrintDecimal(27900/k); // 900mV*31/k
+			MyUARTSendCRLF();
+			break;
+
+		}
+	}
+	}
+
+	NVIC_EnableIRQ(CMP_IRQn);
+
 #endif
 
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
@@ -363,6 +428,8 @@ int main(void) {
 	// Main program loop
 	while (1) {
 
+		//MyUARTPrintHex(LPC_CMP->CTRL);
+		//MyUARTSendCRLF();
 
 #ifdef FEATURE_TEMPERATURE
 
@@ -808,9 +875,6 @@ int main(void) {
 #ifdef FEATURE_EVENT_COUNTER
 void PININT0_IRQHandler (void) {
 
-	//NVIC_ClearPendingIRQ(PININT0_IRQn);
-
-	// Clear interrupt
 	if ( ! (LPC_PIN_INT->IST & 0x1)) {
 		return;
 	}
@@ -826,6 +890,7 @@ void PININT0_IRQHandler (void) {
 	}
 
 
+	LPC_USART0->TXDATA='*';
 
 	event_time = systick_counter;
 
@@ -838,6 +903,15 @@ void PININT0_IRQHandler (void) {
 
 	//MyUARTPrintHex(event_counter);
 
+}
+
+void CMP_IRQHandler (void) {
+
+	// Clear interrupt by writing 1 to CTRL bit 20 (EDGECLR), then 0.
+	LPC_CMP->CTRL |= (1<<20);
+	LPC_CMP->CTRL &= ~(1<<20);
+
+	LPC_USART0->TXDATA='A';
 }
 #endif
 

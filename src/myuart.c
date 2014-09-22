@@ -200,7 +200,7 @@ void MyUARTBufReset() {
 	uart_buf_flags = 0;
 }
 
-/*
+
 void MyUARTPrintDecimal (int32_t i) {
 	uint8_t buf[16];
 	uint32_t j=0;
@@ -222,7 +222,7 @@ void MyUARTPrintDecimal (int32_t i) {
 		MyUARTSendByte(buf[--j]);
 	}
 }
-*/
+
 
 void MyUARTPrintHex (uint32_t v) {
 	int i,h;
