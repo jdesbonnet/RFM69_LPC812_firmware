@@ -10,6 +10,7 @@
 
 #include "sleep.h"
 
+
 void prepareForPowerDown () {
 
 	//
@@ -62,6 +63,8 @@ void prepareForPowerDown () {
 
 	  // Also PINTINT0, PININT1, 2
 	  LPC_SYSCON->STARTERP0 = (1<<0) // PININT0 (UART RXD)
+							| (1<<1) //
+							| (1<<2) //
 							;
 
 	  // DPDCTRL: Deep power-down control register
@@ -95,8 +98,4 @@ void prepareForPowerDown () {
 	  LPC_WKT->CTRL |= 0x01; // 10kHz LPOSC
 }
 
-void WKT_IRQHandler(void)
-{
-	LPC_WKT->CTRL |= 0x02;			/* clear interrupt flag */
-}
 

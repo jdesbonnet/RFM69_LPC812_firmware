@@ -60,7 +60,14 @@ volatile uint32_t flags =
 		;
 
 // When in deepsleep or power down this lets us know which wake event occurred
-volatile uint32_t interrupt_source;
+typedef enum {
+	NO_INTERRUPT = 0,
+	WKT_INTERRUPT = 1,
+	UART_INTERRUPT = 2,
+	TIP_BUCKET_INTERRUPT = 3,
+	PIEZO_SENSOR_INTERRUPT = 4
+} interrupt_source_type;
+volatile interrupt_source_type interrupt_source;
 
 #ifdef FEATURE_EVENT_COUNTER
 	volatile uint32_t event_counter ;
@@ -115,21 +122,6 @@ void SwitchMatrix_Init()
  */
 void SwitchMatrix_Acmp_Init()
 {
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
-    //LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-
-    /* Pin Assign 1 bit Configuration */
-    /* ACMP_I2 */
-    /* SWCLK */
-    /* SWDIO */
-    /* RESET */
-    //LPC_SWM->PINENABLE0 = 0xffffffb1UL;
-
-
-
-
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
     /* U0_RXD */
@@ -396,11 +388,11 @@ int main(void) {
 	LPC_PIN_INT->ISEL &= ~(0x1<<1);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<1);	/* Rising edge */
 
-	// Experimental wake on comparator activity. Camparator output on PIO0_13
+	// Experimental wake on comparator activity. Comparator output on PIO0_13
 	LPC_SYSCON->PINTSEL[2] = 13;
-	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
 	LPC_PIN_INT->ISEL &= ~(0x1<<2);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<2);	/* Rising edge */
+	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
 
 
 
@@ -416,14 +408,13 @@ int main(void) {
 	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
 
 
-
+	// Measure Vdd relative to bandgap
 	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
 			//| (0x2 << 8) // + of cmp to ACMP_input_2
 			| (0x6 << 8)  // bandgap
 			| (0x0 << 11) // - of cmp to voltage ladder
 			;
 
-	// Measure Vdd relative to bandgap
 	{int k;
 	for (k = 0; k <32; k++) {
 		LPC_CMP->LAD = 1 | (k<<1);
@@ -438,22 +429,17 @@ int main(void) {
 	}
 	}
 
-	LPC_CMP->LAD = (1<<0) // enable ladder
-			|  (16 << 1)   // vout = n * Vref/31
-			;
 
 	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
 			| (0x2 << 8) // + of cmp to ACMP_input_2
-			//| (0x6 << 8)  // bandgap
 			| (0x0 << 11) // - of cmp to voltage ladder
 			;
 
-
 	{int k;
-	for (k = 0; k <32; k++) {
+	for (k = 31; k >= 0; k--) {
 		LPC_CMP->LAD = 1 | (k<<1);
 		__WFI(); // allow to settle
-		if ( ! (LPC_CMP->CTRL & (1<<21))) {
+		if ( LPC_CMP->CTRL & (1<<21) ) {
 			MyUARTSendStringZ("L=");
 			MyUARTPrintDecimal(k);
 			MyUARTSendCRLF();
@@ -483,9 +469,6 @@ int main(void) {
 
 	// Main program loop
 	while (1) {
-
-		//MyUARTPrintHex(LPC_CMP->CTRL);
-		//MyUARTSendCRLF();
 
 #ifdef FEATURE_TEMPERATURE
 
@@ -539,24 +522,23 @@ int main(void) {
 			// is 500 ms x 2 to the power of this value (ie 0=500ms, 1=1s, 2=2s,3=4s,4=8s...)
 			LPC_WKT->COUNT = 5000 << ((flags>>8)&0xf);
 
-			// DeepSleep until WKT interrupt
+			// DeepSleep until WKT interrupt (or PIN interrupt)
 			__WFI();
 
 			// Allow time for clocks to stabilise after wake
 			// TODO: can we use WKT and WFI?
 			loopDelay(20000);
 
-			// If UART generated wake interrupt, allow sufficient time for character to
-			// come in on UART.
-			if (interrupt_source == 1) {
-				loopDelay(500000);
+			if (interrupt_source == UART_INTERRUPT) {
+				setOpMode(MODE_AWAKE);
+				// Probably crud in buffer : clear it.
+				MyUARTBufReset();
 			}
 
 			// Indicator to host there is a short time window to issue command
 			MyUARTSendStringZ("z\r\n");
 
-			// Small window of time to allow host to exit sleep mode by issuing command.
-			// Use WKT timer to wake from regular sleep mode (where UART works).
+			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
 		}
 #else
@@ -581,9 +563,7 @@ int main(void) {
 			// in progress (or just delay longer.. which will affect battery drain).
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
 
-			// Experimental: trig temperature measurement
-			//rfm69_register_write(0x4E, 1<<3);
-
+			// Delay in SLEEP for 200ms to allow for reply radio packet
 			LPC_WKT->COUNT = 2000;
 			__WFI();
 		}
@@ -955,13 +935,7 @@ int main(void) {
 void PININT0_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PIN_INT->IST = 1<<0;
-
-	// Set mode wake
-	//flags &= ~0xf;
-	//flags |= 3;
-	//LPC_USART0->TXDATA='U';
-
-	interrupt_source = 1;
+	interrupt_source = UART_INTERRUPT;
 }
 
 /**
@@ -974,14 +948,17 @@ void PININT1_IRQHandler (void) {
 
 	LPC_USART0->TXDATA='B';
 
-	event_time = systick_counter;
-
 	// Printing event_counter in here results in very strange behavior.  Probably due to
 	// using MyUART inside ISR.
 
 	event_counter++;
 
-	interrupt_source = 2;
+	if (event_time == 0) {
+		event_time = systick_counter;
+	}
+
+
+	interrupt_source = TIP_BUCKET_INTERRUPT;
 
 }
 
@@ -992,7 +969,7 @@ void PININT2_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PIN_INT->IST = 1<<2;
 	LPC_USART0->TXDATA='X';
-	//wake_source = 3;
+	interrupt_source = PIEZO_SENSOR_INTERRUPT;
 }
 
 
@@ -1015,3 +992,8 @@ void CMP_IRQHandler (void) {
 #endif
 
 
+void WKT_IRQHandler(void)
+{
+	LPC_WKT->CTRL |= 0x02;			/* clear interrupt flag */
+	interrupt_source = WKT_INTERRUPT;
+}
