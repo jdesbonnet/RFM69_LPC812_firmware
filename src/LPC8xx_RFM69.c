@@ -115,7 +115,24 @@ void SwitchMatrix_Acmp_Init()
     /* Pin Assign 8 bit Configuration */
     /* U0_TXD */
     /* U0_RXD */
+    //LPC_SWM->PINASSIGN0 = 0xffff0004UL;
+
+    /* Pin Assign 1 bit Configuration */
+    /* ACMP_I2 */
+    /* SWCLK */
+    /* SWDIO */
+    /* RESET */
+    //LPC_SWM->PINENABLE0 = 0xffffffb1UL;
+
+
+
+
+    /* Pin Assign 8 bit Configuration */
+    /* U0_TXD */
+    /* U0_RXD */
     LPC_SWM->PINASSIGN0 = 0xffff0004UL;
+    /* ACMP_O */
+    LPC_SWM->PINASSIGN8 = 0xffff0dffUL;
 
     /* Pin Assign 1 bit Configuration */
     /* ACMP_I2 */
@@ -123,6 +140,8 @@ void SwitchMatrix_Acmp_Init()
     /* SWDIO */
     /* RESET */
     LPC_SWM->PINENABLE0 = 0xffffffb1UL;
+
+
 }
 #endif
 
