@@ -388,11 +388,19 @@ int main(void) {
 	LPC_SYSCON->PINTSEL[0] = TIPBUCKET_PIN;
 	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
 	LPC_PIN_INT->ISEL &= ~(0x1<<0);	/* Edge trigger */
-	//LPC_PIN_INT->ISEL |= (0x1<<0); // Level trigger
-
 	LPC_PIN_INT->IENR |= (0x1<<0);	/* Rising edge */
-	//LPC_PIN_INT->SIENR = (0x1<<0);	/* Rising edge */
 
+	// Experimental wake on comparator
+	LPC_SYSCON->PINTSEL[1] = 13;
+	NVIC_EnableIRQ((IRQn_Type)(PININT1_IRQn));
+	LPC_PIN_INT->ISEL &= ~(0x1<<1);	/* Edge trigger */
+	LPC_PIN_INT->IENR |= (0x1<<1);	/* Rising edge */
+
+	// Experimental wake UART
+	LPC_SYSCON->PINTSEL[2] = 0; // PIO0_0 aka RXD
+	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
+	LPC_PIN_INT->ISEL &= ~(0x1<<2);	/* Edge trigger */
+	LPC_PIN_INT->IENR |= (0x1<<2);	/* Rising edge */
 
 	//
 	// Analog comparator configure
@@ -959,6 +967,18 @@ void PININT0_IRQHandler (void) {
 	//MyUARTPrintHex(event_counter);
 
 }
+
+void PININT1_IRQHandler (void) {
+	// Clear interrupt
+	LPC_PIN_INT->IST = 1<<1;
+	LPC_USART0->TXDATA='X';
+}
+
+void PININT2_IRQHandler (void) {
+	// Clear interrupt
+	LPC_PIN_INT->IST = 1<<2;
+}
+
 
 void CMP_IRQHandler (void) {
 

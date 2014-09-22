@@ -59,6 +59,10 @@ void prepareForPowerDown () {
 	  // http://docs.lpcware.com/lpc800um/RegisterMaps/uart/c-ConfiguretheUSARTforwake-up.html
 	  LPC_SYSCON->STARTERP1 = (1<<15)  | (1<<3);
 
+
+	  // Also PINTINT0, PININT1, 2
+	  LPC_SYSCON->STARTERP0 = 0x5;
+
 	  // DPDCTRL: Deep power-down control register
 	  // UM10601 §5.6.3 p47
 	  // Bit 0
