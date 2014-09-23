@@ -218,7 +218,8 @@ void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
 	MyUARTSendStringZ((uint8_t *)"e ");
 	MyUARTSendByte(cmd);
-	MyUARTSendStringZ((uint8_t *)" ");
+	//MyUARTSendStringZ((uint8_t *)" ");
+	MyUARTSendByte(' ');
 	MyUARTPrintHex(code);
 	MyUARTSendCRLF();
 }
@@ -699,15 +700,16 @@ int main(void) {
 					MyUARTSendStringZ("p ");
 
 					print_hex8(frxbuf[0]);
-					MyUARTSendStringZ(" ");
+					MyUARTSendByte(' ');
 					print_hex8(frxbuf[1]);
-					MyUARTSendStringZ(" ");
+					MyUARTSendByte(' ');
+
 
 					int i;
 					for (i = 2; i < frame_len; i++) {
 						print_hex8(frxbuf[i]);
 					}
-					MyUARTSendStringZ (" ");
+					MyUARTSendByte(' ');
 					print_hex8(rssi);
 					MyUARTSendCRLF(LPC_USART0);
 				}
@@ -843,7 +845,8 @@ int main(void) {
 				int regAddr = parse_hex(args[1],&b);
 				MyUARTSendStringZ("r ");
 				print_hex8 (regAddr);
-				MyUARTSendStringZ(" ");
+				//MyUARTSendStringZ(" ");
+				MyUARTSendByte(' ');
 				print_hex8 (rfm69_register_read(regAddr));
 				MyUARTSendCRLF(LPC_USART0);
 				break;
