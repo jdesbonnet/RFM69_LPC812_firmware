@@ -36,7 +36,7 @@
 //#define FEATURE_UART_SPEED
 
 // Read RFM69 temperature sensor
-#define FEATURE_TEMPERATURE
+//#define FEATURE_TEMPERATURE
 
 
 
@@ -77,7 +77,7 @@
 // Enable ARM Cortex M SysTick timer
 #define FEATURE_SYSTICK
 // Experimental application to count rain tip bucket
-#define FEATURE_EVENT_COUNTER
+//#define FEATURE_EVENT_COUNTER
 #endif
 
 #endif

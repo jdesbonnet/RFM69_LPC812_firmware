@@ -287,7 +287,6 @@ int main(void) {
     		| (1<<9)  // Wake Timer (WKT)
     		| (1<<14) // USART0
     		| (1<<17) // Watchdog timer (note: it may not be necessary to have on all the time)
-    		| (1<<19) // Analog comparator
     		;
 
 
@@ -378,15 +377,15 @@ int main(void) {
 
 	// Experimental wake on activity on UART RXD (RXD is shared with PIO0_0)
 	LPC_SYSCON->PINTSEL[0] = 0; // PIO0_0 aka RXD
-	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
 	LPC_PIN_INT->ISEL &= ~(0x1<<0);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<0);	/* Rising edge */
+	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
 
 	// Set interrupt on this pin.
 	LPC_SYSCON->PINTSEL[1] = TIPBUCKET_PIN;
-	NVIC_EnableIRQ((IRQn_Type)(PININT1_IRQn));
 	LPC_PIN_INT->ISEL &= ~(0x1<<1);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<1);	/* Rising edge */
+	NVIC_EnableIRQ((IRQn_Type)(PININT1_IRQn));
 
 	// Experimental wake on comparator activity. Comparator output on PIO0_13
 	LPC_SYSCON->PINTSEL[2] = 13;
@@ -400,8 +399,10 @@ int main(void) {
 	// Analog comparator configure
 	//
 
-	/* Comparator should be powered up first. Use of comparator requires BOD */
+	// Power to comparator. Use of comparator requires BOD. [Why?]
 	LPC_SYSCON->PDRUNCFG &= ~( (0x1 << 15) | (0x1 << 3) );
+
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<19); // Analog comparator
 
 	// Analog comparator reset
 	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
@@ -410,7 +411,6 @@ int main(void) {
 
 	// Measure Vdd relative to bandgap
 	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
-			//| (0x2 << 8) // + of cmp to ACMP_input_2
 			| (0x6 << 8)  // bandgap
 			| (0x0 << 11) // - of cmp to voltage ladder
 			;
@@ -418,7 +418,7 @@ int main(void) {
 	{int k;
 	for (k = 0; k <32; k++) {
 		LPC_CMP->LAD = 1 | (k<<1);
-		__WFI(); // allow to settle
+		__WFI(); // allow to settle (15us on change, 30us on powerup)
 		if ( ! (LPC_CMP->CTRL & (1<<21))) {
 			MyUARTSendStringZ("V(mv)=");
 			MyUARTPrintDecimal(27900/k); // 900mV*31/k
@@ -436,10 +436,15 @@ int main(void) {
 			;
 
 	{int k;
-	for (k = 31; k >= 0; k--) {
+	//for (k = 31; k >= 0; k--) {
+	for (k = 0; k < 32; k++) {
+
 		LPC_CMP->LAD = 1 | (k<<1);
-		__WFI(); // allow to settle
-		if ( LPC_CMP->CTRL & (1<<21) ) {
+		__WFI(); // allow to settle (15us on change, 30us on powerup)
+
+		//if ( LPC_CMP->CTRL & (1<<21) ) {
+		if ( ! (LPC_CMP->CTRL & (1<<21)) ) {
+
 			MyUARTSendStringZ("L=");
 			MyUARTPrintDecimal(k);
 			MyUARTSendCRLF();
@@ -740,8 +745,8 @@ int main(void) {
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
-			MyUARTPrintHex(event_counter);
-			MyUARTSendCRLF();
+			//MyUARTPrintHex(event_counter);
+			//MyUARTSendCRLF();
 
 #ifdef FEATURE_DEEPSLEEP
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL

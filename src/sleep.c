@@ -9,6 +9,7 @@
 #include "lpc8xx_pmu.h"
 
 #include "sleep.h"
+#include "config.h"
 
 
 void prepareForPowerDown () {
@@ -31,7 +32,8 @@ void prepareForPowerDown () {
 
 	  // Step 2: Select the power configuration in Power-down mode in the
 	  // PDSLEEPCFG (Table 35) register
-	  LPC_SYSCON->PDSLEEPCFG = ~1<<6; // WDT on during deep sleep/power down
+	  LPC_SYSCON->PDSLEEPCFG = ~(1<<3); // WDT on during deep sleep/power down
+	  //LPC_SYSCON->PDSLEEPCFG = ~((1<<6)|(1<<3)); // WDT+BOD on during deep sleep/power down
 
 
 	  // Step 3: Select the power configuration after wake-up in the
@@ -42,9 +44,6 @@ void prepareForPowerDown () {
 	  // Step 4: If any of the available wake-up interrupts are used for wake-up,
 	  // enable the interrupts in the interrupt wake-up registers
 	  // (Table 33, Table 34) and in the NVIC.
-	  // Needed?
-	  //NVIC_ClearPendingIRQ(WKT_IRQn);
-	  //NVIC_DisableIRQ(WKT_IRQn);
 	  NVIC_EnableIRQ(WKT_IRQn);
 
 
@@ -54,18 +53,19 @@ void prepareForPowerDown () {
 
 	  // STARTERP1: Start logic 1 interrupt wake-up enable register
 	  // Bit 15: 1 = enable self wake-up timer interrupt wake-up
-	  // Bit 3: 1 = enable self wake-up on UART interrupt
 	  // Ref UM10601 §4.6.29
 	  // hmm.. UART must be in synchronous slave mode:
 	  // http://docs.lpcware.com/lpc800um/RegisterMaps/uart/c-ConfiguretheUSARTforwake-up.html
-	  LPC_SYSCON->STARTERP1 = (1<<15)  | (1<<3);
+	  LPC_SYSCON->STARTERP1 = (1<<15);
 
 
-	  // Also PINTINT0, PININT1, 2
+#ifdef FEATURE_EVENT_COUNTER
+	  // Also PINTINT0, PININT1, PININT2
 	  LPC_SYSCON->STARTERP0 = (1<<0) // PININT0 (UART RXD)
-							| (1<<1) //
-							| (1<<2) //
+							| (1<<1) // PININT1 (tip bucket)
+							//| (1<<2) // PININT2 (comparator output)
 							;
+#endif
 
 	  // DPDCTRL: Deep power-down control register
 	  // UM10601 §5.6.3 p47
