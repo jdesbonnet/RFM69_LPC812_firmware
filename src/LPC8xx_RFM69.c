@@ -149,25 +149,7 @@ void SwitchMatrix_Acmp_Init()
  * to reprogram the device using SWD (else will have to use awkward ISP entry via
  * powercycling to reprogram the device).
  */
-
-void SwitchMatrix_NoSpi_Init_old()
-{
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-
-    /* Pin Assign 1 bit Configuration */
-    /* SWCLK */
-    /* SWDIO */
-    /* RESET */
-    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
-}
-// reset disabled
-void SwitchMatrix_NoSpi_Init()
+void SwitchMatrix_WithSWD_Init()
 {
     /* Enable SWM clock */
     //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
@@ -185,11 +167,13 @@ void SwitchMatrix_NoSpi_Init()
 
 
 /**
- *
- *
- * Note: this configuration disables RESET and SWD.
- * To re-flash will need to access ISP
- * by holding PIO0_? low and cycling power.
+ * SwitchMatrix configuration to utilized RESET and SWD lines for SPI use
+ * (current implementation uses bitbanging on GPIO, so configure these
+ * pins for GPIO use. When this is called any debugging session in progress
+ * will be terminated, and it will not be possible to reflash the device
+ * unless SWD is restored (through UART command) or power cycle and reflash
+ * during the ~10second delay on boot when SWD is still active. Alternatively
+ * hold ISP entry pin (PIO0_0?) low and power cycle.
  */
 void SwitchMatrix_Spi_Init()
 {
@@ -302,7 +286,7 @@ int main(void) {
 	 */
 
 #ifdef LPC810
-	SwitchMatrix_NoSpi_Init();
+	SwitchMatrix_WithSWD_Init();
 #endif
 #ifdef LPC812
 	SwitchMatrix_Acmp_Init();
@@ -876,7 +860,7 @@ int main(void) {
 					spi_init();
 				} else {
 					// Enable SWD pins
-					SwitchMatrix_NoSpi_Init();
+					SwitchMatrix_WithSWD_Init();
 				}
 				break;
 			}
