@@ -29,7 +29,7 @@ int cmd_flags (int argc, uint8_t **argv) {
 		MyUARTSendStringZ("f ");
 		MyUARTPrintHex(flags);
 		MyUARTSendCRLF();
-		return;
+		return E_OK;
 	}
 
 	// Node address

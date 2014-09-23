@@ -35,6 +35,9 @@
 // Allow change of UART speed from default 9600
 //#define FEATURE_UART_SPEED
 
+// When sleeping trigger PIN interrupt on RXD line
+#define FEATURE_UART_INTERRUPT
+
 // Read RFM69 temperature sensor
 //#define FEATURE_TEMPERATURE
 

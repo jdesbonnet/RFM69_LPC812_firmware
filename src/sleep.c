@@ -14,6 +14,26 @@
 
 void prepareForPowerDown () {
 
+	// Condition pins to minimize current use during sleep
+
+#ifdef LPC812
+	// Experiment to disconnect UART to see if it reduces current during sleep
+	//LPC_SWM->PINASSIGN0 = 0xffffffffUL;
+
+	// Experiment (conducted w/o RFM69 radio connected): set SPI pins to output
+	// SPI pins output, all 0 results in 380uA
+	// SPI pins output, MISO=1, rest=0 328uA
+	// SPI pins output, MISO=MOSI=1, rest=0 275uA
+	// SPI pins output, MISO=MOSI=SCK=1, SS=0 222uA
+	// SPI pins output, all=1 results in 169uA power down current
+	GPIOSetDir(0, MISO_PIN, 1);
+	GPIOSetBitValue(0, MISO_PIN,1);
+	GPIOSetBitValue(0, MOSI_PIN,1);
+	GPIOSetBitValue(0, SCK_PIN,1);
+	GPIOSetBitValue(0, SS_PIN,1);
+
+#endif
+
 	//
 	// UM10601 §5.7.6.2, p52: Programming Power-down mode.
 	// Power-down mode keeps processor state, registers and SRAM. Almost
@@ -59,10 +79,13 @@ void prepareForPowerDown () {
 	  LPC_SYSCON->STARTERP1 = (1<<15);
 
 
+#ifdef FEATURE_UART_INTERRUPT
+	  LPC_SYSCON->STARTERP0 |= (1<<0); // PININT0 (UART RXD)
+#endif
+
 #ifdef FEATURE_EVENT_COUNTER
 	  // Also PINTINT0, PININT1, PININT2
-	  LPC_SYSCON->STARTERP0 = (1<<0) // PININT0 (UART RXD)
-							| (1<<1) // PININT1 (tip bucket)
+	  LPC_SYSCON->STARTERP0 |= (1<<1) // PININT1 (tip bucket)
 							//| (1<<2) // PININT2 (comparator output)
 							;
 #endif
