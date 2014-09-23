@@ -26,11 +26,15 @@ void prepareForPowerDown () {
 	// SPI pins output, MISO=MOSI=1, rest=0 275uA
 	// SPI pins output, MISO=MOSI=SCK=1, SS=0 222uA
 	// SPI pins output, all=1 results in 169uA power down current
-	GPIOSetDir(0, MISO_PIN, 1);
-	GPIOSetBitValue(0, MISO_PIN,1);
-	GPIOSetBitValue(0, MOSI_PIN,1);
-	GPIOSetBitValue(0, SCK_PIN,1);
-	GPIOSetBitValue(0, SS_PIN,1);
+
+	//GPIOSetDir(0, MISO_PIN, 1);
+	LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
+
+	//GPIOSetBitValue(0, MISO_PIN,1);
+	//GPIOSetBitValue(0, MOSI_PIN,1);
+	//GPIOSetBitValue(0, SCK_PIN,1);
+	//GPIOSetBitValue(0, SS_PIN,1);
+	LPC_GPIO_PORT->SET0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
 
 #endif
 
@@ -46,7 +50,7 @@ void prepareForPowerDown () {
 	// Ref UM10601 §5.6.1, Table 44,  p46.
 	// 0x1 Deep-sleep; 0x2 Power-down
 	//LPC_PMU->PCON = 0x1; // Getting ~ 200uA in this mode
-	LPC_PMU->PCON = 0x2; // Getting ~ 60uA in this mode
+	LPC_PMU->PCON = 0x2; // Getting ~ 60uA in this mode with LPC810
 
 
 

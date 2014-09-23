@@ -451,9 +451,10 @@ int main(void) {
 
 #endif
 
-	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 #ifdef FEATURE_LED
-	GPIOSetDir(0,LED_PIN,1);
+	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
+	//GPIOSetDir(0,LED_PIN,1);
+	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
 	ledBlink();
 #endif
 
@@ -521,7 +522,7 @@ int main(void) {
 			__WFI();
 
 			// Experimental: Reassign UART to external pins
-			SwitchMatrix_Init();
+			//SwitchMatrix_Init();
 			// Experimental: Re-init spi pins
 			spi_init();
 
