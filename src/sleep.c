@@ -16,7 +16,7 @@ void prepareForPowerDown () {
 
 	// Condition pins to minimize current use during sleep
 
-#ifdef LPC812
+//#ifdef LPC812
 	// Experiment to disconnect UART to see if it reduces current during sleep
 	//LPC_SWM->PINASSIGN0 = 0xffffffffUL;
 
@@ -27,16 +27,13 @@ void prepareForPowerDown () {
 	// SPI pins output, MISO=MOSI=SCK=1, SS=0 222uA
 	// SPI pins output, all=1 results in 169uA power down current
 
-	//GPIOSetDir(0, MISO_PIN, 1);
-	LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
+	// Experiment on LPC810 with RFM69HW connected:
+	// 44uA current consumption with all SPI pins output and high during power down mode.
 
-	//GPIOSetBitValue(0, MISO_PIN,1);
-	//GPIOSetBitValue(0, MOSI_PIN,1);
-	//GPIOSetBitValue(0, SCK_PIN,1);
-	//GPIOSetBitValue(0, SS_PIN,1);
+	LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
 	LPC_GPIO_PORT->SET0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
 
-#endif
+//#endif
 
 	//
 	// UM10601 §5.7.6.2, p52: Programming Power-down mode.

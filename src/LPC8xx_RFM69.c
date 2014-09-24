@@ -296,6 +296,10 @@ int main(void) {
 #endif
 
 	//GPIOInit();
+    // Reset GPIO
+	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
+	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+
 	MyUARTInit(UART_BPS);
 
 	// Display firmware version on boot
@@ -334,6 +338,7 @@ int main(void) {
     LPC_WWDT->FEED = 0x55;
     /* Make sure feed sequence executed properly */
     //loopDelay(1000);
+
 
 
 	spi_init();
@@ -523,9 +528,9 @@ int main(void) {
 
 			// Experimental: Reassign UART to external pins
 			//SwitchMatrix_Init();
-			// Experimental: Re-init spi pins
-			spi_init();
 
+			// Experimental: Re-set SPI pins after deepsleep/powerdown conditioning
+			spi_init();
 
 			// Allow time for clocks to stabilise after wake
 			// TODO: can we use WKT and WFI?
@@ -933,11 +938,15 @@ int main(void) {
 
 #ifdef FEATURE_UART_INTERRUPT
 /**
- * This interrupt is triggered on activity on UART RX
+ * This interrupt is triggered on activity on UART RXD. It's used to facilitate immediate
+ * wake of the MCU by the host by transmitting a char on the UART. The waking character
+ * will be lost however. One solution to lost char is to prefix each command with one or
+ * two <ESC> because <ESC> are ignored by UART API but will trigger this interrupt.
  */
 void PININT0_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PIN_INT->IST = 1<<0;
+	//LPC_USART0->TXDATA='*';
 	interrupt_source = UART_INTERRUPT;
 }
 #endif
