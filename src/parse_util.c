@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include "parse_util.h"
 
 /**
@@ -8,12 +9,17 @@ static int is_hex_digit(uint8_t c) {
 	if (c>='0' && c<='9') {
 		return c - '0';
 	}
+
+	// This bit flip trick saves 12 bytes (converts upper to lowercase)
+	c |= (1<<5);
 	if (c>='a' && c<='f') {
 		return c - 'a' + 10;
 	}
+	/*
 	if (c>='A' && c<='F') {
 		return c - 'A' + 10;
 	}
+	*/
 	return -1;
 }
 
