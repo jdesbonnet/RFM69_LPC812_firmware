@@ -571,11 +571,10 @@ int main(void) {
 			payload[1] = node_addr;
 			payload[2] = 'z';
 			payload[3] = sleep_counter++;
-
-
 			*/
 
 			tx_buffer.header.msg_type = 'z';
+			tx_buffer.buffer[3] = sleep_counter++;
 			rfm69_frame_tx(tx_buffer.buffer,4);
 
 			// Allow time for response (120ms)
