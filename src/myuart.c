@@ -47,9 +47,6 @@ void MyUARTInit(uint32_t baudrate)
 	LPC_SYSCON->PRESETCTRL |= (0x1<<3);
 
 
-
-
-
 	UARTSysClk = SystemCoreClock/LPC_SYSCON->UARTCLKDIV;
 	UARTx->CFG = UART_CFG_DATA_LENG_8|UART_CFG_PARITY_NONE|UART_CFG_STOP_BIT_1; /* 8 bits, no Parity, 1 Stop bit */
 	UARTx->BRG = UARTSysClk/16/baudrate-1;	/* baud rate */
@@ -68,18 +65,8 @@ void MyUARTInit(uint32_t baudrate)
 	LPC_SYSCON->UARTFRGMULT = (((UARTSysClk / 16) * (LPC_SYSCON->UARTFRGDIV + 1)) / (baudrate * (UARTx->BRG + 1))) - (LPC_SYSCON->UARTFRGDIV + 1);
 
 	UARTx->STAT = UART_STAT_CTS_DELTA | UART_STAT_DELTA_RXBRK;		/* Clear all status bits. */
-  /* Enable the UART Interrupt. */
 
-	/*
-	if (UARTx == LPC_USART0) {
-		NVIC_EnableIRQ(UART0_IRQn);
-	} else if (UARTx == LPC_USART1) {
-		NVIC_EnableIRQ(UART1_IRQn);
-	} else if (UARTx == LPC_USART2) {
-		NVIC_EnableIRQ(UART2_IRQn);
-	}
-	*/
-
+	// Enable UART interrupt
 	NVIC_EnableIRQ(UART0_IRQn);
 
 	UARTx->INTENSET = UART_STAT_RXRDY | UART_STAT_TXRDY | UART_STAT_DELTA_RXBRK;	/* Enable UART interrupt */
@@ -118,7 +105,9 @@ void MyUARTSendStringZ (uint8_t *buf) {
 
 
 void MyUARTSendCRLF(void) {
-	MyUARTSendStringZ((uint8_t *)"\r\n");
+	//MyUARTSendStringZ((uint8_t *)"\r\n");
+	MyUARTSendByte('\r');
+	MyUARTSendByte('\n');
 }
 
 void UART0_IRQHandler(void)
@@ -153,7 +142,6 @@ void UART0_IRQHandler(void)
 		LPC_USART0->INTENCLR = 0x04;
 	}
 
-  return;
 }
 
 uint8_t* MyUARTGetBuf(void) {
@@ -196,7 +184,7 @@ void MyUARTBufReset() {
 		uart_rxbuf[i]=0;
 	}
 
-	// Rest flags
+	// Reset flags
 	uart_buf_flags = 0;
 }
 
@@ -225,6 +213,7 @@ void MyUARTPrintDecimal (int32_t i) {
 
 
 void MyUARTPrintHex (uint32_t v) {
+	// 36 bytes long
 	int i,h;
 	for (i = 28; i >=0 ; i-=4) {
 		h = (v>>i) & 0x0f;
