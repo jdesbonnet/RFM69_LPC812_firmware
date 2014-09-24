@@ -71,6 +71,7 @@ typedef enum {
 volatile interrupt_source_type interrupt_source;
 
 frame_buffer_type tx_buffer;
+frame_buffer_type rx_buffer;
 
 //frame_send_buffer.header.from_addr = node_addr;
 
@@ -358,7 +359,7 @@ int main(void) {
 	uint8_t *args[8];
 
 	// Radio frame receive buffer
-	uint8_t frxbuf[66];
+	//uint8_t frxbuf[66];
 	uint8_t frame_len;
 
 	// Use to ID each sleep ping packet. No need to init (saves 4 bytes).
@@ -594,38 +595,33 @@ int main(void) {
 		if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
 
 			// Yes, frame ready to be read from FIFO
-			frame_len = rfm69_frame_rx(frxbuf,66,&rssi);
+			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
 
 			// TODO: tidy this
 			// SPI error
 			//if (frame_len>0) {
 
-				// Feed watchdog
-			    LPC_WWDT->FEED = 0xAA;
-			    LPC_WWDT->FEED = 0x55;
+			// Feed watchdog
+			LPC_WWDT->FEED = 0xAA;
+			LPC_WWDT->FEED = 0x55;
 
-				// All frames have a common header
-				// 8 bit to address
-				// 8 bit from address
-				// 8 bit message type
-				uint8_t to_addr = frxbuf[0];
-				uint8_t from_addr = frxbuf[1];
-				uint8_t msgType = frxbuf[2];
 
 			// 0xff is the broadcast address
-			if ( (flags&FLAG_PROMISCUOUS_MODE) || to_addr == 0xff || to_addr == tx_buffer.header.from_addr) {
+			if ( (flags&FLAG_PROMISCUOUS_MODE)
+					|| rx_buffer.header.to_addr == 0xff
+					|| rx_buffer.header.to_addr == tx_buffer.header.from_addr) {
 
 				// This frame is for us! Examine messageType field for appropriate action.
 
-				switch (msgType) {
+				switch (rx_buffer.header.msg_type) {
 
 #ifdef FEATURE_REMOTE_PKT_TX
 				// Experimental remote packet transmit / relay
 				case 'B' : {
 					int payload_len = frame_len - 3;
 					uint8_t payload[payload_len];
-					memcpy(payload,frxbuf+3,payload_len);
-					rfm69_frame_tx(payload, payload_len);
+					memcpy(tx_buffer.payload,rx_buffer.payload,payload_len);
+					rfm69_frame_tx(tx_buffer.buffer, payload_len+3);
 					break;
 				}
 #endif
@@ -637,7 +633,7 @@ int main(void) {
 				{
 					int loc_len = strlen(current_loc);
 					// report position
-					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'r';
 					memcpy(tx_buffer.payload,current_loc,loc_len);
 					rfm69_frame_tx(tx_buffer.buffer, loc_len+3);
@@ -647,10 +643,10 @@ int main(void) {
 #ifdef FEATURE_REMOTE_REG_READ
 				// Remote register read
 				case 'X' : {
-					uint8_t base_addr = frxbuf[3];
-					uint8_t read_len = frxbuf[4];
+					uint8_t base_addr = rx_buffer.payload[0];
+					uint8_t read_len = rx_buffer.payload[1];
 					if (read_len>16) read_len = 16;
-					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'x';
 					tx_buffer.payload[0] = base_addr;
 					int i;
@@ -665,14 +661,14 @@ int main(void) {
 #ifdef FEATURE_REMOTE_REG_WRITE
 				// Remote register write
 				case 'Y' : {
-					uint8_t base_addr = frxbuf[3];
+					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t write_len = frame_len - 4;
 					if (write_len > 16) write_len = 16;
 					int i;
 					for (i = 0; i < write_len; i++) {
-						rfm69_register_write(base_addr+i,frxbuf[i+4]);
+						rfm69_register_write(base_addr+i,rx_buffer.payload[i+1]);
 					}
-					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'y';
 					rfm69_frame_tx(tx_buffer.buffer, 3);
 					break;
@@ -696,7 +692,7 @@ int main(void) {
 					}
 					MyUARTSendStringZ("d ");
 					int payload_len = frame_len - 3;
-					memcpy(cmdbuf,frxbuf+3,payload_len);
+					memcpy(cmdbuf,rx_buffer.payload,payload_len);
 					cmdbuf[payload_len] = 0; // zero terminate buffer
 					MyUARTSendStringZ(cmdbuf);
 					MyUARTSendCRLF();
@@ -722,9 +718,9 @@ int main(void) {
 				case '>' : {
 					// To 32bit memory address at payload+0 and write value at payload+4
 					uint32_t **mem_addr;
-					mem_addr = frxbuf+3;
+					mem_addr = rx_buffer.payload;
 					uint32_t *mem_val;
-					mem_val = frxbuf+7;
+					mem_val = rx_buffer.payload+4;
 					**mem_addr = *mem_val;
 					break;
 				}
@@ -732,8 +728,8 @@ int main(void) {
 				case '<' : {
 					// Return 32bit value from memory at payload+0
 					uint32_t **mem_addr;
-					mem_addr = frxbuf+3;
-					tx_buffer.header.to_addr = from_addr;
+					mem_addr = rx_buffer.payload;
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = '<'-32;
 					*(uint32_t *)tx_buffer.payload = *mem_addr;
 					*(uint32_t *)(tx_buffer.payload+4) = **mem_addr;
@@ -744,7 +740,7 @@ int main(void) {
 				case 'E' : {
 					// Execute function at memory loadion payload+0 (note LSB=1 for Thumb)
 					uint32_t **mem_addr;
-					mem_addr = frxbuf+3;
+					mem_addr = rx_buffer.payload;
 					typedef void (*E)(void);
 					E e_entry = (E)*mem_addr;
 					e_entry();
@@ -757,15 +753,15 @@ int main(void) {
 
 					MyUARTSendStringZ("p ");
 
-					print_hex8(frxbuf[0]);
+					print_hex8(rx_buffer.header.to_addr);
 					MyUARTSendByte(' ');
-					print_hex8(frxbuf[1]);
+					print_hex8(rx_buffer.header.from_addr);
 					MyUARTSendByte(' ');
 
 
 					int i;
 					for (i = 2; i < frame_len; i++) {
-						print_hex8(frxbuf[i]);
+						print_hex8(rx_buffer.buffer[i]);
 					}
 					MyUARTSendByte(' ');
 					print_hex8(rssi);
