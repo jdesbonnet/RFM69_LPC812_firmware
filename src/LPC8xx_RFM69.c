@@ -302,10 +302,10 @@ int main(void) {
 	SwitchMatrix_Acmp_Init();
 #endif
 
-	//GPIOInit();
-    // Reset GPIO
-	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
-	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	// Reset GPIO
+	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
+	//LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	lpc8xx_peripheral_reset(10);
 
 	MyUARTInit(UART_BPS);
 

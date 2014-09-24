@@ -43,8 +43,9 @@ void MyUARTInit(uint32_t baudrate)
 
 
 	/* Peripheral reset control to UART, a "1" bring it out of reset. */
-	LPC_SYSCON->PRESETCTRL &= ~(0x1<<3);
-	LPC_SYSCON->PRESETCTRL |= (0x1<<3);
+	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<3);
+	//LPC_SYSCON->PRESETCTRL |= (0x1<<3);
+	lpc8xx_peripheral_reset(3);
 
 
 	UARTSysClk = SystemCoreClock/LPC_SYSCON->UARTCLKDIV;

@@ -108,8 +108,9 @@ void prepareForPowerDown () {
 	  // Reset WKT by writing 0, and then 1 to bit 9 of Peripheral reset control register
 	  // Ref UM10601, §4.6.2, p20.
 	  // TODO: is this necessary?
-	  LPC_SYSCON->PRESETCTRL &= ~(0x1 << 9);
-	  LPC_SYSCON->PRESETCTRL |= (0x1 << 9);
+	  //LPC_SYSCON->PRESETCTRL &= ~(0x1 << 9);
+	  //LPC_SYSCON->PRESETCTRL |= (0x1 << 9);
+	  lpc8xx_peripheral_reset(9);
 
 
 	  // Use WTK clock source 1 (10kHz, low power, low accuracy).
