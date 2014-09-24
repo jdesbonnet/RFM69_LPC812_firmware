@@ -717,6 +717,40 @@ int main(void) {
 #endif
 
 
+#ifdef FEATURE_REMOTE_RWX
+				// Experimental write to memory
+				case '>' : {
+					// To 32bit memory address at payload+0 and write value at payload+4
+					uint32_t **mem_addr;
+					mem_addr = frxbuf+3;
+					uint32_t *mem_val;
+					mem_val = frxbuf+7;
+					**mem_addr = *mem_val;
+					break;
+				}
+				// Experimental read from memory
+				case '<' : {
+					// Return 32bit value from memory at payload+0
+					uint32_t **mem_addr;
+					mem_addr = frxbuf+3;
+					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.msg_type = '<'-32;
+					*(uint32_t *)tx_buffer.payload = *mem_addr;
+					*(uint32_t *)(tx_buffer.payload+4) = **mem_addr;
+					rfm69_frame_tx(tx_buffer.buffer, 3+8);
+					break;
+				}
+				// Experimental execute from memory (!?!)
+				case 'E' : {
+					// Execute function at memory loadion payload+0 (note LSB=1 for Thumb)
+					uint32_t **mem_addr;
+					mem_addr = frxbuf+3;
+					typedef void (*E)(void);
+					E e_entry = (E)*mem_addr;
+					e_entry();
+					break;
+				}
+#endif
 
 				// If none of the above cases match, output packet to UART
 				default: {

@@ -41,8 +41,8 @@
 // Read RFM69 temperature sensor
 //#define FEATURE_TEMPERATURE
 
-
-
+// Remote memory read/write and execute (+160bytes)
+#define FEATURE_REMOTE_RWX
 
 // Diagnostic LED (only available on LPC812)
 #ifdef LPC812
