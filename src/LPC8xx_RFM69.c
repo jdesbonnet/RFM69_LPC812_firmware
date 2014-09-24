@@ -717,7 +717,7 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_REMOTE_RWX
+#ifdef FEATURE_REMOTE_MEM_RWX
 				// Experimental write to memory
 				case '>' : {
 					// To 32bit memory address at payload+0 and write value at payload+4
@@ -960,6 +960,31 @@ int main(void) {
 				rfm69_register_write(regAddr,regValue);
 				break;
 			}
+
+
+
+#ifdef FEATURE_UART_MEM_RWX
+				// Experimental write to memory. Write 8 bits at a time as writing more
+				// might trigger a fault if not correctly aligned.
+				// > 32bit-addr byte-value
+				case '>' : {
+					uint8_t *mem_addr;
+					mem_addr = parse_hex(args[1]);
+					*mem_addr = parse_hex(args[2]);
+					break;
+				}
+				// Experimental read from memory
+				// < 32bit-addr
+				case '<' : {
+					uint32_t *mem_addr;
+					mem_addr = parse_hex(args[1]);
+					MyUARTPrintHex(*mem_addr);
+					break;
+				}
+#endif
+
+
+
 			default : {
 				report_error(*args[0], E_INVALID_CMD);
 			}

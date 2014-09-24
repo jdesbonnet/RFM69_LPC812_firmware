@@ -36,13 +36,16 @@
 //#define FEATURE_UART_SPEED
 
 // When sleeping trigger PIN interrupt on RXD line
-#define FEATURE_UART_INTERRUPT
+//#define FEATURE_UART_INTERRUPT
 
 // Read RFM69 temperature sensor
 //#define FEATURE_TEMPERATURE
 
-// Remote memory read/write and execute (+160bytes)
-#define FEATURE_REMOTE_RWX
+// Remote MCU memory read/write and execute (+160bytes)
+#define FEATURE_REMOTE_MEM_RWX
+
+// MCU memory read/write/exec from UART API
+#define FEATURE_UART_MEM_RWX
 
 // Diagnostic LED (only available on LPC812)
 #ifdef LPC812
