@@ -43,7 +43,7 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 	for (i = 0; i < payload_len; i++) {
 		tt[0] = argv[2][i*2];
 		tt[1] = argv[2][i*2+1];
-		tx_buffer.buffer[i+2] = parse_hex(tt);
+		tx_buffer.payload[i] = parse_hex(tt);
 	}
 
 	// Transmit frame

@@ -575,7 +575,7 @@ int main(void) {
 			*/
 
 			tx_buffer.header.msg_type = 'z';
-			tx_buffer.buffer[3] = sleep_counter++;
+			tx_buffer.payload[0] = sleep_counter++;
 			rfm69_frame_tx(tx_buffer.buffer,4);
 
 			// Allow time for response (120ms)
@@ -637,18 +637,9 @@ int main(void) {
 				{
 					int loc_len = strlen(current_loc);
 					// report position
-					/*
-					int payload_len = loc_len + 3;
-					uint8_t payload[payload_len];
-					payload[0] = from_addr;
-					payload[1] = node_addr;
-					payload[2] = 'r';
-					memcpy(payload+3,current_loc,loc_len);
-					rfm69_frame_tx(payload, payload_len);
-					*/
 					tx_buffer.header.to_addr = from_addr;
 					tx_buffer.header.msg_type = 'r';
-					memcpy(tx_buffer.buffer+3,current_loc,loc_len);
+					memcpy(tx_buffer.payload,current_loc,loc_len);
 					rfm69_frame_tx(tx_buffer.buffer, loc_len+3);
 					break;
 				}
@@ -659,25 +650,12 @@ int main(void) {
 					uint8_t base_addr = frxbuf[3];
 					uint8_t read_len = frxbuf[4];
 					if (read_len>16) read_len = 16;
-					/*
-					uint8_t payload[read_len+4];
-					payload[0] = from_addr;
-					payload[1] = node_addr;
-					payload[2] = 'x';
-					payload[3] = base_addr;
-					int i;
-					for (i = 0; i < read_len; i++) {
-						payload[i+4] = rfm69_register_read(base_addr+i);
-					}
-					rfm69_frame_tx(payload, read_len+4);
-
-					*/
 					tx_buffer.header.to_addr = from_addr;
 					tx_buffer.header.msg_type = 'x';
-					tx_buffer.buffer[3] = base_addr;
+					tx_buffer.payload[0] = base_addr;
 					int i;
 					for (i = 0; i < read_len; i++) {
-						tx_buffer.buffer[i+4] = rfm69_register_read(base_addr+i);
+						tx_buffer.payload[i+1] = rfm69_register_read(base_addr+i);
 					}
 					rfm69_frame_tx(tx_buffer.buffer, read_len+4);
 					break;
@@ -694,13 +672,6 @@ int main(void) {
 					for (i = 0; i < write_len; i++) {
 						rfm69_register_write(base_addr+i,frxbuf[i+4]);
 					}
-					/*
-					uint8_t payload[2];
-					payload[0] = from_addr;
-					payload[1] = node_addr;
-					payload[2] = 'y';
-					rfm69_frame_tx(payload, 3);
-					*/
 					tx_buffer.header.to_addr = from_addr;
 					tx_buffer.header.msg_type = 'y';
 					rfm69_frame_tx(tx_buffer.buffer, 3);
@@ -744,6 +715,8 @@ int main(void) {
 					break;
 				}
 #endif
+
+
 
 				// If none of the above cases match, output packet to UART
 				default: {
