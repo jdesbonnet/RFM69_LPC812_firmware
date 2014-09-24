@@ -39,6 +39,7 @@ For v0.2.0:
 #include "cmd.h"
 #include "err.h"
 #include "flags.h"
+#include "frame_buffer.h"
 
 #include "lpc8xx_pmu.h"
 
@@ -69,7 +70,7 @@ typedef enum {
 } interrupt_source_type;
 volatile interrupt_source_type interrupt_source;
 
-tx_buffer_type tx_buffer;
+frame_buffer_type tx_buffer;
 
 //frame_send_buffer.header.from_addr = node_addr;
 

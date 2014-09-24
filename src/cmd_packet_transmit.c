@@ -7,13 +7,11 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "myuart.h"
-#include "print_util.h"
 #include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"
 #include "err.h"
-#include "config.h"
+#include "frame_buffer.h"
 
 //extern uint8_t node_addr;
 
@@ -21,7 +19,7 @@
  * Command to transmit arbitrary packet.
  * Args: <to-node-addr> <packet-payload>
  */
-extern tx_buffer_type tx_buffer;
+extern frame_buffer_type tx_buffer;
 int cmd_packet_transmit (int argc, uint8_t **argv) {
 
 	if (argc != 3) {

@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.2.5"
+#define VERSION "RFM69 0.2.6"
 
 #define DEFAULT_NODE_ADDR 0x41
 
@@ -84,16 +84,3 @@
 #endif
 
 #endif
-
-// TODO: This doesn't belong here
-typedef struct {
-	//uint8_t flags;
-	uint8_t to_addr;
-	uint8_t from_addr;
-	uint8_t msg_type;
-} frame_header_type;
-
-typedef union {
-	frame_header_type header;
-	uint8_t buffer[66];
-} tx_buffer_type;

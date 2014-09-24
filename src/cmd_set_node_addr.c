@@ -9,13 +9,13 @@
 #include "parse_util.h"
 #include "cmd.h"
 #include "err.h"
-#include "config.h"
+#include "frame_buffer.h"
 
 /**
  * Set node address
  * Args: <node-addr>
  */
-extern tx_buffer_type tx_buffer;
+extern frame_buffer_type tx_buffer;
 int cmd_set_node_addr (int argc, uint8_t **argv) {
 
 	if (argc != 2) {
