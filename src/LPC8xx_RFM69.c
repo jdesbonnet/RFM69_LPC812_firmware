@@ -46,7 +46,7 @@ For v0.2.0:
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 
 // Address of this node
-int8_t node_addr = DEFAULT_NODE_ADDR;
+//int8_t node_addr = DEFAULT_NODE_ADDR;
 
 // Current location string specified by boat firmware. Format TBD.
 uint8_t current_loc[32];
@@ -68,6 +68,11 @@ typedef enum {
 	PIEZO_SENSOR_INTERRUPT = 4
 } interrupt_source_type;
 volatile interrupt_source_type interrupt_source;
+
+tx_buffer_type tx_buffer;
+
+//frame_send_buffer.header.from_addr = node_addr;
+
 
 #ifdef FEATURE_EVENT_COUNTER
 	volatile uint32_t event_counter ;
@@ -360,6 +365,8 @@ int main(void) {
 
 	int argc;
 
+	tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
+
 #ifdef FEATURE_UART_INTERRUPT
 	// Experimental wake on activity on UART RXD (RXD is shared with PIO0_0)
 	LPC_SYSCON->PINTSEL[0] = 0; // PIO0_0 aka RXD
@@ -557,12 +564,19 @@ int main(void) {
 
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
+
+			/*
 			uint8_t payload[4];
 			payload[0] = 0xff;
 			payload[1] = node_addr;
 			payload[2] = 'z';
 			payload[3] = sleep_counter++;
-			rfm69_frame_tx(payload,4);
+
+
+			*/
+
+			tx_buffer.header.msg_type = 'z';
+			rfm69_frame_tx(tx_buffer.buffer,4);
 
 			// Allow time for response (120ms)
 			// TODO: this is only long enough for a 4 or 5 bytes of payload.
@@ -599,7 +613,7 @@ int main(void) {
 				uint8_t msgType = frxbuf[2];
 
 			// 0xff is the broadcast address
-			if ( (flags&FLAG_PROMISCUOUS_MODE) || to_addr == 0xff || to_addr == node_addr) {
+			if ( (flags&FLAG_PROMISCUOUS_MODE) || to_addr == 0xff || to_addr == tx_buffer.header.from_addr) {
 
 				// This frame is for us! Examine messageType field for appropriate action.
 
@@ -623,6 +637,7 @@ int main(void) {
 				{
 					int loc_len = strlen(current_loc);
 					// report position
+					/*
 					int payload_len = loc_len + 3;
 					uint8_t payload[payload_len];
 					payload[0] = from_addr;
@@ -630,6 +645,11 @@ int main(void) {
 					payload[2] = 'r';
 					memcpy(payload+3,current_loc,loc_len);
 					rfm69_frame_tx(payload, payload_len);
+					*/
+					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.msg_type = 'r';
+					memcpy(tx_buffer.buffer+3,current_loc,loc_len);
+					rfm69_frame_tx(tx_buffer.buffer, loc_len+3);
 					break;
 				}
 
@@ -639,6 +659,7 @@ int main(void) {
 					uint8_t base_addr = frxbuf[3];
 					uint8_t read_len = frxbuf[4];
 					if (read_len>16) read_len = 16;
+					/*
 					uint8_t payload[read_len+4];
 					payload[0] = from_addr;
 					payload[1] = node_addr;
@@ -649,6 +670,16 @@ int main(void) {
 						payload[i+4] = rfm69_register_read(base_addr+i);
 					}
 					rfm69_frame_tx(payload, read_len+4);
+
+					*/
+					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.msg_type = 'x';
+					tx_buffer.buffer[3] = base_addr;
+					int i;
+					for (i = 0; i < read_len; i++) {
+						tx_buffer.buffer[i+4] = rfm69_register_read(base_addr+i);
+					}
+					rfm69_frame_tx(tx_buffer.buffer, read_len+4);
 					break;
 				}
 #endif
@@ -663,11 +694,16 @@ int main(void) {
 					for (i = 0; i < write_len; i++) {
 						rfm69_register_write(base_addr+i,frxbuf[i+4]);
 					}
+					/*
 					uint8_t payload[2];
 					payload[0] = from_addr;
 					payload[1] = node_addr;
 					payload[2] = 'y';
 					rfm69_frame_tx(payload, 3);
+					*/
+					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.msg_type = 'y';
+					rfm69_frame_tx(tx_buffer.buffer, 3);
 					break;
 				}
 
@@ -701,11 +737,9 @@ int main(void) {
 #ifdef FEATURE_LED
 				// Remote LED blink
 				case 'U' : {
-					uint8_t payload[2];
-					payload[0] = from_addr;
-					payload[1] = node_addr;
-					payload[2] = 'u';
-					rfm69_frame_tx(payload, 3);
+					tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.msg_type = 'u';
+					rfm69_frame_tx(tx_buffer.buffer, 3);
 					ledBlink();
 					break;
 				}

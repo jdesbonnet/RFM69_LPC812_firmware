@@ -6,27 +6,21 @@
 
 #include <string.h>
 
-#include "myuart.h"
-#include "print_util.h"
 #include "parse_util.h"
-#include "rfm69.h"
 #include "cmd.h"
 #include "err.h"
-
-
-extern uint8_t node_addr;
+#include "config.h"
 
 /**
  * Set node address
  * Args: <node-addr>
  */
+extern tx_buffer_type tx_buffer;
 int cmd_set_node_addr (int argc, uint8_t **argv) {
 
 	if (argc != 2) {
 		return E_WRONG_ARGC;
 	}
-
-	// Node address
-	node_addr = parse_hex(argv[1]);
-
+	tx_buffer.header.from_addr=parse_hex(argv[1]);
+	return E_OK;
 }
