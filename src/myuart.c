@@ -278,7 +278,7 @@ int isDigit (uint8_t v) {
 /**
  * Return zero terminated string length
  */
-int getLength (uint8_t *s) {
+int MyUARTGetStrLen (uint8_t *s) {
 	int len=0;
 	while (*s++) len++;
 	return len;

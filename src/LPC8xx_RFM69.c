@@ -227,7 +227,6 @@ void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
 	MyUARTSendStringZ((uint8_t *)"e ");
 	MyUARTSendByte(cmd);
-	//MyUARTSendStringZ((uint8_t *)" ");
 	MyUARTSendByte(' ');
 	MyUARTPrintHex(code);
 	MyUARTSendCRLF();
@@ -632,7 +631,7 @@ int main(void) {
 				case 'R' :
 				//case 'z' : // for testing only
 				{
-					int loc_len = strlen(current_loc);
+					int loc_len = MyUARTGetStrLen(current_loc);
 					// report position
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'r';
@@ -782,16 +781,16 @@ int main(void) {
 					}
 					MyUARTSendByte(' ');
 					print_hex8(rssi);
-					MyUARTSendCRLF(LPC_USART0);
+					MyUARTSendCRLF();
 				}
 				}
 
 			} else {
 
 #ifdef FEATURE_DEBUG
-				MyUARTSendStringZ(LPC_USART0,"i Ignoring packet from ");
-				MyUARTPrintHex(LPC_USART0,to_addr);
-				MyUARTSendCRLF(LPC_USART0);
+				MyUARTSendStringZ("i Ignoring packet from ");
+				MyUARTPrintHex(to_addr);
+				MyUARTSendCRLF();
 #endif
 
 			}
@@ -811,7 +810,7 @@ int main(void) {
 			setOpMode(MODE_AWAKE);
 #endif
 
-			MyUARTSendCRLF(LPC_USART0);
+			MyUARTSendCRLF();
 
 			cmdbuf = MyUARTGetBuf();
 
@@ -854,9 +853,9 @@ int main(void) {
 			// Display MCU unique ID
 #ifdef FEATURE_MCU_UID
 			case 'I' : {
-				MyUARTSendStringZ(LPC_USART0,"u ");
-				MyUARTPrintHex(LPC_USART0,get_mcu_serial_number());
-				MyUARTSendCRLF(LPC_USART0);
+				MyUARTSendStringZ("u ");
+				MyUARTPrintHex(get_mcu_serial_number());
+				MyUARTSendCRLF();
 				break;
 			}
 #endif
@@ -864,7 +863,7 @@ int main(void) {
 			// Set current location
 			case 'L' : {
 				// +1 on len to include zero terminator
-				memcpy(current_loc,args[1],strlen(args[1])+1);
+				memcpy(current_loc,args[1],MyUARTGetStrLen(args[1])+1);
 				break;
 			}
 
@@ -872,8 +871,8 @@ int main(void) {
 			// NMEA (only interested in $GPGLL)
 			case '$' : {
 				// +1 on len to include zero terminator
-				if (strlen(args[0]) && args[0][4]=='L' && args[0][5]=='L') {
-					memcpy(current_loc,args[0],strlen(args[0])+1);
+				if (MyUARTGetStrLen(args[0]) && args[0][4]=='L' && args[0][5]=='L') {
+					memcpy(current_loc,args[0],MyUARTGetStrLen(args[0])+1);
 				}
 				break;
 			}
@@ -916,10 +915,9 @@ int main(void) {
 				int regAddr = parse_hex(args[1],&b);
 				MyUARTSendStringZ("r ");
 				print_hex8 (regAddr);
-				//MyUARTSendStringZ(" ");
 				MyUARTSendByte(' ');
 				print_hex8 (rfm69_register_read(regAddr));
-				MyUARTSendCRLF(LPC_USART0);
+				MyUARTSendCRLF();
 				break;
 			}
 

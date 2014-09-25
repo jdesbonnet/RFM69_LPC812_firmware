@@ -11,6 +11,7 @@
 #include "rfm69.h"
 #include "cmd.h"
 #include "err.h"
+#include "myuart.h"
 #include "frame_buffer.h"
 
 //extern uint8_t node_addr;
@@ -28,7 +29,7 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 
 
 	// Packet payload in hex, so divide by two to get byte count
-	uint32_t payload_len = strlen(argv[2]) / 2;
+	uint32_t payload_len = MyUARTGetStrLen(argv[2]) / 2;
 
 	if (payload_len >= 66) {
 		return E_PKT_TOO_LONG;
