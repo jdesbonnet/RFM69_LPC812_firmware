@@ -1,9 +1,9 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.2.7"
+#define VERSION "RFM69 0.2.8"
 
-#define DEFAULT_NODE_ADDR 0x41
+#define DEFAULT_NODE_ADDR 0x42
 
 // Version of MCU used (LPC812, LPC810 supported)
 #define LPC810
