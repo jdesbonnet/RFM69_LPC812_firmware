@@ -722,7 +722,7 @@ int main(void) {
 					uint32_t **mem_addr;
 					mem_addr = (uint32_t **)rx_buffer.payload;
 					uint32_t *mem_val;
-					mem_val = (uint32_t *)rx_buffer.payload+4;
+					mem_val = (uint32_t *)(rx_buffer.payload+4);
 					**mem_addr = *mem_val;
 					/*
 					int i;
