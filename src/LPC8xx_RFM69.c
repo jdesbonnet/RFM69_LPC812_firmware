@@ -735,19 +735,22 @@ int main(void) {
 				// Experimental read from memory
 				case '<' : {
 					// Return 32bit value from memory at payload+0
-					// First 4 bytes is base address, followed by byte number of bytes to read
+					// Note address and result is LSB first (little endian)
 					uint32_t **mem_addr;
-					mem_addr = (uint8_t **)rx_buffer.payload;
-					uint8_t len = rx_buffer.payload[4];
+					mem_addr = (uint32_t **)rx_buffer.payload;
+					//uint8_t len = rx_buffer.payload[4];
 					// First 4 bytes of return is base address
 					*(uint32_t *)tx_buffer.payload = *mem_addr;
+					*(uint32_t *)(tx_buffer.payload+4) = **mem_addr;
+					/*
 					int i;
 					for (i = 0; i < len; i++) {
 						tx_buffer.payload[i+4] = **mem_addr;
 					}
+					*/
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = '<'-32;
-					rfm69_frame_tx(tx_buffer.buffer, sizeof(frame_header_type)+4+len);
+					rfm69_frame_tx(tx_buffer.buffer, sizeof(frame_header_type)+8);
 					break;
 				}
 				// Experimental execute from memory (!?!)
