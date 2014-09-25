@@ -738,7 +738,7 @@ int main(void) {
 					// First 4 bytes is base address, followed by byte number of bytes to read
 					uint32_t **mem_addr;
 					mem_addr = (uint8_t **)rx_buffer.payload;
-					uint8_t len = rx_buffer.payload[5];
+					uint8_t len = rx_buffer.payload[4];
 					// First 4 bytes of return is base address
 					*(uint32_t *)tx_buffer.payload = *mem_addr;
 					int i;
