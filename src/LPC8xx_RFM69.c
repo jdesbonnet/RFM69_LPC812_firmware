@@ -55,8 +55,8 @@ uint8_t current_loc[32];
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
 volatile uint32_t flags =
-		//MODE_LOW_POWER_POLL
-		MODE_AWAKE
+		MODE_LOW_POWER_POLL
+		//MODE_AWAKE
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
 
@@ -575,6 +575,7 @@ int main(void) {
 			payload[3] = sleep_counter++;
 			*/
 
+			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
 			rfm69_frame_tx(tx_buffer.buffer,4);
@@ -716,24 +717,37 @@ int main(void) {
 #ifdef FEATURE_REMOTE_MEM_RWX
 				// Experimental write to memory
 				case '>' : {
-					// To 32bit memory address at payload+0 and write value at payload+4
+					// At 32bit memory address at payload+0 write 32bit value at payload+4
+					// Note: must be 32bit word aligned.
 					uint32_t **mem_addr;
-					mem_addr = rx_buffer.payload;
+					mem_addr = (uint32_t **)rx_buffer.payload;
 					uint32_t *mem_val;
-					mem_val = rx_buffer.payload+4;
+					mem_val = (uint32_t *)rx_buffer.payload+4;
 					**mem_addr = *mem_val;
+					/*
+					int i;
+					for (i = 0; i < (frame_len-sizeof(frame_header_type)-4)/4; i++) {
+						**mem_addr = rx_buffer.payload[i+4];
+					}
+					*/
 					break;
 				}
 				// Experimental read from memory
 				case '<' : {
 					// Return 32bit value from memory at payload+0
+					// First 4 bytes is base address, followed by byte number of bytes to read
 					uint32_t **mem_addr;
-					mem_addr = rx_buffer.payload;
+					mem_addr = (uint8_t **)rx_buffer.payload;
+					uint8_t len = rx_buffer.payload[5];
+					// First 4 bytes of return is base address
+					*(uint32_t *)tx_buffer.payload = *mem_addr;
+					int i;
+					for (i = 0; i < len; i++) {
+						tx_buffer.payload[i+4] = **mem_addr;
+					}
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = '<'-32;
-					*(uint32_t *)tx_buffer.payload = *mem_addr;
-					*(uint32_t *)(tx_buffer.payload+4) = **mem_addr;
-					rfm69_frame_tx(tx_buffer.buffer, 3+8);
+					rfm69_frame_tx(tx_buffer.buffer, sizeof(frame_header_type)+4+len);
 					break;
 				}
 				// Experimental execute from memory (!?!)
@@ -964,7 +978,7 @@ int main(void) {
 				// might trigger a fault if not correctly aligned.
 				// > 32bit-addr byte-value
 				case '>' : {
-					uint8_t *mem_addr;
+					uint32_t *mem_addr;
 					mem_addr = parse_hex(args[1]);
 					*mem_addr = parse_hex(args[2]);
 					break;
@@ -975,6 +989,7 @@ int main(void) {
 					uint32_t *mem_addr;
 					mem_addr = parse_hex(args[1]);
 					MyUARTPrintHex(*mem_addr);
+					MyUARTSendCRLF();
 					break;
 				}
 #endif

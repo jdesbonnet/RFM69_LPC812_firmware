@@ -39,7 +39,7 @@
 //#define FEATURE_UART_INTERRUPT
 
 // Read RFM69 temperature sensor
-//#define FEATURE_TEMPERATURE
+#define FEATURE_TEMPERATURE
 
 // Remote MCU memory read/write and execute (+160bytes)
 #define FEATURE_REMOTE_MEM_RWX
