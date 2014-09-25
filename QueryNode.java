@@ -1,16 +1,18 @@
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.BufferedReader;
+import java.util.ArrayList;
+
 public class QueryNode {
 
 	private static String poke (int addr, int value) {
-		String addrHex = String.format("%08x", addr);
-		String valueHex = String.format("%08x", value);
+		String addrHex = String.format("%08x", Integer.reverseBytes(addr));
+		String valueHex = String.format("%08x", Integer.reverseBytes(value));
 		return "T FF 3E" + addrHex + valueHex;
 	}
 
 	private static String peek (int addr) {
-		String addrHex = String.format("%08x", addr);
+		String addrHex = String.format("%08x", Integer.reverseBytes(addr));
 		return "T FF 3C" + addrHex;
 	}
 
@@ -39,6 +41,16 @@ public class QueryNode {
 		//String remoteCmd1 = "T FF 4456"; // Remote 'V' command
 		//String remoteCmd1 = "T FF 444620343032"; // Remote 'F 402' (low power poll)
 		//String remoteCmd1 = "T FF 44462032"; // Remote 'F 2' (low power poll)
+
+		ArrayList<String> commands = new ArrayList<String>();
+
+		commands.add(peek(0x10000100));
+		commands.add(peek(0x10000100));
+		commands.add(peek(0x10000100));
+		commands.add(peek(0x10000104));
+		commands.add(peek(0x10000108));
+		commands.add(peek(0x1000010C));
+
 		String line;
 
 		int i = 0; 
@@ -47,6 +59,7 @@ public class QueryNode {
 
 			System.out.print (" < ");
 			System.out.println (line);
+			//System.out.flush();
 
 			String[] p = line.split(" ");
 
@@ -56,19 +69,11 @@ public class QueryNode {
 
 			String fromAddr = p[2];
 			String msgType = p[3];
-			if (msgType.startsWith("7A")) {
-				// Send query to read Temp1, Temp2
-				if (i%2 == 0) {
-					out.write (remoteCmd0 + "\r");
-					System.out.println (" > " + remoteCmd0);
-				} else {
-					out.write (remoteCmd1 + "\r");
-					System.out.println (" > " + remoteCmd1);
-				}
-
+			if (msgType.startsWith("7A") && i < commands.size() ) {
+				out.write (commands.get(i) + "\r");
 				out.flush();
+				System.out.println (" > " + commands.get(i));
 				i++;
-
 			}
 
 
