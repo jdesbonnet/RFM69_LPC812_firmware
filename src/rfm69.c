@@ -8,10 +8,24 @@
 
 #include <stdint.h>
 #include "rfm69.h"
+#include "spi.h"
 #include "err.h"
 
 
 extern const uint8_t RFM69_CONFIG[][2];
+
+/**
+ * Wait for a register bit to go high, with timeout.
+ */
+int rfm69_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
+	int niter=50000;
+	while ( (rfm69_register_read(reg_addr) & mask) == 0) {
+		if (--niter == 0) {
+			return E_TIMEOUT;
+		}
+	}
+	return E_OK;
+}
 
 /**
  * Configure RFM69 radio module for use. Assumes SPI interface is already configured.
@@ -34,13 +48,15 @@ int rfm69_mode(uint8_t mode) {
 
 	// Wait until mode change is complete
 	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
-	int niter=500;
-	while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) {
-		if (--niter == 0) {
-			return -1;
-		}
-	}
-	return E_OK;
+
+	//int niter=500;
+	//while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) {
+	//	if (--niter == 0) {
+	//		return -1;
+	//	}
+	//}
+	//return E_OK;
+	return rfm69_wait_for_bit_high(RFM69_IRQFLAGS1, RFM69_IRQFLAGS1_ModeReady);
 }
 
 /**
@@ -51,7 +67,8 @@ uint8_t rfm69_rssi () {
 	rfm69_register_write(RFM69_RSSICONFIG, RFM69_RSSICONFIG_RssiStart);
 
 	// Wait for RSSI ready
-	while ((rfm69_register_read(RFM69_RSSICONFIG) & RFM69_RSSICONFIG_RssiDone_MASK) == 0x00);
+	//while ((rfm69_register_read(RFM69_RSSICONFIG) & RFM69_RSSICONFIG_RssiDone_MASK) == 0x00);
+	rfm69_wait_for_bit_high(RFM69_RSSICONFIG, RFM69_RSSICONFIG_RssiDone);
 	return rfm69_register_read(RFM69_RSSIVALUE);
 }
 
@@ -171,10 +188,10 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 
 	// REG_IRQFLAGS2 page 70
 	// IRQFLAGS2[3] PacketSent 1 when complete packet sent. Cleared when existing TX mode.
-	while ( (rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PacketSent_MASK) == 0x00){
+	//while ( (rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PacketSent_MASK) == 0x00){
 		// TODO: implement timeout
-	}
-
+	//}
+	rfm69_wait_for_bit_high(RFM69_IRQFLAGS2, RFM69_IRQFLAGS2_PacketSent);
 	// Back to receive mode
 	// Let main loop manage transition back to default mode
 	//rfm69_mode(RFM69_OPMODE_Mode_RX);
