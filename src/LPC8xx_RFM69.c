@@ -336,7 +336,7 @@ int main(void) {
 	// Setup watchdog oscillator frequency
     /* Freq = 0.5Mhz, div_sel is 0x1F, divided by 64. WDT_OSC should be 7.8125khz */
     LPC_SYSCON->WDTOSCCTRL = (0x1<<5)|0x1F;
-    LPC_WWDT->TC = 0x100000;
+    LPC_WWDT->TC = 0x100000; // about 134s
     LPC_WWDT->MOD = (1<<0) // WDEN enable watchdog
     			| (1<<1); // WDRESET : enable watchdog to reset on timeout
     // Watchdog feed sequence
