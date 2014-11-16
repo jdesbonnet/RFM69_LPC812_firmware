@@ -621,8 +621,15 @@ int main(void) {
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
 		if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY() ) ) {
 
+#ifdef FEATURE_LED
+			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+#endif
 			// Yes, frame ready to be read from FIFO
 			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
+
+#ifdef FEATURE_LED
+			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+#endif
 
 			// TODO: tidy this
 			// SPI error
