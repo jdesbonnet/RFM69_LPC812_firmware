@@ -70,6 +70,7 @@
 #define MOSI_PIN 9
 #define MISO_PIN 8
 #define RESET_PIN 15
+#define DIO0_PIN 6
 #define TIPBUCKET_PIN 16
 #define LED_PIN 17
 #endif

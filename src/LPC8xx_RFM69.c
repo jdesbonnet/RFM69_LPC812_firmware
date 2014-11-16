@@ -353,13 +353,21 @@ int main(void) {
 	// Configure hardware interface to radio module
 	rfm69_init();
 
+	uint32_t regVal;
 #ifdef RESET_PIN
 	// If RFM reset line available, configure PIO pin for output and set low
 	// (RFM resets are active high).
-	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	regVal = LPC_GPIO_PORT->DIR0;
 	regVal |= (1<<RESET_PIN);
 	LPC_GPIO_PORT->DIR0 = regVal;
 	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
+#endif
+
+#ifdef DIO0_PIN
+	// If RFM DIO0 output line is available configure PIO pin for input
+	regVal = LPC_GPIO_PORT->DIR0;
+	regVal &= ~(1<<DIO0_PIN);
+	LPC_GPIO_PORT->DIR0 = regVal;
 #endif
 
 	uint8_t rssi;
@@ -601,8 +609,17 @@ int main(void) {
 		}
 
 
+		// IF we have access to RFM69 DIO0 use that to determine if frame ready to read,
+		// else poll status register through SPI port.
+#ifdef DIO0_PIN
+#define IS_PAYLOAD_READY() (LPC_GPIO_PORT->PIN0&(1<<DIO0_PIN)
+#else
+#define IS_PAYLOAD_READY() rfm69_payload_ready()
+#endif
+
 		// Check for received packet on RFM69
-		if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
+		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
+		if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY() ) ) {
 
 			// Yes, frame ready to be read from FIFO
 			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
@@ -1020,6 +1037,7 @@ int main(void) {
 
 		} // end command switch block
 
+		__WFI();
 
 	} // end main loop
 
