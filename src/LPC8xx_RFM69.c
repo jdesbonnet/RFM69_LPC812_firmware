@@ -55,8 +55,8 @@ uint8_t current_loc[32];
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
 volatile uint32_t flags =
-		MODE_LOW_POWER_POLL
-		//MODE_AWAKE
+		//MODE_LOW_POWER_POLL
+		MODE_AWAKE
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
 
@@ -298,7 +298,8 @@ int main(void) {
 	SwitchMatrix_WithSWD_Init();
 #endif
 #ifdef LPC812
-	SwitchMatrix_Acmp_Init();
+	SwitchMatrix_Init();
+	//SwitchMatrix_Acmp_Init();
 #endif
 
 	// Reset GPIO
@@ -351,6 +352,15 @@ int main(void) {
 
 	// Configure hardware interface to radio module
 	rfm69_init();
+
+#ifdef RESET_PIN
+	// If RFM reset line available, configure PIO pin for output and set low
+	// (RFM resets are active high).
+	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	regVal |= (1<<RESET_PIN);
+	LPC_GPIO_PORT->DIR0 = regVal;
+	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
+#endif
 
 	uint8_t rssi;
 
@@ -704,7 +714,8 @@ int main(void) {
 #ifdef FEATURE_LED
 				// Remote LED blink
 				case 'U' : {
-					tx_buffer.header.to_addr = from_addr;
+					//tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'u';
 					rfm69_frame_tx(tx_buffer.buffer, 3);
 					ledBlink();

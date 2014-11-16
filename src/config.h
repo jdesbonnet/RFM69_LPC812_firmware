@@ -6,9 +6,9 @@
 #define DEFAULT_NODE_ADDR 0x42
 
 // Version of MCU used (LPC812, LPC810 supported)
-#define LPC810
-//#define LPC812
-
+//#define LPC810
+#define LPC812
+#define BOARD_V1  // First rev of PCB
 //
 // Optional features are enabled by defining macro FEATURE_xxxxxx. As space is very
 // limited on LPC810 (4KiB) not all features can be supported simultaneously.
@@ -50,7 +50,6 @@
 // Diagnostic LED (only available on LPC812)
 #ifdef LPC812
 #define FEATURE_LED
-#define LED_PIN 14
 #endif
 
 
@@ -58,11 +57,22 @@
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
 //
 #ifdef LPC812
+#ifdef BOARD_V0
 #define SCK_PIN 15
 #define SS_PIN 9
 #define MOSI_PIN 8
 #define MISO_PIN 7
 #define TIPBUCKET_PIN 17
+#endif
+#ifdef BOARD_V1
+#define SCK_PIN 7
+#define SS_PIN 1
+#define MOSI_PIN 9
+#define MISO_PIN 8
+#define RESET_PIN 15
+#define TIPBUCKET_PIN 16
+#define LED_PIN 17
+#endif
 #endif
 
 #ifdef LPC810
