@@ -370,12 +370,13 @@ int main(void) {
 #endif
 
 #ifdef DIO0_PIN
-	// If RFM DIO0 output line is available configure PIO pin for input
+	// If RFM DIO0 output line is available configure PIO pin for input. In RFM69 packet
+	// mode DIO0 high signifies frame is ready to read from FIFO.
 	regVal = LPC_GPIO_PORT->DIR0;
 	regVal &= ~(1<<DIO0_PIN);
 	LPC_GPIO_PORT->DIR0 = regVal;
 
-	// Enable interrupt on this pin
+	// Enable interrupt when DIO0 goes high.
 	LPC_SYSCON->PINTSEL[3] = DIO0_PIN;
 	LPC_PIN_INT->ISEL &= ~(0x1<<3);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<3);	/* Rising edge */
@@ -511,24 +512,24 @@ int main(void) {
 	// Main program loop
 	while (1) {
 
+
 #ifdef FEATURE_TEMPERATURE
-
 		if ((flags&0xf)==MODE_LOW_POWER_POLL) {
-		// Must read temperature from STDBY or FS mode
-		rfm69_mode(RFM69_OPMODE_Mode_STDBY);
+			// Must read temperature from STDBY or FS mode
+			rfm69_mode(RFM69_OPMODE_Mode_STDBY);
 
-		// Start temperature conversion
-		rfm69_register_write(0x4E,0x8);
+			// Start temperature conversion
+			rfm69_register_write(0x4E,0x8);
 
-		// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
-		// space efficient (down to last few bytes of flash!)
-		loopDelay(10000);
+			// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
+			// space efficient (down to last few bytes of flash!)
+			loopDelay(10000);
 
-		// Hack: put temperature into unused register (AESKey1) for remote reading
-		rfm69_register_write(0x3E,rfm69_register_read(0x4F));
+			// Hack: put temperature into unused register (AESKey1) for remote reading
+			rfm69_register_write(0x3E,rfm69_register_read(0x4F));
 		}
-
 #endif
+
 
 #ifdef FEATURE_EVENT_COUNTER
 		if ( (event_time != 0) && (systick_counter - event_time > 10) ) {
@@ -540,6 +541,8 @@ int main(void) {
 		}
 #endif
 
+		// TODO: can we avoid calling rfm69_mode() on every iteration?
+		// TODO: use macro to test flags
 		if ( (flags&0xf) == MODE_AWAKE) {
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
 		}
