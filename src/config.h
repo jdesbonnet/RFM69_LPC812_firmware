@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.2.8"
+#define VERSION "RFM69 0.3.0"
 
 #define DEFAULT_NODE_ADDR 0x42
 
