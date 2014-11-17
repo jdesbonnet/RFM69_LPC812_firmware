@@ -66,7 +66,8 @@ typedef enum {
 	WKT_INTERRUPT = 1,
 	UART_INTERRUPT = 2,
 	TIP_BUCKET_INTERRUPT = 3,
-	PIEZO_SENSOR_INTERRUPT = 4
+	PIEZO_SENSOR_INTERRUPT = 4,
+	DIO0_INTERRUPT = 5
 } interrupt_source_type;
 volatile interrupt_source_type interrupt_source;
 
@@ -86,7 +87,11 @@ frame_buffer_type rx_buffer;
 	volatile uint32_t systick_counter = 0;
 	void SysTick_Handler(void) {
 		systick_counter++; // every 10ms
-		//LPC_USART0->TXDATA='t';
+
+		//LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+		//LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+		//LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+		//LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
 	}
 #endif
 
@@ -354,6 +359,7 @@ int main(void) {
 	rfm69_init();
 
 	uint32_t regVal;
+
 #ifdef RESET_PIN
 	// If RFM reset line available, configure PIO pin for output and set low
 	// (RFM resets are active high).
@@ -368,6 +374,12 @@ int main(void) {
 	regVal = LPC_GPIO_PORT->DIR0;
 	regVal &= ~(1<<DIO0_PIN);
 	LPC_GPIO_PORT->DIR0 = regVal;
+
+	// Enable interrupt on this pin
+	LPC_SYSCON->PINTSEL[3] = DIO0_PIN;
+	LPC_PIN_INT->ISEL &= ~(0x1<<3);	/* Edge trigger */
+	LPC_PIN_INT->IENR |= (0x1<<3);	/* Rising edge */
+	NVIC_EnableIRQ((IRQn_Type)(PININT3_IRQn));
 #endif
 
 	uint8_t rssi;
@@ -481,6 +493,8 @@ int main(void) {
 	//NVIC_EnableIRQ(CMP_IRQn);
 
 #endif
+
+
 
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
@@ -612,23 +626,22 @@ int main(void) {
 		// IF we have access to RFM69 DIO0 use that to determine if frame ready to read,
 		// else poll status register through SPI port.
 #ifdef DIO0_PIN
-#define IS_PAYLOAD_READY() (LPC_GPIO_PORT->PIN0&(1<<DIO0_PIN)
+#define IS_PAYLOAD_READY() (LPC_GPIO_PORT->PIN0&(1<<DIO0_PIN))
 #else
 #define IS_PAYLOAD_READY() rfm69_payload_ready()
 #endif
 
 		// Check for received packet on RFM69
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
-		if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY() ) ) {
+		if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
 
+			// Yes, frame ready to be read from FIFO
 #ifdef FEATURE_LED
 			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-#endif
-			// Yes, frame ready to be read from FIFO
 			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
-
-#ifdef FEATURE_LED
 			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+#else
+			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
 #endif
 
 			// TODO: tidy this
@@ -1044,7 +1057,10 @@ int main(void) {
 
 		} // end command switch block
 
+		//LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
 		__WFI();
+		//LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+
 
 	} // end main loop
 
@@ -1121,6 +1137,16 @@ void CMP_IRQHandler (void) {
 }
 #endif
 
+#ifdef DIO0_PIN
+/**
+ * Interrupt generated DIO0 (frame ready to download)
+ */
+void PININT3_IRQHandler (void) {
+	// Clear interrupt
+	LPC_PIN_INT->IST = 1<<3;
+	interrupt_source = DIO0_INTERRUPT;
+}
+#endif
 
 void WKT_IRQHandler(void)
 {

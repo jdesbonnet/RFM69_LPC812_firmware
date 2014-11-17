@@ -47,9 +47,13 @@
 // MCU memory read/write/exec from UART API
 #define FEATURE_UART_MEM_RWX
 
-// Diagnostic LED (only available on LPC812)
 #ifdef LPC812
+// Diagnostic LED (only available on LPC812)
 #define FEATURE_LED
+// Enable ARM Cortex M SysTick timer
+#define FEATURE_SYSTICK
+// Experimental application to count rain tip bucket
+//#define FEATURE_EVENT_COUNTER
 #endif
 
 
@@ -90,11 +94,5 @@
 #define UART_BPS (9600)
 //#define UART_BPS (115200)
 
-#ifdef LPC812
-// Enable ARM Cortex M SysTick timer
-#define FEATURE_SYSTICK
-// Experimental application to count rain tip bucket
-//#define FEATURE_EVENT_COUNTER
-#endif
 
 #endif
