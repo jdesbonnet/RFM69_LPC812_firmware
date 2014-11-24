@@ -42,7 +42,7 @@ For v0.2.0:
 #include "frame_buffer.h"
 
 #include "lpc8xx_pmu.h"
-
+#include "ds18b20.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 
@@ -55,8 +55,8 @@ uint8_t current_loc[32];
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
 volatile uint32_t flags =
-		MODE_LOW_POWER_POLL
-		//MODE_AWAKE
+		//MODE_LOW_POWER_POLL
+		MODE_AWAKE
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
 
@@ -479,8 +479,8 @@ int main(void) {
 	// Set TIPBUCKET_PIN as input
 	LPC_GPIO_PORT->DIR0 &= ~(1<<TIPBUCKET_PIN);
 
-	// Pulldown resistor on PIO0_17
-	LPC_IOCON->PIO0_17=(0x1<<3);
+	// Pulldown resistor on PIO0_16 (tip bucket)
+	LPC_IOCON->PIO0_16=(0x1<<3);
 
 	// Set interrupt on this pin.
 	LPC_SYSCON->PINTSEL[1] = TIPBUCKET_PIN;
@@ -493,11 +493,6 @@ int main(void) {
 	LPC_PIN_INT->ISEL &= ~(0x1<<2);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<2);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
-
-
-
-
-
 
 	MyUARTPrintDecimal(readBattery());
 	MyUARTSendCRLF();
@@ -639,8 +634,14 @@ int main(void) {
 		}
 #endif
 
+
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
+
+			//ow_init(0,DS18B20_PIN);
+			// Pullup resistor on PIO0_14
+			//LPC_IOCON->PIO0_14=(0x2<<3);
+
 
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
@@ -650,7 +651,19 @@ int main(void) {
 			//int32_t temperature = ds18b20_temperature_read();
 			//tx_buffer.payload[3] = temperature>>8;
 			//tx_buffer.payload[4] = temperature&0xff;
+
+
+#ifdef FEATURE_LED
+			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
 			rfm69_frame_tx(tx_buffer.buffer,6);
+			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+#else
+			rfm69_frame_tx(tx_buffer.buffer,6);
+#endif
+
+
+
+
 
 			// Allow time for response (120ms)
 			// TODO: this is only long enough for a 4 or 5 bytes of payload.

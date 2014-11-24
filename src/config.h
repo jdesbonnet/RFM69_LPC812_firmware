@@ -88,13 +88,14 @@
 #define MISO_PIN 8
 #define RESET_PIN 15
 #define DIO0_PIN 6
-#define TIPBUCKET_PIN 14
+#define TIPBUCKET_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0
+#define DS18B20_PIN 14
 #endif
 
 // Enable reroute of RXD to alternative pin due to failure to fix via bug.
-//#define BOARD_V1B_HACK
+#define BOARD_V1B_HACK
 #ifdef BOARD_V1B_HACK
 #define UART_RXD_PIN 11
 #endif
