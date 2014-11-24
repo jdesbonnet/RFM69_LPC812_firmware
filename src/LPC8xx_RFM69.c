@@ -55,8 +55,8 @@ uint8_t current_loc[32];
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
 volatile uint32_t flags =
-		//MODE_LOW_POWER_POLL
-		MODE_AWAKE
+		MODE_LOW_POWER_POLL
+		//MODE_AWAKE
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
 
@@ -78,7 +78,7 @@ frame_buffer_type rx_buffer;
 
 
 #ifdef FEATURE_EVENT_COUNTER
-	volatile uint32_t event_counter ;
+	volatile uint32_t event_counter = 0;
 	volatile uint32_t event_time = 0;
 #endif
 
@@ -206,6 +206,31 @@ void SwitchMatrix_Spi_Init()
 
 #endif
 
+#ifdef BOARD_V1B_HACK
+/**
+ * Hack to facilitate PCB v1 bug where via on RXD at PIO0_0 (package pin 19)
+ * line touches Vdd rendering it useless (always high). There is an easy work around using
+ * a knife to separate the via from Vdd, but in one case the was not done before
+ * the LPC812 package was soldered in pace. The via contact is under the LPC812, so
+ * making the cut was no longer possible. Rather
+ * than scrap the board, the RXD line from the board UART connecter was routed to
+ * PIO0_11 instead (package pin 8). So in this case want to route LPC812 UART RXD
+ * to there. AFAIK, it is not possible to program this board using ISP mode. SWD
+ * must be used. I'm going to call this v1b of the board. JD 20141117.
+ */
+void SwitchMatrix_LPC812_PCB1b_Init()
+{
+	// UART0 TXD to PIO0_4 (pin package 5). This is location for ISP programming
+	// UART0 RXD rerouted to PIO0_11 (pin package 11).
+    LPC_SWM->PINASSIGN0 = 0xffff0b04UL;
+
+    /* Pin Assign 1 bit Configuration */
+    /* SWCLK */
+    /* SWDIO */
+    /* RESET */
+    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+}
+#endif
 
 #ifdef FEATURE_MCU_UID
 /**
@@ -235,6 +260,43 @@ void report_error (uint8_t cmd, int32_t code) {
 	MyUARTSendByte(' ');
 	MyUARTPrintHex(code);
 	MyUARTSendCRLF();
+}
+
+/**
+ * Use analog comparitor with internal reference to find approx battery voltage
+ */
+int readBattery () {
+
+	//
+	// Analog comparator configure
+	//
+
+	// Power to comparator. Use of comparator requires BOD. [Why?]
+	LPC_SYSCON->PDRUNCFG &= ~( (0x1 << 15) | (0x1 << 3) );
+
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<19); // Analog comparator
+
+	// Analog comparator reset
+	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
+	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
+
+
+	// Measure Vdd relative to bandgap
+	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
+			| (0x6 << 8)  // bandgap
+			| (0x0 << 11) // - of cmp to voltage ladder
+			;
+
+	int k;
+	for (k = 0; k <32; k++) {
+		LPC_CMP->LAD = 1 | (k<<1);
+		__WFI(); // allow to settle (15us on change, 30us on powerup
+		if ( ! (LPC_CMP->CTRL & (1<<21))) {
+			return 27900/k; // 900mV*31/k
+		}
+	}
+
+	return 27900/32;
 }
 
 #ifdef FEATURE_LED
@@ -302,9 +364,14 @@ int main(void) {
 #ifdef LPC810
 	SwitchMatrix_WithSWD_Init();
 #endif
+
 #ifdef LPC812
+#ifdef BOARD_V1B_HACK
+	SwitchMatrix_LPC812_PCB1b_Init();
+#else
 	SwitchMatrix_Init();
 	//SwitchMatrix_Acmp_Init();
+#endif
 #endif
 
 	// Reset GPIO
@@ -400,10 +467,10 @@ int main(void) {
 	tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
 
 #ifdef FEATURE_UART_INTERRUPT
-	// Experimental wake on activity on UART RXD (RXD is shared with PIO0_0)
-	LPC_SYSCON->PINTSEL[0] = 0; // PIO0_0 aka RXD
-	LPC_PIN_INT->ISEL &= ~(0x1<<0);	/* Edge trigger */
-	LPC_PIN_INT->IENR |= (0x1<<0);	/* Rising edge */
+	// Experimental wake on activity on UART RXD (RXD is normally shared with PIO0_0)
+	LPC_SYSCON->PINTSEL[0] = UART_RXD_PIN; // PIO0_0 aka RXD
+	LPC_PIN_INT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
+	LPC_PIN_INT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
 #endif
 
@@ -429,41 +496,14 @@ int main(void) {
 
 
 
-	//
-	// Analog comparator configure
-	//
-
-	// Power to comparator. Use of comparator requires BOD. [Why?]
-	LPC_SYSCON->PDRUNCFG &= ~( (0x1 << 15) | (0x1 << 3) );
-
-	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<19); // Analog comparator
-
-	// Analog comparator reset
-	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
-	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
 
 
-	// Measure Vdd relative to bandgap
-	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
-			| (0x6 << 8)  // bandgap
-			| (0x0 << 11) // - of cmp to voltage ladder
-			;
 
-	{int k;
-	for (k = 0; k <32; k++) {
-		LPC_CMP->LAD = 1 | (k<<1);
-		__WFI(); // allow to settle (15us on change, 30us on powerup)
-		if ( ! (LPC_CMP->CTRL & (1<<21))) {
-			MyUARTSendStringZ("V(mv)=");
-			MyUARTPrintDecimal(27900/k); // 900mV*31/k
-			MyUARTSendCRLF();
-			break;
-
-		}
-	}
-	}
+	MyUARTPrintDecimal(readBattery());
+	MyUARTSendCRLF();
 
 
+/*
 	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
 			| (0x2 << 8) // + of cmp to ACMP_input_2
 			| (0x0 << 11) // - of cmp to voltage ladder
@@ -487,6 +527,7 @@ int main(void) {
 		}
 	}
 	}
+	*/
 
 	// No need for additional modifications to ACMP registers. Switch off clock.
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<19);
@@ -536,7 +577,7 @@ int main(void) {
 			MyUARTSendStringZ("a ");
 			MyUARTPrintHex(event_counter);
 			MyUARTSendCRLF();
-			event_counter = 0;
+			//event_counter = 0;
 			event_time= 0;
 		}
 #endif
@@ -601,18 +642,15 @@ int main(void) {
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
 
-			/*
-			uint8_t payload[4];
-			payload[0] = 0xff;
-			payload[1] = node_addr;
-			payload[2] = 'z';
-			payload[3] = sleep_counter++;
-			*/
-
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
-			rfm69_frame_tx(tx_buffer.buffer,4);
+			tx_buffer.payload[1] = event_counter;
+			tx_buffer.payload[2] = readBattery()/100;
+			//int32_t temperature = ds18b20_temperature_read();
+			//tx_buffer.payload[3] = temperature>>8;
+			//tx_buffer.payload[4] = temperature&0xff;
+			rfm69_frame_tx(tx_buffer.buffer,6);
 
 			// Allow time for response (120ms)
 			// TODO: this is only long enough for a 4 or 5 bytes of payload.
@@ -1023,6 +1061,11 @@ int main(void) {
 				break;
 			}
 
+			case 'X' :  {
+				MyUARTPrintDecimal(readBattery());
+				MyUARTSendCRLF();
+				break;
+			}
 
 
 #ifdef FEATURE_UART_MEM_RWX
@@ -1095,20 +1138,17 @@ void PININT1_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PIN_INT->IST = 1<<1;
 
-	LPC_USART0->TXDATA='B';
 
 	// Printing event_counter in here results in very strange behavior.  Probably due to
 	// using MyUART inside ISR.
 
-	event_counter++;
-
 	if (event_time == 0) {
+		event_counter++;
 		event_time = systick_counter;
+		//LPC_USART0->TXDATA='B';
 	}
 
-
 	interrupt_source = TIP_BUCKET_INTERRUPT;
-
 }
 
 /**
@@ -1117,7 +1157,7 @@ void PININT1_IRQHandler (void) {
 void PININT2_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PIN_INT->IST = 1<<2;
-	LPC_USART0->TXDATA='X';
+	//LPC_USART0->TXDATA='X';
 	interrupt_source = PIEZO_SENSOR_INTERRUPT;
 }
 
