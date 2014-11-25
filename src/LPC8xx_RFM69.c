@@ -55,8 +55,8 @@ uint8_t current_loc[32];
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
 volatile uint32_t flags =
-		//MODE_LOW_POWER_POLL
-		MODE_AWAKE
+		MODE_LOW_POWER_POLL
+		//MODE_AWAKE
 		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		;
 
@@ -433,6 +433,9 @@ int main(void) {
 	regVal = LPC_GPIO_PORT->DIR0;
 	regVal |= (1<<RESET_PIN);
 	LPC_GPIO_PORT->DIR0 = regVal;
+	// Force reset on boot
+	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
+	loopDelay(20000);
 	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
 #endif
 
@@ -494,8 +497,8 @@ int main(void) {
 	LPC_PIN_INT->IENR |= (0x1<<2);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
 
-	MyUARTPrintDecimal(readBattery());
-	MyUARTSendCRLF();
+	//MyUARTPrintDecimal(readBattery());
+	//MyUARTSendCRLF();
 
 
 /*
@@ -572,6 +575,7 @@ int main(void) {
 			MyUARTSendStringZ("a ");
 			MyUARTPrintHex(event_counter);
 			MyUARTSendCRLF();
+			MyUARTSendDrain();
 			//event_counter = 0;
 			event_time= 0;
 		}
@@ -638,7 +642,7 @@ int main(void) {
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
 
-			//ow_init(0,DS18B20_PIN);
+			ow_init(0,DS18B20_PIN);
 			// Pullup resistor on PIO0_14
 			//LPC_IOCON->PIO0_14=(0x2<<3);
 
@@ -648,17 +652,21 @@ int main(void) {
 			tx_buffer.payload[0] = sleep_counter++;
 			tx_buffer.payload[1] = event_counter;
 			tx_buffer.payload[2] = readBattery()/100;
-			//int32_t temperature = ds18b20_temperature_read();
-			//tx_buffer.payload[3] = temperature>>8;
-			//tx_buffer.payload[4] = temperature&0xff;
+			int32_t temperature = ds18b20_temperature_read();
+			//MyUARTPrintDecimal(temperature);
+			//MyUARTSendByte(' ');
+			//MyUARTPrintDecimal(readBattery());
+			//MyUARTSendCRLF();
+			tx_buffer.payload[3] = temperature>>8;
+			tx_buffer.payload[4] = temperature&0xff;
 
 
 #ifdef FEATURE_LED
 			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-			rfm69_frame_tx(tx_buffer.buffer,6);
+			rfm69_frame_tx(tx_buffer.buffer,8);
 			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
 #else
-			rfm69_frame_tx(tx_buffer.buffer,6);
+			rfm69_frame_tx(tx_buffer.buffer,8);
 #endif
 
 
@@ -1020,7 +1028,6 @@ int main(void) {
 				MyUARTSendByte(' ');
 				print_hex8 (rfm69_register_read(regAddr));
 				MyUARTSendCRLF();
-				break;
 			}
 
 
