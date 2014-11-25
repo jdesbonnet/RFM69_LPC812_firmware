@@ -399,6 +399,7 @@ int main(void) {
 #endif
 
 
+#ifdef FEATURE_LINK_LOSS_RESET
 	//
     // Watchdog configuration
 	//
@@ -417,7 +418,7 @@ int main(void) {
     LPC_WWDT->FEED = 0x55;
     /* Make sure feed sequence executed properly */
     //loopDelay(1000);
-
+#endif
 
 
 	spi_init();
@@ -710,10 +711,11 @@ int main(void) {
 			// SPI error
 			//if (frame_len>0) {
 
+#ifdef FEATURE_LINK_LOSS_RESET
 			// Feed watchdog
 			LPC_WWDT->FEED = 0xAA;
 			LPC_WWDT->FEED = 0x55;
-
+#endif
 
 			// 0xff is the broadcast address
 			if ( (flags&FLAG_PROMISCUOUS_MODE)
