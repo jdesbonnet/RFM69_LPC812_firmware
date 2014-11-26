@@ -57,7 +57,8 @@ uint8_t current_loc[32];
 volatile uint32_t flags =
 		MODE_LOW_POWER_POLL
 		//MODE_AWAKE
-		| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
+		//| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
+		| (0x6<<8) // poll interval 500ms x 2^(6+1) = ?s
 		;
 
 // When in deepsleep or power down this lets us know which wake event occurred
@@ -464,7 +465,7 @@ int main(void) {
 	uint8_t frame_len;
 
 	// Use to ID each sleep ping packet. No need to init (saves 4 bytes).
-	uint32_t sleep_counter;
+	uint32_t sleep_counter = 0;
 
 	int argc;
 
