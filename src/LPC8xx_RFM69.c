@@ -755,7 +755,8 @@ int main(void) {
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'r';
 					memcpy(tx_buffer.payload,current_loc,loc_len);
-					rfm69_frame_tx(tx_buffer.buffer, loc_len+3);
+					tx_buffer.payload[loc_len] = rssi;
+					rfm69_frame_tx(tx_buffer.buffer, loc_len+4);
 					break;
 				}
 
