@@ -457,12 +457,12 @@ int main(void) {
 
 	uint8_t rssi;
 
-	uint8_t *cmdbuf;
+	//uint8_t *cmdbuf;
 	uint8_t *args[8];
 
 	// Radio frame receive buffer
 	//uint8_t frxbuf[66];
-	uint8_t frame_len;
+	//uint8_t frame_len;
 
 	// Use to ID each sleep ping packet. No need to init (saves 4 bytes).
 	uint32_t sleep_counter = 0;
@@ -709,10 +709,10 @@ int main(void) {
 			// Yes, frame ready to be read from FIFO
 #ifdef FEATURE_LED
 			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
+			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
 			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
 #else
-			frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
+			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
 #endif
 
 			// TODO: tidy this
@@ -812,9 +812,10 @@ int main(void) {
 					}
 					MyUARTSendStringZ("d ");
 					int payload_len = frame_len - 3;
-					memcpy(cmdbuf,rx_buffer.payload,payload_len);
-					cmdbuf[payload_len] = 0; // zero terminate buffer
-					MyUARTSendStringZ(cmdbuf);
+					uint8_t *uart_buf = MyUARTGetBuf();
+					memcpy(uart_buf,rx_buffer.payload,payload_len);
+					uart_buf[payload_len] = 0; // zero terminate buffer
+					MyUARTSendStringZ(uart_buf);
 					MyUARTSendCRLF();
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
@@ -933,17 +934,17 @@ int main(void) {
 
 			MyUARTSendCRLF();
 
-			cmdbuf = MyUARTGetBuf();
+			uint8_t *uart_buf = MyUARTGetBuf();
 
 			// Split command line into parameters (separated by spaces)
 			argc = 1;
-			args[0] = cmdbuf;
-			while (*cmdbuf != 0) {
-				if (*cmdbuf == ' ') {
-					*cmdbuf = 0;
-					args[argc++] = cmdbuf+1;
+			args[0] = uart_buf;
+			while (*uart_buf != 0) {
+				if (*uart_buf == ' ') {
+					*uart_buf = 0;
+					args[argc++] = uart_buf+1;
 				}
-				cmdbuf++;
+				uart_buf++;
 			}
 
 			// TODO: using an array of functions may be more space efficient than
