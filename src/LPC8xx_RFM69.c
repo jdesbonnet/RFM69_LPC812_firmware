@@ -680,9 +680,16 @@ int main(void) {
 			// in progress (or just delay longer.. which will affect battery drain).
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
 
-			// Delay in SLEEP for 200ms to allow for reply radio packet
-			LPC_WKT->COUNT = 2000;
-			__WFI();
+			// Delay in SLEEP for 200ms to allow for reply radio frame
+			// TODO: bug: we need to start this counter after the previous frame
+			// has finished TX. For the moment, extend from 200ms to 800ms to
+			// compensate for longer frame TX
+			LPC_WKT->COUNT = 8000;
+			interrupt_source = 0;
+			do {
+				__WFI();
+			} while (interrupt_source != WKT_INTERRUPT);
+			//loopDelay(150000);
 		}
 
 
