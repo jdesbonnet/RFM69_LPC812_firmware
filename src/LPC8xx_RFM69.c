@@ -760,6 +760,35 @@ int main(void) {
 				}
 #endif
 
+
+#ifdef FEATURE_REMOTE_COMMAND
+				case 'D' : {
+					// If there is an uncompleted UART command in buffer then
+					// remote command takes priority and whatever is in the
+					// command buffer is dropped. Output an error to indicate
+					// this has happened.
+					// TODO: should we disable UART interrupt for this block?
+					// because incoming UART char between now and cmd parse could
+					// cause corruption of cmd buffer.
+					if (MyUARTGetBufIndex()>0) {
+						MyUARTBufReset();
+						report_error('D',E_CMD_DROPPED);
+					}
+
+					// Echo remote command to UART, copy remote command to UART buffer and
+					// trigger UART command parsing.
+					MyUARTSendStringZ("d ");
+					int payload_len = frame_len - 3;
+					uint8_t *uart_buf = MyUARTGetBuf();
+					memcpy(uart_buf,rx_buffer.payload,payload_len);
+					uart_buf[payload_len] = 0; // zero terminate buffer
+					MyUARTSendStringZ(uart_buf);
+					MyUARTSendCRLF();
+					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
+					break;
+				}
+#endif
+
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
@@ -774,6 +803,18 @@ int main(void) {
 					rfm69_frame_tx(tx_buffer.buffer, loc_len+4);
 					break;
 				}
+
+#ifdef FEATURE_LED
+				// Remote LED blink
+				case 'U' : {
+					//tx_buffer.header.to_addr = from_addr;
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
+					tx_buffer.header.msg_type = 'u';
+					rfm69_frame_tx(tx_buffer.buffer, 3);
+					ledBlink();
+					break;
+				}
+#endif
 
 #ifdef FEATURE_REMOTE_REG_READ
 				// Remote register read
@@ -810,46 +851,6 @@ int main(void) {
 				}
 
 
-#endif
-
-#ifdef FEATURE_REMOTE_COMMAND
-				case 'D' : {
-					// If there is an uncompleted UART command in buffer then
-					// remote command takes priority and whatever is in the
-					// command buffer is dropped. Output an error to indicate
-					// this has happened.
-					// TODO: should we disable UART interrupt for this block?
-					// because incoming UART char between now and cmd parse could
-					// cause corruption of cmd buffer.
-					if (MyUARTGetBufIndex()>0) {
-						MyUARTBufReset();
-						report_error('D',E_CMD_DROPPED);
-					}
-
-					// Echo remote command to UART, copy remote command to UART buffer and
-					// trigger UART command parsing.
-					MyUARTSendStringZ("d ");
-					int payload_len = frame_len - 3;
-					uint8_t *uart_buf = MyUARTGetBuf();
-					memcpy(uart_buf,rx_buffer.payload,payload_len);
-					uart_buf[payload_len] = 0; // zero terminate buffer
-					MyUARTSendStringZ(uart_buf);
-					MyUARTSendCRLF();
-					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
-					break;
-				}
-#endif
-
-#ifdef FEATURE_LED
-				// Remote LED blink
-				case 'U' : {
-					//tx_buffer.header.to_addr = from_addr;
-					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
-					tx_buffer.header.msg_type = 'u';
-					rfm69_frame_tx(tx_buffer.buffer, 3);
-					ledBlink();
-					break;
-				}
 #endif
 
 
@@ -990,6 +991,7 @@ int main(void) {
 				break;
 			}
 
+
 			// Display MCU unique ID
 #ifdef FEATURE_MCU_UID
 			case 'I' : {
@@ -999,6 +1001,20 @@ int main(void) {
 				break;
 			}
 #endif
+
+			// Set link loss reset
+			case 'J' : {
+				if (argc == 1) {
+					MyUARTSendStringZ("j ");
+					MyUARTPrintHex(link_loss_timeout);
+					MyUARTSendCRLF();
+					break;
+				}
+				link_loss_timeout = parse_hex(args[1]);
+				break;
+			}
+
+
 
 			// Set current location
 			case 'L' : {
@@ -1157,11 +1173,7 @@ int main(void) {
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
-			//MyUARTSendStringZ("last_frame=");
-			//MyUARTPrintDecimal(sleep_clock - last_frame_time);
-			//MyUARTSendCRLF();
-			//MyUARTSendDrain();
-			if (systick_counter - last_frame_time > link_loss_timeout) {
+			if (link_loss_timeout!=0 && (systick_counter - last_frame_time > link_loss_timeout)) {
 				// Report MCU reset (reason=2 link loss timeout)
 				MyUARTSendStringZ("q 2\r\n");
 				MyUARTSendDrain();
