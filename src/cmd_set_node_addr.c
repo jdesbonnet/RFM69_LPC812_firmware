@@ -18,6 +18,12 @@
 extern frame_buffer_type tx_buffer;
 int cmd_set_node_addr (int argc, uint8_t **argv) {
 
+	if (argc == 1) {
+		MyUARTSendStringZ("n ");
+		MyUARTPrintHex(tx_buffer.header.from_addr);
+		MyUARTSendCRLF();
+		return;
+	}
 	if (argc != 2) {
 		return E_WRONG_ARGC;
 	}
