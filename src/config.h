@@ -1,9 +1,14 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.3.1"
+#define VERSION "RFM69 0.3.2"
 
-#define DEFAULT_NODE_ADDR 0x42
+#define DEFAULT_NODE_ADDR 0x44
+
+#define DEFAULT_WATCHDOG_TIMEOUT 100000
+
+// When in low power polling mode, timeout in 10ms units to trigger reset
+#define DEFAULT_LINK_LOSS_TIMEOUT 10000
 
 // Version of MCU used (LPC812, LPC810 supported)
 //#define LPC810
@@ -53,6 +58,8 @@
 #define FEATURE_SYSTICK
 // Experimental application to count rain tip bucket
 #define FEATURE_EVENT_COUNTER
+// DS18B20 one wire temperature sensor
+#define FEATURE_DS18B20
 // Allow change of UART speed from default 9600
 #define FEATURE_UART_SPEED
 // When sleeping trigger PIN interrupt on RXD line
@@ -63,6 +70,12 @@
 #define FEATURE_REMOTE_PKT_TX
 // Report unique serial number of MCU
 #define FEATURE_MCU_UID
+// Use WDT to reset MCU on loss of link
+#define FEATURE_LINK_LOSS_RESET
+
+// Use LPC8xx watchdog timer
+//#define FEATURE_WATCHDOG_TIMER
+
 #endif
 
 
@@ -87,7 +100,7 @@
 #define MOSI_PIN 9
 #define MISO_PIN 8
 #define RESET_PIN 15
-#define DIO0_PIN 6
+//#define DIO0_PIN 6
 #define TIPBUCKET_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0
@@ -95,7 +108,7 @@
 #endif
 
 // Enable reroute of RXD to alternative pin due to failure to fix via bug.
-#define BOARD_V1B_HACK
+//#define BOARD_V1B_HACK
 #ifdef BOARD_V1B_HACK
 #define UART_RXD_PIN 11
 #endif

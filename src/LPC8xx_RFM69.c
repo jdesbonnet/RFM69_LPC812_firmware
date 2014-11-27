@@ -54,12 +54,18 @@ uint8_t current_loc[32];
 
 // Various radio controller flags (done as one 32 bit register so as to
 // reduce code size and SRAM requirements).
+// TODO: now that we've moved to LPC812, this sort of extreme optimization
+// detracts from code readability. Consider a struct of params instead.
 volatile uint32_t flags =
 		MODE_LOW_POWER_POLL
 		//MODE_AWAKE
 		//| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		| (0x6<<8) // poll interval 500ms x 2^(6+1) = ?s
 		;
+
+// Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
+uint32_t last_frame_time;
+uint32_t link_loss_timeout = DEFAULT_LINK_LOSS_TIMEOUT; // 10ms increments
 
 // When in deepsleep or power down this lets us know which wake event occurred
 typedef enum {
@@ -88,11 +94,7 @@ frame_buffer_type rx_buffer;
 	volatile uint32_t systick_counter = 0;
 	void SysTick_Handler(void) {
 		systick_counter++; // every 10ms
-
-		//LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-		//LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
-		//LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-		//LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+		//coarse_clock++;
 	}
 #endif
 
@@ -400,7 +402,7 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_LINK_LOSS_RESET
+#ifdef FEATURE_WATCHDOG_TIMER
 	//
     // Watchdog configuration
 	//
@@ -411,7 +413,7 @@ int main(void) {
 	// Setup watchdog oscillator frequency
     /* Freq = 0.5Mhz, div_sel is 0x1F, divided by 64. WDT_OSC should be 7.8125khz */
     LPC_SYSCON->WDTOSCCTRL = (0x1<<5)|0x1F;
-    LPC_WWDT->TC = 0x100000; // about 134s
+    LPC_WWDT->TC = DEFAULT_WATCHDOG_TIMEOUT;
     LPC_WWDT->MOD = (1<<0) // WDEN enable watchdog
     			| (1<<1); // WDRESET : enable watchdog to reset on timeout
     // Watchdog feed sequence
@@ -606,10 +608,20 @@ int main(void) {
 			// Polling interval determined by bits 11:8 of flags.
 			// Ts = 0.5 * 2 ^ flags[11:8]
 			// is 500 ms x 2 to the power of this value (ie 0=500ms, 1=1s, 2=2s,3=4s,4=8s...)
-			LPC_WKT->COUNT = 5000 << ((flags>>8)&0xf);
+			uint32_t wakeup_time = 5000 << ((flags>>8)&0xf);
+			LPC_WKT->COUNT = wakeup_time ;
 
 			// DeepSleep until WKT interrupt (or PIN interrupt)
 			__WFI();
+
+			//MyUARTSendStringZ("sleep_clock += ");
+			//MyUARTPrintDecimal(wakeup_time - LPC_WKT->COUNT);
+			//MyUARTSendCRLF();
+			// WKT in 100us increments, want sleep_clock in 10ms increments
+			systick_counter += (wakeup_time - LPC_WKT->COUNT)/100;
+			MyUARTSendStringZ("sleep_clock=");
+			MyUARTPrintDecimal(systick_counter);
+			MyUARTSendCRLF();
 
 			// Experimental: Reassign UART to external pins
 			//SwitchMatrix_Init();
@@ -629,6 +641,7 @@ int main(void) {
 
 			// Indicator to host there is a short time window to issue command
 			MyUARTSendStringZ("z\r\n");
+			//MyUARTPrintDecimal(LPC_WWDT->TV);
 
 			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
@@ -644,7 +657,6 @@ int main(void) {
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
 
-			ow_init(0,DS18B20_PIN);
 			// Pullup resistor on PIO0_14
 			//LPC_IOCON->PIO0_14=(0x2<<3);
 
@@ -654,14 +666,13 @@ int main(void) {
 			tx_buffer.payload[0] = sleep_counter++;
 			tx_buffer.payload[1] = event_counter;
 			tx_buffer.payload[2] = readBattery()/100;
+
+#ifdef FEATURE_DS18B20
+			ow_init(0,DS18B20_PIN);
 			int32_t temperature = ds18b20_temperature_read();
-			//MyUARTPrintDecimal(temperature);
-			//MyUARTSendByte(' ');
-			//MyUARTPrintDecimal(readBattery());
-			//MyUARTSendCRLF();
 			tx_buffer.payload[3] = temperature>>8;
 			tx_buffer.payload[4] = temperature&0xff;
-
+#endif
 
 #ifdef FEATURE_LED
 			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
@@ -715,15 +726,19 @@ int main(void) {
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
 #endif
 
+			last_frame_time = systick_counter;
+
 			// TODO: tidy this
 			// SPI error
 			//if (frame_len>0) {
 
-#ifdef FEATURE_LINK_LOSS_RESET
+#ifdef FEATURE_WATCHDOG_TIMER
 			// Feed watchdog
 			LPC_WWDT->FEED = 0xAA;
 			LPC_WWDT->FEED = 0x55;
+
 #endif
+
 
 			// 0xff is the broadcast address
 			if ( (flags&FLAG_PROMISCUOUS_MODE)
@@ -810,6 +825,9 @@ int main(void) {
 						MyUARTBufReset();
 						report_error('D',E_CMD_DROPPED);
 					}
+
+					// Echo remote command to UART, copy remote command to UART buffer and
+					// trigger UART command parsing.
 					MyUARTSendStringZ("d ");
 					int payload_len = frame_len - 3;
 					uint8_t *uart_buf = MyUARTGetBuf();
@@ -1023,8 +1041,10 @@ int main(void) {
 				break;
 			}
 
-			// Experimental reset
 			case 'Q' : {
+				// Report reset for reason=1 (explicit reset command)
+				MyUARTSendStringZ("q 1\r\n");
+				MyUARTSendDrain();
 				NVIC_SystemReset();
 				// no need for break
 			}
@@ -1135,9 +1155,25 @@ int main(void) {
 
 		} // end command switch block
 
-		//LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+#ifdef FEATURE_LINK_LOSS_RESET
+		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
+			//MyUARTSendStringZ("last_frame=");
+			//MyUARTPrintDecimal(sleep_clock - last_frame_time);
+			//MyUARTSendCRLF();
+			//MyUARTSendDrain();
+			if (systick_counter - last_frame_time > link_loss_timeout) {
+				// Report MCU reset (reason=2 link loss timeout)
+				MyUARTSendStringZ("q 2\r\n");
+				MyUARTSendDrain();
+				// Reset
+				NVIC_SystemReset();
+			}
+		}
+#endif
+
+		// Reduce rate of polling RFM for frame by waiting for SysTick (or any) interrupt.
+		// This additional sleep time may(?) help reduce power consumption (to be confirmed).
 		__WFI();
-		//LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
 
 
 	} // end main loop
