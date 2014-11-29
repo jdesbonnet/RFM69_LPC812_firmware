@@ -619,9 +619,9 @@ int main(void) {
 			//MyUARTSendCRLF();
 			// WKT in 100us increments, want sleep_clock in 10ms increments
 			systick_counter += (wakeup_time - LPC_WKT->COUNT)/100;
-			MyUARTSendStringZ("sleep_clock=");
-			MyUARTPrintDecimal(systick_counter);
-			MyUARTSendCRLF();
+			//MyUARTSendStringZ("systick_counter=");
+			//MyUARTPrintDecimal(systick_counter);
+			//MyUARTSendCRLF();
 
 			// Experimental: Reassign UART to external pins
 			//SwitchMatrix_Init();
@@ -789,6 +789,8 @@ int main(void) {
 				}
 #endif
 
+				// Ping
+				//case 'P' :
 				// Message requesting position report. This will return the string
 				// set by the UART 'L' command verbatim.
 				case 'R' :
@@ -1036,8 +1038,9 @@ int main(void) {
 
 			// Set radio system mode
 			// TODO is this necessary now? Use F command instead.
-			/*
+
 			case 'M' : {
+				// Clear 4 lower bits
 				flags &= ~0xf;
 				if (args[1][0]=='0') {
 					// no action
@@ -1048,9 +1051,9 @@ int main(void) {
 				}
 				break;
 			}
-			*/
 
-			// Set node address
+
+			// Set or report node address
 			case 'N' :
 			{
 				cmd_set_node_addr(argc, args);
