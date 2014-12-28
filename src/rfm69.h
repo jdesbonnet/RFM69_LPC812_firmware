@@ -6,6 +6,7 @@
 
 void rfm69_init(void);
 void rfm69_config(void);
+int rfm69_test(void);
 
 int rfm69_mode(uint8_t mode);
 

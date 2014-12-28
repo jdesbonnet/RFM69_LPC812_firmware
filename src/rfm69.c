@@ -28,6 +28,26 @@ int rfm69_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
 }
 
 /**
+ * Test for presence of RFM69
+ */
+int rfm69_test () {
+	// Backup AES key register 1
+	int aeskey1 = rfm69_register_read(0x3E);
+
+	rfm69_register_write(0x3E,0x55);
+	if (rfm69_register_read(0x3E)!=0x55) {
+		return -1;
+	}
+	rfm69_register_write(0x3E,0xAA);
+	if (rfm69_register_read(0x3E)!=0xAA) {
+		return -1;
+	}
+	// Restore value
+	rfm69_register_write(0x3E,aeskey1);
+
+	return 0;
+}
+/**
  * Configure RFM69 radio module for use. Assumes SPI interface is already configured.
  */
 void rfm69_config() {
