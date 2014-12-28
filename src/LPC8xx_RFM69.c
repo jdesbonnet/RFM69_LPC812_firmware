@@ -306,9 +306,9 @@ int readBattery () {
 /**
  * Blink diagnostic LED. Optional feature (edit config.h to define hardware configuration).
  */
-void ledBlink () {
+void ledBlink (int nblink) {
 	int i;
-	for (i = 0; i < 3; i++)	{
+	for (i = 0; i < nblink; i++)	{
 			GPIOSetBitValue(0,LED_PIN,1);
 			loopDelay(200000);
 			GPIOSetBitValue(0,LED_PIN,0);
@@ -538,18 +538,27 @@ int main(void) {
 
 #endif
 
-
+	// Configure RFM69 registers for this application. I found that it was necessary
+	// to delay a short period after powerup before configuring registers.
+	loopDelay(300000);
 
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 	//GPIOSetDir(0,LED_PIN,1);
 	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
-	ledBlink();
 #endif
 
-	// Configure RFM69 registers for this application. I found that it was necessary
-	// to delay a short period after powerup before configuring registers.
-	loopDelay(200000);
+
+#ifdef FEATURE_LED
+	if (rfm69_test() != 0) {
+		// Error communicating with RFM69: 4 blinks
+		ledBlink(4);
+	} else {
+		// Normal: 2 blinks
+		ledBlink(2);
+	}
+#endif
+
 	rfm69_config();
 
 	// Main program loop
@@ -664,7 +673,11 @@ int main(void) {
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
+#ifdef FEATURE_EVENT_COUNTER
 			tx_buffer.payload[1] = event_counter;
+#else
+			tx_buffer.payload[1] = 0xFF;
+#endif
 			tx_buffer.payload[2] = readBattery()/100;
 
 #ifdef FEATURE_DS18B20
@@ -813,7 +826,7 @@ int main(void) {
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'u';
 					rfm69_frame_tx(tx_buffer.buffer, 3);
-					ledBlink();
+					ledBlink(3);
 					break;
 				}
 #endif
