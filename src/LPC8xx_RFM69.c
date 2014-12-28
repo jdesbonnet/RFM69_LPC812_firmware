@@ -39,6 +39,7 @@ For v0.2.0:
 #include "cmd.h"
 #include "err.h"
 #include "flags.h"
+#include "params.h"
 #include "frame_buffer.h"
 
 #include "lpc8xx_pmu.h"
@@ -66,6 +67,8 @@ volatile uint32_t flags =
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
 uint32_t last_frame_time;
 uint32_t link_loss_timeout = DEFAULT_LINK_LOSS_TIMEOUT; // 10ms increments
+
+params_type params;
 
 // When in deepsleep or power down this lets us know which wake event occurred
 typedef enum {
@@ -1070,6 +1073,25 @@ int main(void) {
 			case 'N' :
 			{
 				cmd_set_node_addr(argc, args);
+				break;
+			}
+
+			case 'P' : {
+
+				if (argc == 2) {
+					uint32_t param_index = parse_hex(args[1]);
+					MyUARTPrintHex(params.params_buffer[param_index]);
+					MyUARTSendCRLF();
+					break;
+				}
+
+				if (argc != 3) {
+					return E_WRONG_ARGC;
+				}
+
+				uint32_t param_index = parse_hex(args[1]);
+				uint32_t param_value = parse_hex(args[2]);
+				params.params_buffer[param_index] = param_value;
 				break;
 			}
 

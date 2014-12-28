@@ -11,7 +11,10 @@
 #include "sleep.h"
 #include "config.h"
 
-
+/**
+ * Condition MCU (pin states etc) to minimize current consumption during
+ * deep sleep modes.
+ */
 void prepareForPowerDown () {
 
 	// Condition pins to minimize current use during sleep
@@ -30,8 +33,15 @@ void prepareForPowerDown () {
 	// Experiment on LPC810 with RFM69HW connected:
 	// 44uA current consumption with all SPI pins output and high during power down mode.
 
+	// Set MISO (normally input) to output
 	LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
+
+	// Set all SPI pins high
 	LPC_GPIO_PORT->SET0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
+
+	// 320uA
+	//LPC_GPIO_PORT->DIR0 |= 0xFFF;
+
 
 //#endif
 

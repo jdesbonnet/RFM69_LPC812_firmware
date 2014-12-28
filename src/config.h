@@ -1,14 +1,18 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.3.2"
+#define VERSION "RFM69 0.3.3"
 
-#define DEFAULT_NODE_ADDR 0x44
+//#define DEFAULT_NODE_ADDR 0x42 // Garden
+//#define DEFAULT_NODE_ADDR 0x43 // Master RX
+//#define DEFAULT_NODE_ADDR 0x44 // 3rd
+//#define DEFAULT_NODE_ADDR 0x45 // 4th
+#define DEFAULT_NODE_ADDR 0x46 // 5th
 
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
 
 // When in low power polling mode, timeout in 10ms units to trigger reset
-#define DEFAULT_LINK_LOSS_TIMEOUT 10000
+#define DEFAULT_LINK_LOSS_TIMEOUT 0
 
 // Version of MCU used (LPC812, LPC810 supported)
 //#define LPC810
@@ -57,9 +61,9 @@
 // Enable ARM Cortex M SysTick timer
 #define FEATURE_SYSTICK
 // Experimental application to count rain tip bucket
-#define FEATURE_EVENT_COUNTER
+//#define FEATURE_EVENT_COUNTER
 // DS18B20 one wire temperature sensor
-#define FEATURE_DS18B20
+//#define FEATURE_DS18B20
 // Allow change of UART speed from default 9600
 #define FEATURE_UART_SPEED
 // When sleeping trigger PIN interrupt on RXD line
