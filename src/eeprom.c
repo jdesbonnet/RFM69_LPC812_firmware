@@ -17,9 +17,11 @@
 //const char eeprom_flashpage[64] __attribute__ ((aligned (64))) = {0};
 
 
-const params_struct eeprom_flashpage __attribute__ ((aligned (64))) = {
+const params_type eeprom_flashpage __attribute__ ((aligned (64))) = {
+		.params = {
 		.poll_interval = 255,
 		.listen_period = 180
+		}
 };
 
 //const char eeprom_flashpage2[64] __attribute__ ((aligned (64))) = {0,1,2,3,4};

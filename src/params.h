@@ -19,7 +19,7 @@ typedef union {
 	params_struct params;
 	//uint8_t params_buffer[sizeof(params_struct)];
 	uint8_t params_buffer[64];
-
+	//uint64_t padx[8] = {0,0,0,0, 1,2,3,4};
 } params_type;
 
 #endif
