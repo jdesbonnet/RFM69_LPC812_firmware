@@ -14,16 +14,16 @@
 // 16kB LPC812. Assignment to constant ( = {0}) seems necessary to force allocation in
 // flash area.
 
-const char eeprom_flashpage[64] __attribute__ ((aligned (64))) = {0};
+//const char eeprom_flashpage[64] __attribute__ ((aligned (64))) = {0};
 
-/*
+
 const params_struct eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.poll_interval = 255,
 		.listen_period = 180
 };
 
-const char eeprom_flashpage2[64] __attribute__ ((aligned (64))) = {0,1,2,3,4};
-*/
+//const char eeprom_flashpage2[64] __attribute__ ((aligned (64))) = {0,1,2,3,4};
+
 
 /**
  * Write 64 byte page to flash.
