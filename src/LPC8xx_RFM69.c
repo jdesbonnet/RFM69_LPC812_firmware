@@ -270,6 +270,7 @@ void report_error (uint8_t cmd, int32_t code) {
 
 /**
  * Use analog comparitor with internal reference to find approx battery voltage
+ * @return Battery voltage in mV
  */
 int readBattery () {
 
@@ -555,30 +556,20 @@ params.params.listen_period = 80;
 	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
 #endif
 
-
-#ifdef FEATURE_LED
+	// Self test (just RFM69 for the moment)
+	MyUARTSendStringZ("k ");
 	if (rfm69_test() != 0) {
 		// Error communicating with RFM69: 4 blinks
 		ledBlink(4);
+		MyUARTSendByte('0');
 	} else {
 		// Normal: 2 blinks
 		ledBlink(2);
+		MyUARTSendByte('1');
+
 	}
-#endif
-
-
-	// Test EEPROM feature
-	MyUARTSendStringZ("Testing EEPROM emulation\r\n");
-	uint32_t *flash_ptr = (uint8_t *)0x2000;
-	MyUARTPrintHex(*flash_ptr);
 	MyUARTSendCRLF();
-	uint8_t testdata[16];
-	testdata[0] = 'a';
-	testdata[1] = 'b';
-	testdata[2] = 'c';
-	eeprom_write (testdata);
-	MyUARTPrintHex(*flash_ptr);
-	MyUARTSendCRLF();
+
 
 	rfm69_config();
 
@@ -1013,12 +1004,10 @@ params.params.listen_period = 80;
 
 			switch (*args[0]) {
 
-#ifdef FEATURE_UART_SPEED
 			case 'B' : {
 				cmd_set_uart_speed (argc, args);
 				break;
 			}
-#endif
 
 			// Reset RFM69 with default configuration
 			case 'C' :
@@ -1033,16 +1022,13 @@ params.params.listen_period = 80;
 				break;
 			}
 
-
 			// Display MCU unique ID
-#ifdef FEATURE_MCU_UID
 			case 'I' : {
-				MyUARTSendStringZ("u ");
+				MyUARTSendStringZ("i ");
 				MyUARTPrintHex(get_mcu_serial_number());
 				MyUARTSendCRLF();
 				break;
 			}
-#endif
 
 			// Set link loss reset
 			case 'J' : {
@@ -1065,7 +1051,6 @@ params.params.listen_period = 80;
 				break;
 			}
 
-#ifdef FEATURE_NMEA_INPUT
 			// NMEA (only interested in $GPGLL)
 			case '$' : {
 				// +1 on len to include zero terminator
@@ -1074,11 +1059,8 @@ params.params.listen_period = 80;
 				}
 				break;
 			}
-#endif
 
-			// Set radio system mode
-			// TODO is this necessary now? Use F command instead.
-
+			// Set radio system operating mode
 			case 'M' : {
 				// Clear 4 lower bits
 				flags &= ~0xf;
