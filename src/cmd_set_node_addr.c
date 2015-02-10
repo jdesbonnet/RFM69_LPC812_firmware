@@ -2,7 +2,7 @@
 #include "LPC8xx.h"
 #endif
 
-#include <cr_section_macros.h>
+//#include <cr_section_macros.h>
 
 #include <string.h>
 
@@ -21,8 +21,10 @@ int cmd_set_node_addr (int argc, uint8_t **argv) {
 	if (argc == 1) {
 		MyUARTSendStringZ("n ");
 		MyUARTPrintHex(tx_buffer.header.from_addr);
+		//MyUARTPrintHex(params.params.node_addr);
+
 		MyUARTSendCRLF();
-		return;
+		return E_OK;
 	}
 	if (argc != 2) {
 		return E_WRONG_ARGC;

@@ -3,10 +3,16 @@
 
 /**
  * The paramater block. Controls the behaviour of the system.
+ *
+ * Design note: must be no more than 64 bytes in length to fit in single page
+ * of flash memory.
  */
 typedef struct {
-	uint8_t listen_period;
+	uint8_t node_addr;
+	uint8_t operating_mode;
+	uint8_t listen_period_cs;
 	uint8_t poll_interval;
+	uint16_t link_loss_timeout_s;
 
 	// To facilitate experimenting with the optimum low power state of pins
 	// allow the GPIO pin directions and states to be configured here.
