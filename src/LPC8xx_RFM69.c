@@ -1122,23 +1122,6 @@ params.params.listen_period = 80;
 				MyUARTSendCRLF();
 			}
 
-
-
-#ifdef LPC810
-			// Allow re-enabling of SWD from UART API to facilitate reflashing
-			case 'S' : {
-				if (args[1][0]=='1') {
-					// Note will disconnect SWD
-					SwitchMatrix_Spi_Init();
-					spi_init();
-				} else {
-					// Enable SWD pins
-					SwitchMatrix_WithSWD_Init();
-				}
-				break;
-			}
-#endif
-
 			// Transmit arbitrary packet
 			case 'T' : {
 				int status = cmd_packet_transmit(argc, args);
@@ -1148,16 +1131,14 @@ params.params.listen_period = 80;
 				break;
 			}
 
-#ifdef FEATURE_LED
 			// Turn LED on/off
 			case 'U' : {
 				int i = parse_hex(args[1]);
 				GPIOSetBitValue(0,LED_PIN,i);
 				break;
 			}
-#endif
 
-			// RFM69 controller (this) firmware
+			// Report RFM69 controller (this) firmware
 			case 'V' : {
 				cmd_version(1,NULL);
 				break;
@@ -1173,6 +1154,7 @@ params.params.listen_period = 80;
 				break;
 			}
 
+			// Read battery
 			case 'X' :  {
 				MyUARTPrintDecimal(readBattery());
 				MyUARTSendCRLF();
@@ -1180,26 +1162,24 @@ params.params.listen_period = 80;
 			}
 
 
-#ifdef FEATURE_UART_MEM_RWX
-				// Experimental write to memory. Write 8 bits at a time as writing more
-				// might trigger a fault if not correctly aligned.
-				// > 32bit-addr byte-value
-				case '>' : {
-					uint32_t *mem_addr;
-					mem_addr = parse_hex(args[1]);
-					*mem_addr = parse_hex(args[2]);
-					break;
-				}
-				// Experimental read from memory
-				// < 32bit-addr
-				case '<' : {
-					uint32_t *mem_addr;
-					mem_addr = parse_hex(args[1]);
-					MyUARTPrintHex(*mem_addr);
-					MyUARTSendCRLF();
-					break;
-				}
-#endif
+			// Experimental write to memory. Write 8 bits at a time as writing more
+			// might trigger a fault if not correctly aligned.
+			// > 32bit-addr byte-value
+			case '>' : {
+				uint32_t *mem_addr;
+				mem_addr = parse_hex(args[1]);
+				*mem_addr = parse_hex(args[2]);
+				break;
+			}
+			// Experimental read from memory
+			// < 32bit-addr
+			case '<' : {
+				uint32_t *mem_addr;
+				mem_addr = parse_hex(args[1]);
+				MyUARTPrintHex(*mem_addr);
+				MyUARTSendCRLF();
+				break;
+			}
 
 
 

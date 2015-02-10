@@ -7,12 +7,23 @@
 #include <string.h>
 #include "config.h"
 #include "eeprom.h"
+#include "params.h"
 #include "iap_driver.h"
 
 // Allocate 64 byte aligned, 64 byte block in flash memory (0x00000000 - 0x00003999) on
 // 16kB LPC812. Assignment to constant ( = {0}) seems necessary to force allocation in
 // flash area.
+
 const char eeprom_flashpage[64] __attribute__ ((aligned (64))) = {0};
+
+/*
+const params_struct eeprom_flashpage __attribute__ ((aligned (64))) = {
+		.poll_interval = 255,
+		.listen_period = 180
+};
+
+const char eeprom_flashpage2[64] __attribute__ ((aligned (64))) = {0,1,2,3,4};
+*/
 
 /**
  * Write 64 byte page to flash.
@@ -36,6 +47,8 @@ int32_t eeprom_write (uint8_t *data) {
 	// to erase multiple sectors at the same time). In this case we require to be able to program
 	// just one sector, so this does not conern us.
 
+
+	// TODO: it is advised that interrupts are disabled while writing to flash.
 
 	/* Prepare the page for erase */
 	iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
@@ -61,6 +74,6 @@ int32_t eeprom_write (uint8_t *data) {
  * Copy content of EEPROM flash area.
  */
 int32_t eeprom_read (uint8_t *data) {
-	memcpy (data, eeprom_flashpage, 64);
+	memcpy (data, &eeprom_flashpage, 64);
 	return 0;
 }
