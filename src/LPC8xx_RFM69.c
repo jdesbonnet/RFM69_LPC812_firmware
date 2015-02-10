@@ -58,8 +58,8 @@ uint8_t current_loc[32];
 // TODO: now that we've moved to LPC812, this sort of extreme optimization
 // detracts from code readability. Consider a struct of params instead.
 volatile uint32_t flags =
-		MODE_LOW_POWER_POLL
-		//MODE_AWAKE
+		//MODE_LOW_POWER_POLL
+		MODE_AWAKE
 		//| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		| (0x6<<8) // poll interval 500ms x 2^(6+1) = ?s
 		;
@@ -313,9 +313,11 @@ void ledBlink (int nblink) {
 	int i;
 	for (i = 0; i < nblink; i++)	{
 			GPIOSetBitValue(0,LED_PIN,1);
-			loopDelay(200000);
+			//loopDelay(200000);
+			delayMilliseconds(200);
 			GPIOSetBitValue(0,LED_PIN,0);
-			loopDelay(200000);
+			//loopDelay(200000);
+			delayMilliseconds(200);
 	}
 }
 #endif
@@ -343,6 +345,8 @@ void setOpMode (uint32_t mode) {
 
 int main(void) {
 
+// TODO: put this somewhere else
+params.params.listen_period = 80;
 
 	// Enable MCU subsystems needed in this application in one step. Saves bytes.
 	// (it would be preferable to have in each subsystem init, but we're very
@@ -562,9 +566,22 @@ int main(void) {
 	}
 #endif
 
+
+	// Test EEPROM feature
+	MyUARTSendStringZ("Testing EEPROM emulation\r\n");
+	uint32_t *flash_ptr = (uint8_t *)0x2000;
+	MyUARTPrintHex(*flash_ptr);
+	MyUARTSendCRLF();
+	eeprom_write ((uint8_t *)"abxhello, 0123456789abc");
+	MyUARTPrintHex(*flash_ptr);
+	MyUARTSendCRLF();
+
 	rfm69_config();
 
+
+	//
 	// Main program loop
+	//
 	while (1) {
 
 
@@ -712,12 +729,15 @@ int main(void) {
 			// TODO: bug: we need to start this counter after the previous frame
 			// has finished TX. For the moment, extend from 200ms to 800ms to
 			// compensate for longer frame TX
+			/*
 			LPC_WKT->COUNT = 8000;
 			interrupt_source = 0;
 			do {
 				__WFI();
 			} while (interrupt_source != WKT_INTERRUPT);
-			//loopDelay(150000);
+			*/
+
+			delayMilliseconds(params.params.listen_period*10);
 		}
 
 
