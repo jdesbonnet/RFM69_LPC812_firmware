@@ -28,7 +28,10 @@ int rfm69_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
 }
 
 /**
- * Test for presence of RFM69
+ * Test for presence of RFM69. Write test value into AES key registers
+ * to verify successful communication and operation of RFM69 module.
+ *
+ * @return 0 if successful, -1 if error.
  */
 int rfm69_test () {
 	// Backup AES key register 1
