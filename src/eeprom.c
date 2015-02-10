@@ -1,5 +1,6 @@
 /**
- * EEPROM emulation using flash In-Application-Programming (IAP) library
+ * EEPROM emulation using flash In-Application-Programming (IAP) library to write/read
+ * one 64 byte page from flash memory.
  */
 
 #include <LPC8xx.h>
@@ -27,8 +28,6 @@ const params_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		}
 };
 
-//const char eeprom_flashpage2[64] __attribute__ ((aligned (64))) = {0,1,2,3,4};
-
 
 /**
  * Write 64 byte page to flash.
@@ -52,9 +51,6 @@ int32_t eeprom_write (uint8_t *data) {
 	// to erase multiple sectors at the same time). In this case we require to be able to program
 	// just one sector, so this does not conern us.
 
-
-	// TODO: it is advised that interrupts are disabled while writing to flash.
-
 	/* Prepare the page for erase */
 	iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
 	if (iap_status != CMD_SUCCESS) return -4;
@@ -76,7 +72,7 @@ int32_t eeprom_write (uint8_t *data) {
 }
 
 /**
- * Copy content of EEPROM flash area.
+ * Copy 64 byte content of EEPROM flash area to supplied buffer.
  */
 int32_t eeprom_read (uint8_t *data) {
 	memcpy (data, &eeprom_flashpage, 64);

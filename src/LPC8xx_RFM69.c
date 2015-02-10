@@ -587,8 +587,6 @@ int main(void) {
 
 	rfm69_config();
 
-	eeprom_write("123abc");
-
 	//
 	// Main program loop
 	//
