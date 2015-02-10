@@ -572,7 +572,11 @@ params.params.listen_period = 80;
 	uint32_t *flash_ptr = (uint8_t *)0x2000;
 	MyUARTPrintHex(*flash_ptr);
 	MyUARTSendCRLF();
-	eeprom_write ((uint8_t *)"abxhello, 0123456789abc");
+	uint8_t testdata[16];
+	testdata[0] = 'a';
+	testdata[1] = 'b';
+	testdata[2] = 'c';
+	eeprom_write (testdata);
 	MyUARTPrintHex(*flash_ptr);
 	MyUARTSendCRLF();
 

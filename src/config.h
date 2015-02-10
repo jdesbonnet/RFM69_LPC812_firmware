@@ -3,6 +3,12 @@
 
 #define VERSION "RFM69 0.3.3"
 
+// This is a location after the end of program for storage of settings. We use
+// in-application flash programming (IAP) to emulate a 'EEPROM' bank.
+// TODO: need to find a way to automatically allocate a flash page at the end
+// of program text.
+#define SETTINGS_FLASH_ADDR (0x2000)
+
 //#define DEFAULT_NODE_ADDR 0x42 // Garden
 //#define DEFAULT_NODE_ADDR 0x43 // Master RX
 //#define DEFAULT_NODE_ADDR 0x44 // 3rd
