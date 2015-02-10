@@ -66,7 +66,6 @@ volatile uint32_t flags =
 
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
 uint32_t last_frame_time;
-uint32_t link_loss_timeout = DEFAULT_LINK_LOSS_TIMEOUT; // 10ms increments
 
 params_type params;
 
@@ -346,9 +345,6 @@ void setOpMode (uint32_t mode) {
 
 int main(void) {
 
-// TODO: put this somewhere else
-params.params.listen_period = 80;
-
 	// Enable MCU subsystems needed in this application in one step. Saves bytes.
 	// (it would be preferable to have in each subsystem init, but we're very
 	// tight for space on LPC810).
@@ -470,16 +466,34 @@ params.params.listen_period = 80;
 	//uint8_t *cmdbuf;
 	uint8_t *args[8];
 
-	// Radio frame receive buffer
-	//uint8_t frxbuf[66];
-	//uint8_t frame_len;
 
 	// Use to ID each sleep ping packet. No need to init (saves 4 bytes).
 	uint32_t sleep_counter = 0;
 
 	int argc;
 
-	tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
+	// Read parameter block from eeprom
+	eeprom_read(params.params_buffer);
+
+	// Output params to UART
+	MyUARTSendStringZ ("; mode=");
+	MyUARTPrintHex(params.params.operating_mode);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; node_addr=");
+	MyUARTPrintHex(params.params.node_addr);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; poll_interval=");
+	MyUARTPrintHex(params.params.poll_interval);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; listen_period=");
+	MyUARTPrintHex(params.params.listen_period_cs);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; link_loss_timeout=");
+	MyUARTPrintHex(params.params.listen_period_cs);
+	MyUARTSendCRLF();
+
+	//tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
+	tx_buffer.header.from_addr = params.params.node_addr;
 
 #ifdef FEATURE_UART_INTERRUPT
 	// Experimental wake on activity on UART RXD (RXD is normally shared with PIO0_0)
@@ -733,7 +747,7 @@ params.params.listen_period = 80;
 			} while (interrupt_source != WKT_INTERRUPT);
 			*/
 
-			delayMilliseconds(params.params.listen_period*10);
+			delayMilliseconds(params.params.listen_period_cs*10);
 		}
 
 
@@ -837,6 +851,8 @@ params.params.listen_period = 80;
 					rfm69_frame_tx(tx_buffer.buffer, loc_len+4);
 					break;
 				}
+
+
 
 #ifdef FEATURE_LED
 				// Remote LED blink
@@ -963,7 +979,7 @@ params.params.listen_period = 80;
 			} else {
 
 #ifdef FEATURE_DEBUG
-				MyUARTSendStringZ("i Ignoring packet from ");
+				MyUARTSendStringZ("; Ignoring packet from ");
 				MyUARTPrintHex(to_addr);
 				MyUARTSendCRLF();
 #endif
@@ -1035,11 +1051,11 @@ params.params.listen_period = 80;
 			case 'J' : {
 				if (argc == 1) {
 					MyUARTSendStringZ("j ");
-					MyUARTPrintHex(link_loss_timeout);
+					MyUARTPrintHex(params.params.link_loss_timeout_s);
 					MyUARTSendCRLF();
 					break;
 				}
-				link_loss_timeout = parse_hex(args[1]);
+				params.params.link_loss_timeout_s = parse_hex(args[1]);
 				break;
 			}
 
@@ -1079,7 +1095,20 @@ params.params.listen_period = 80;
 			// Set or report node address
 			case 'N' :
 			{
-				cmd_set_node_addr(argc, args);
+				//cmd_set_node_addr(argc, args);
+
+				if (argc == 1) {
+					MyUARTSendStringZ("n ");
+					MyUARTPrintHex(params.params.node_addr);
+					MyUARTSendCRLF();
+					break;
+				}
+				if (argc != 2) {
+					//return E_WRONG_ARGC;
+				} else {
+					params.params.node_addr = parse_hex(args[1]);
+					tx_buffer.header.from_addr = params.params.node_addr ;
+				}
 				break;
 			}
 
@@ -1121,6 +1150,12 @@ params.params.listen_period = 80;
 				MyUARTSendByte(' ');
 				print_hex8 (rfm69_register_read(regAddr));
 				MyUARTSendCRLF();
+			}
+
+			case 'S' :
+			{
+				eeprom_write(params.params_buffer);
+				break;
 			}
 
 			// Transmit arbitrary packet
@@ -1198,7 +1233,8 @@ params.params.listen_period = 80;
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
-			if (link_loss_timeout!=0 && (systick_counter - last_frame_time > link_loss_timeout)) {
+			if (params.params.link_loss_timeout_s!=0
+					&& (systick_counter - last_frame_time > params.params.link_loss_timeout_s)) {
 				// Report MCU reset (reason=2 link loss timeout)
 				MyUARTSendStringZ("q 2\r\n");
 				MyUARTSendDrain();
