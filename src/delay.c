@@ -1,17 +1,17 @@
 #include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
 #include "delay.h"
 
-extern volatile uint32_t timeTick;
+extern volatile uint32_t systick_counter;
 
 uint32_t delayLoopCalibration=1000; /* guesstimate in case delay_init() not called */
 
 void delay_init () {
 	// Calibrate our simple spin-loop delay using the SysTick timer
-	uint32_t startCalib = timeTick;
+	uint32_t startCalib = systick_counter;
 	delay(1<<20);
 
 	// Number of delay loop iterations per 10ms
-	delayLoopCalibration =  1<<20 / (timeTick - startCalib) ;
+	delayLoopCalibration =  1<<20 / (systick_counter - startCalib) ;
 
 	// Number of ns per iteration
 	//delayLoopCalibration = ((timeTick - startCalib) * 10000000) / 1<<20 ;
@@ -35,8 +35,11 @@ void delayMilliseconds(uint32_t t_ms) {
 	if (t_cs==0) {
 		return;
 	}
-	uint32_t end = timeTick + t_cs;
-	while (timeTick != end) ;
+	uint32_t end = systick_counter + t_cs;
+	while (systick_counter != end) {
+		// Sleep inbetween systicks
+		__WFI();
+	}
 }
 
 /**
