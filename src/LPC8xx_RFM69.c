@@ -573,6 +573,7 @@ params.params.listen_period = 80;
 
 	rfm69_config();
 
+	eeprom_write("123abc");
 
 	//
 	// Main program loop
