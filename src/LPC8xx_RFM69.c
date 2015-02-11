@@ -373,6 +373,14 @@ int main(void) {
 	// Read parameter block from eeprom
 	eeprom_read(params.params_buffer);
 
+	// List optional features enabled
+#ifdef FEATURE_TIP_BUCKET_COUNTER
+	MyUARTSendStringZ ("; feature TIP_BUCKET_COUNTER\r\n");
+#endif
+#ifdef FEATURE_DS18B20
+	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
+#endif
+
 	// Display parameters to UART
 	MyUARTSendStringZ ("; mode=");
 	MyUARTPrintHex(params.params.operating_mode);
@@ -393,12 +401,11 @@ int main(void) {
 	MyUARTPrintHex((uint32_t)eeprom_get_addr());
 	MyUARTSendCRLF();
 
-#ifdef FEATURE_TIP_BUCKET_COUNTER
-	MyUARTSendStringZ ("; feature TIP_BUCKET_COUNTER\r\n");
-#endif
-#ifdef FEATURE_DS18B20
-	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
-#endif
+
+
+	MyUARTSendStringZ ("; supply_voltage_mV=");
+	MyUARTPrintDecimal(readBattery());
+	MyUARTSendCRLF();
 
 	//tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
 	tx_buffer.header.from_addr = params.params.node_addr;
@@ -431,8 +438,7 @@ int main(void) {
 	LPC_PIN_INT->IENR |= (0x1<<2);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
 
-	//MyUARTPrintDecimal(readBattery());
-	//MyUARTSendCRLF();
+
 
 
 /*
