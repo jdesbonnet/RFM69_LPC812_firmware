@@ -405,7 +405,16 @@ int main(void) {
 	MyUARTPrintHex((uint32_t)eeprom_get_addr());
 	MyUARTSendCRLF();
 
-
+#ifdef FEATURE_WATCHDOG_TIMER
+	MyUARTSendStringZ("; WatchDogTimer=");
+	MyUARTPrintHex(LPC_WWDT->TV);
+	MyUARTSendCRLF();
+#endif
+#ifdef FEATURE_TIP_BUCKET_COUNTER
+	MyUARTSendStringZ("; TipBucketCounter=");
+	MyUARTPrintHex(event_counter);
+	MyUARTSendCRLF();
+#endif
 
 	MyUARTSendStringZ ("; supply_voltage_mV=");
 	MyUARTPrintDecimal(readBattery());
@@ -442,40 +451,8 @@ int main(void) {
 	LPC_PIN_INT->IENR |= (0x1<<2);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT2_IRQn));
 
-
-
-
-/*
-	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
-			| (0x2 << 8) // + of cmp to ACMP_input_2
-			| (0x0 << 11) // - of cmp to voltage ladder
-			;
-
-	{int k;
-	//for (k = 31; k >= 0; k--) {
-	for (k = 0; k < 32; k++) {
-
-		LPC_CMP->LAD = 1 | (k<<1);
-		__WFI(); // allow to settle (15us on change, 30us on powerup)
-
-		//if ( LPC_CMP->CTRL & (1<<21) ) {
-		if ( ! (LPC_CMP->CTRL & (1<<21)) ) {
-
-			MyUARTSendStringZ("L=");
-			MyUARTPrintDecimal(k);
-			MyUARTSendCRLF();
-			MyUARTSendCRLF();
-			break;
-		}
-	}
-	}
-	*/
-
 	// No need for additional modifications to ACMP registers. Switch off clock.
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<19);
-
-	//NVIC_EnableIRQ(CMP_IRQn);
-
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -695,10 +672,12 @@ int main(void) {
 			//if (frame_len>0) {
 
 #ifdef FEATURE_WATCHDOG_TIMER
+			MyUARTSendStringZ("; WDT=");
+			MyUARTPrintHex(LPC_WWDT->TV);
+			MyUARTSendCRLF();
 			// Feed watchdog
 			LPC_WWDT->FEED = 0xAA;
 			LPC_WWDT->FEED = 0x55;
-
 #endif
 
 
@@ -896,8 +875,6 @@ int main(void) {
 
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
-			//MyUARTPrintHex(event_counter);
-			//MyUARTSendCRLF();
 
 #ifdef FEATURE_DEEPSLEEP
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
@@ -906,6 +883,9 @@ int main(void) {
 #endif
 
 			MyUARTSendCRLF();
+
+
+
 
 			uint8_t *uart_buf = MyUARTGetBuf();
 

@@ -62,7 +62,7 @@
 #define FEATURE_LINK_LOSS_RESET
 
 // Use LPC8xx watchdog timer
-//#define FEATURE_WATCHDOG_TIMER
+#define FEATURE_WATCHDOG_TIMER
 
 #endif
 
