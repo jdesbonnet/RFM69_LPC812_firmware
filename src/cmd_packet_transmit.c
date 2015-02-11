@@ -40,7 +40,7 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 
 	int i;
 	uint8_t tt[3];
-	tt[3]=0;
+	tt[2]=0;
 	for (i = 0; i < payload_len; i++) {
 		tt[0] = argv[2][i*2];
 		tt[1] = argv[2][i*2+1];
