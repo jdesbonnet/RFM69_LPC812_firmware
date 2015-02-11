@@ -52,9 +52,6 @@ For v0.2.0:
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 
-// Address of this node
-//int8_t node_addr = DEFAULT_NODE_ADDR;
-
 // Current location string specified by boat firmware. Format TBD.
 uint8_t current_loc[32];
 
@@ -115,7 +112,7 @@ void wktDelay(uint32_t i) {
 	LPC_WKT->COUNT = i;
 	__WFI();
 }
-#ifdef LPC812
+
 
 /**
  * UART RXD on SOIC package pin 19
@@ -139,30 +136,6 @@ void SwitchMatrix_Init()
 
 }
 
-/**
- * UART RXD on SOIC package pin 19
- * UART TXD on SOIC package pin 5
- * ACMP_2 on SOIC package pin 12
- */
-void SwitchMatrix_Acmp_Init()
-{
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-    /* ACMP_O */
-    LPC_SWM->PINASSIGN8 = 0xffff0dffUL;
-
-    /* Pin Assign 1 bit Configuration */
-    /* ACMP_I2 */
-    /* SWCLK */
-    /* SWDIO */
-    /* RESET */
-    LPC_SWM->PINENABLE0 = 0xffffffb1UL;
-
-
-}
-#endif
 
 #ifdef BOARD_V1B_HACK
 /**
@@ -190,6 +163,7 @@ void SwitchMatrix_LPC812_PCB1b_Init()
 }
 #endif
 
+// TODO: isn't this code duped in iap_driver.c?
 /**
  * Retrieve MCU unique ID
  */
@@ -218,8 +192,9 @@ void report_error (uint8_t cmd, int32_t code) {
 	MyUARTSendCRLF();
 }
 
+// TODO: move this somewhere else
 /**
- * Use analog comparitor with internal reference to find approx battery voltage
+ * Use analog comparator with internal reference to find approx battery voltage
  * @return Battery voltage in mV
  */
 int readBattery () {
@@ -256,7 +231,6 @@ int readBattery () {
 	return 27900/32;
 }
 
-#ifdef FEATURE_LED
 /**
  * Blink diagnostic LED. Optional feature (edit config.h to define hardware configuration).
  */
@@ -271,7 +245,6 @@ void ledBlink (int nblink) {
 			delayMilliseconds(200);
 	}
 }
-#endif
 
 
 /**
@@ -319,10 +292,6 @@ int main(void) {
 	 * is delayed to allow opportunity to reprogram device via SWD.
 	 */
 
-#ifdef LPC810
-	SwitchMatrix_WithSWD_Init();
-#endif
-
 #ifdef LPC812
 #ifdef BOARD_V1B_HACK
 	SwitchMatrix_LPC812_PCB1b_Init();
@@ -333,9 +302,9 @@ int main(void) {
 #endif
 
 	// Reset GPIO
-	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
-	//LPC_SYSCON->PRESETCTRL |= (0x1<<10);
-	lpc8xx_peripheral_reset(10);
+	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
+	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	//lpc8xx_peripheral_reset(10);
 
 	MyUARTInit(UART_BPS);
 
