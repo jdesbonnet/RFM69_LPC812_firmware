@@ -7,7 +7,7 @@
  * Design note: must be no more than 64 bytes in length to fit in single page
  * of flash memory.
  */
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint8_t node_addr;
 	uint8_t operating_mode;
 	uint8_t listen_period_cs;
