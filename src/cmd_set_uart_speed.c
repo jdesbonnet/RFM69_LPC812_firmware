@@ -29,4 +29,6 @@ int cmd_set_uart_speed (int argc, uint8_t **argv) {
 	uint32_t bps = parse_hex(argv[1]);
 
 	MyUARTInit(bps);
+
+	return E_OK;
 }

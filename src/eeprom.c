@@ -65,7 +65,7 @@ int32_t eeprom_write (uint8_t *data) {
 
 	/* Write data to page */
 	iap_status = (__e_iap_status) iap_copy_ram_to_flash(data,
-			&eeprom_flashpage, 64);
+			(void *)&eeprom_flashpage, 64);
 	if (iap_status != CMD_SUCCESS) return -7;
 
 	return 0;
@@ -78,3 +78,8 @@ int32_t eeprom_read (uint8_t *data) {
 	memcpy (data, &eeprom_flashpage, 64);
 	return 0;
 }
+
+void * eeprom_get_addr () {
+	return (void *)&eeprom_flashpage;
+}
+

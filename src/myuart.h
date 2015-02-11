@@ -47,7 +47,7 @@
 void MyUARTInit(uint32_t baudrate);
 void MyUARTSendByte(uint8_t v);
 void MyUARTSendString(uint8_t *buf, uint32_t len);
-void MyUARTSendStringZ(uint8_t *buf);
+void MyUARTSendStringZ(char *buf);
 void MyUARTSendCRLF();
 void MyUARTSendDrain();
 

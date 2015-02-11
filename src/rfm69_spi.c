@@ -15,7 +15,7 @@
 #include "spi.h"
 #include "lpc8xx_gpio.h"
 
-rfm69_init() {
+void rfm69_init() {
 
 #ifdef USE_SSP0
 	// Initialize SPI peripheral

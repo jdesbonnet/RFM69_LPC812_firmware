@@ -10,6 +10,7 @@
 #include "rfm69.h"
 #include "spi.h"
 #include "err.h"
+#include "delay.h"
 
 
 extern const uint8_t RFM69_CONFIG[][2];
@@ -117,7 +118,7 @@ uint8_t rfm69_temperature () {
 
 	// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
 	// space efficient (down to last few bytes of flash!)
-	loopDelay(10000);
+	delayMilliseconds(20);
 	uint8_t temperature = rfm69_register_read(0x4F);
 
 	// Restore mode

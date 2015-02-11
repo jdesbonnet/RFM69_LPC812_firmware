@@ -35,11 +35,15 @@ For v0.2.0:
 #include "myuart.h"
 #include "sleep.h"
 #include "print_util.h"
+#include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"
 #include "err.h"
+#include "spi.h"
 #include "flags.h"
 #include "params.h"
+#include "delay.h"
+#include "eeprom.h"
 #include "frame_buffer.h"
 
 #include "lpc8xx_pmu.h"
@@ -86,7 +90,7 @@ frame_buffer_type rx_buffer;
 //frame_send_buffer.header.from_addr = node_addr;
 
 
-#ifdef FEATURE_EVENT_COUNTER
+#ifdef FEATURE_TIP_BUCKET_COUNTER
 	volatile uint32_t event_counter = 0;
 	volatile uint32_t event_time = 0;
 #endif
@@ -159,58 +163,6 @@ void SwitchMatrix_Acmp_Init()
 }
 #endif
 
-#ifdef LPC810
-/**
- * On boot initialize LPC810 SwitchMatrix preserving SWD functionality. For SPI operation
- * we need to forfeit SWCLK, SWDIO and RESET functions due to lack of available pins.
- * Instead delay configuring these pins for SPI either by
- * switching pins to SPI by UART command or by delay so as to provide opportunity
- * to reprogram the device using SWD (else will have to use awkward ISP entry via
- * powercycling to reprogram the device).
- */
-void SwitchMatrix_WithSWD_Init()
-{
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-
-    /* Pin Assign 1 bit Configuration */
-    /* SWCLK */
-    /* SWDIO */
-    LPC_SWM->PINENABLE0 = 0xfffffff3UL;
-}
-
-
-/**
- * SwitchMatrix configuration to utilized RESET and SWD lines for SPI use
- * (current implementation uses bitbanging on GPIO, so configure these
- * pins for GPIO use. When this is called any debugging session in progress
- * will be terminated, and it will not be possible to reflash the device
- * unless SWD is restored (through UART command) or power cycle and reflash
- * during the ~10second delay on boot when SWD is still active. Alternatively
- * hold ISP entry pin (PIO0_0?) low and power cycle.
- */
-void SwitchMatrix_Spi_Init()
-{
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-
-    /* Pin Assign 1 bit Configuration */
-    LPC_SWM->PINENABLE0 = 0xffffffffUL;
-}
-
-
-#endif
-
 #ifdef BOARD_V1B_HACK
 /**
  * Hack to facilitate PCB v1 bug where via on RXD at PIO0_0 (package pin 19)
@@ -237,7 +189,6 @@ void SwitchMatrix_LPC812_PCB1b_Init()
 }
 #endif
 
-#ifdef FEATURE_MCU_UID
 /**
  * Retrieve MCU unique ID
  */
@@ -251,7 +202,6 @@ uint32_t get_mcu_serial_number () {
 	iap_entry (command, result);
 	return (uint32_t)result[1];
 }
-#endif
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
@@ -260,7 +210,7 @@ uint32_t get_mcu_serial_number () {
  */
 void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
-	MyUARTSendStringZ((uint8_t *)"e ");
+	MyUARTSendStringZ("e ");
 	MyUARTSendByte(cmd);
 	MyUARTSendByte(' ');
 	MyUARTPrintHex(code);
@@ -392,20 +342,6 @@ int main(void) {
 	cmd_version(1,NULL);
 
 
-#ifdef LPC810
-	// Long delay (10-20seconds) to allow debug probe to reflash. Remove in production.
-	// Tried using regular SLEEP mode for this, but seems debugger doesn't work in that mode.
-	loopDelay(20000000);
-
-	// Won't be able to use debug probe from this point on (unless UART S 0 command used)
-	SwitchMatrix_Spi_Init();
-
-	// Hack:
-	// Display firmware version again to indicate SPI is in operation
-	cmd_version(1,NULL);
-#endif
-
-
 #ifdef FEATURE_WATCHDOG_TIMER
 	//
     // Watchdog configuration
@@ -475,7 +411,7 @@ int main(void) {
 	// Read parameter block from eeprom
 	eeprom_read(params.params_buffer);
 
-	// Output params to UART
+	// Display parameters to UART
 	MyUARTSendStringZ ("; mode=");
 	MyUARTPrintHex(params.params.operating_mode);
 	MyUARTSendCRLF();
@@ -491,6 +427,16 @@ int main(void) {
 	MyUARTSendStringZ ("; link_loss_timeout=");
 	MyUARTPrintHex(params.params.listen_period_cs);
 	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; eeprom_addr=");
+	MyUARTPrintHex((uint32_t)eeprom_get_addr());
+	MyUARTSendCRLF();
+
+#ifdef FEATURE_TIP_BUCKET_COUNTER
+	MyUARTSendStringZ ("; feature TIP_BUCKET_COUNTER\r\n");
+#endif
+#ifdef FEATURE_DS18B20
+	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
+#endif
 
 	//tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
 	tx_buffer.header.from_addr = params.params.node_addr;
@@ -504,7 +450,7 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_EVENT_COUNTER
+#ifdef FEATURE_TIP_BUCKET_COUNTER
 	// Set TIPBUCKET_PIN as input
 	LPC_GPIO_PORT->DIR0 &= ~(1<<TIPBUCKET_PIN);
 
@@ -593,7 +539,7 @@ int main(void) {
 	while (1) {
 
 
-#ifdef FEATURE_TEMPERATURE
+#ifdef FEATURE_RFM69_TEMPERATURE
 		if ((flags&0xf)==MODE_LOW_POWER_POLL) {
 			// Must read temperature from STDBY or FS mode
 			rfm69_mode(RFM69_OPMODE_Mode_STDBY);
@@ -611,7 +557,7 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_EVENT_COUNTER
+#ifdef FEATURE_TIP_BUCKET_COUNTER
 		if ( (event_time != 0) && (systick_counter - event_time > 10) ) {
 			MyUARTSendStringZ("a ");
 			MyUARTPrintHex(event_counter);
@@ -701,7 +647,7 @@ int main(void) {
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
-#ifdef FEATURE_EVENT_COUNTER
+#ifdef FEATURE_TIP_BUCKET_COUNTER
 			tx_buffer.payload[1] = event_counter;
 #else
 			tx_buffer.payload[1] = 0xFF;
@@ -805,7 +751,6 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_REMOTE_COMMAND
 				case 'D' : {
 					// If there is an uncompleted UART command in buffer then
 					// remote command takes priority and whatever is in the
@@ -831,7 +776,6 @@ int main(void) {
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
 				}
-#endif
 
 				// Ping
 				//case 'P' :
@@ -852,7 +796,6 @@ int main(void) {
 
 
 
-#ifdef FEATURE_LED
 				// Remote LED blink
 				case 'U' : {
 					//tx_buffer.header.to_addr = from_addr;
@@ -862,9 +805,7 @@ int main(void) {
 					ledBlink(3);
 					break;
 				}
-#endif
 
-#ifdef FEATURE_REMOTE_REG_READ
 				// Remote register read
 				case 'X' : {
 					uint8_t base_addr = rx_buffer.payload[0];
@@ -880,9 +821,7 @@ int main(void) {
 					rfm69_frame_tx(tx_buffer.buffer, read_len+4);
 					break;
 				}
-#endif
 
-#ifdef FEATURE_REMOTE_REG_WRITE
 				// Remote register write
 				case 'Y' : {
 					uint8_t base_addr = rx_buffer.payload[0];
@@ -899,10 +838,6 @@ int main(void) {
 				}
 
 
-#endif
-
-
-#ifdef FEATURE_REMOTE_MEM_RWX
 				// Experimental write to memory
 				case '>' : {
 					// At 32bit memory address at payload+0 write 32bit value at payload+4
@@ -951,7 +886,6 @@ int main(void) {
 					e_entry();
 					break;
 				}
-#endif
 
 				// If none of the above cases match, output packet to UART
 				default: {
@@ -1141,8 +1075,7 @@ int main(void) {
 			// Read RFM69 register
 			case 'R' : {
 				// Parameter is register address
-				uint8_t *b;
-				int regAddr = parse_hex(args[1],&b);
+				int regAddr = parse_hex(args[1]);
 				MyUARTSendStringZ("r ");
 				print_hex8 (regAddr);
 				MyUARTSendByte(' ');
@@ -1201,7 +1134,7 @@ int main(void) {
 			// > 32bit-addr byte-value
 			case '>' : {
 				uint32_t *mem_addr;
-				mem_addr = parse_hex(args[1]);
+				mem_addr = (uint32_t *)parse_hex(args[1]);
 				*mem_addr = parse_hex(args[2]);
 				break;
 			}
@@ -1209,7 +1142,7 @@ int main(void) {
 			// < 32bit-addr
 			case '<' : {
 				uint32_t *mem_addr;
-				mem_addr = parse_hex(args[1]);
+				mem_addr = (uint32_t *)parse_hex(args[1]);
 				MyUARTPrintHex(*mem_addr);
 				MyUARTSendCRLF();
 				break;
@@ -1267,7 +1200,7 @@ void PININT0_IRQHandler (void) {
 #endif
 
 
-#ifdef FEATURE_EVENT_COUNTER
+#ifdef FEATURE_TIP_BUCKET_COUNTER
 
 /**
  * Interrupt generated by tip bucket

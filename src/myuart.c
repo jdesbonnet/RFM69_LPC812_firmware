@@ -10,7 +10,7 @@
 #include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
 
 #include "myuart.h"
-
+#include "lpc8xx_util.h"
 
 volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 volatile uint32_t uart_rxi=0;
@@ -97,7 +97,7 @@ void MyUARTSendString (uint8_t *buf, uint32_t len) {
 /**
  * Send zero-terminated string.
  */
-void MyUARTSendStringZ (uint8_t *buf) {
+void MyUARTSendStringZ (char *buf) {
 	while (*buf != 0) {
 		MyUARTSendByte(*buf);
 		buf++;

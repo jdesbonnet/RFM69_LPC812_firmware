@@ -5,6 +5,7 @@
 #include "config.h"
 #include "myuart.h"
 #include "cmd.h"
+#include "err.h"
 
 
 /**
@@ -16,4 +17,6 @@ int cmd_version (int argc, uint8_t **argv) {
 	MyUARTSendStringZ("v ");
 	MyUARTSendStringZ(VERSION);
 	MyUARTSendCRLF(LPC_USART0);
+
+	return E_OK;
 }

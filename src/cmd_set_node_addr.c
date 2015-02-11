@@ -10,6 +10,7 @@
 #include "cmd.h"
 #include "err.h"
 #include "frame_buffer.h"
+#include "myuart.h"
 
 /**
  * Set node address

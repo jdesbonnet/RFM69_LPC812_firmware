@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "parse_util.h"
 
+// TODO: not good dependency graph here
+#include "myuart.h"
+
 /**
  * Return the numeric value of a hex digit or -1 if not a hex digit.
  */
@@ -27,7 +30,7 @@ uint32_t parse_dec_or_hex (uint8_t *buf) {
 	if (buf[0]=='0' && buf[1]=='x') {
 		return parse_hex(buf+2);
 	} else {
-		return atoi (buf);
+		return atoi ((char *)buf);
 	}
 }
 

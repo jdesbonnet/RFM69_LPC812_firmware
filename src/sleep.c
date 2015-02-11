@@ -7,6 +7,7 @@
 
 #include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
 #include "lpc8xx_pmu.h"
+#include "lpc8xx_util.h"
 
 #include "sleep.h"
 #include "config.h"

@@ -14,8 +14,7 @@
 // When in low power polling mode, timeout in 10ms units to trigger reset
 #define DEFAULT_LINK_LOSS_TIMEOUT 0
 
-// Version of MCU used (LPC812, LPC810 supported)
-//#define LPC810
+// Version of MCU used (only LPC812 supported, LPC824 later)
 #define LPC812
 
 // What PCB board or pin layout?
@@ -28,26 +27,14 @@
 // limited on LPC810 (4KiB) not all features can be supported simultaneously.
 //
 
-// Remote register read/write
-#define FEATURE_REMOTE_REG_READ
-#define FEATURE_REMOTE_REG_WRITE
-
-
-
-
 
 #define FEATURE_SLEEP
 
 // Support MCU deep-sleep (~10uA)
 #define FEATURE_DEEPSLEEP
 
-// Allow full UART command to be executed remotely
-#define FEATURE_REMOTE_COMMAND
-
-
-
 // Read RFM69 temperature sensor
-#define FEATURE_TEMPERATURE
+#define FEATURE_RFM69_TEMPERATURE
 
 // Remote MCU memory read/write and execute (+160bytes)
 #define FEATURE_REMOTE_MEM_RWX
@@ -61,19 +48,16 @@
 // Enable ARM Cortex M SysTick timer
 #define FEATURE_SYSTICK
 // Experimental application to count rain tip bucket
-//#define FEATURE_EVENT_COUNTER
+#define FEATURE_TIP_BUCKET_COUNTER
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
-// Allow change of UART speed from default 9600
-#define FEATURE_UART_SPEED
+#define FEATURE_DS18B20
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
 // Support NMEA sentences for location
 #define FEATURE_NMEA_INPUT
 // Remote packet broadcast
 #define FEATURE_REMOTE_PKT_TX
-// Report unique serial number of MCU
-#define FEATURE_MCU_UID
+
 // Use WDT to reset MCU on loss of link
 #define FEATURE_LINK_LOSS_RESET
 
