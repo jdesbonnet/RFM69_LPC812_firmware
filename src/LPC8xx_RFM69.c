@@ -69,7 +69,11 @@ volatile uint32_t flags =
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
 uint32_t last_frame_time;
 
-params_type params;
+params_union_type params_union;
+//params_struct *rptr;
+//uint32_t rptr = &params_union;
+//params_struct *p;
+//p = (params_struct *)rptr;
 
 // When in deepsleep or power down this lets us know which wake event occurred
 typedef enum {
@@ -371,7 +375,7 @@ int main(void) {
 	int argc;
 
 	// Read parameter block from eeprom
-	eeprom_read(params.params_buffer);
+	eeprom_read(params_union.params_buffer);
 
 	// List optional features enabled
 #ifdef FEATURE_TIP_BUCKET_COUNTER
@@ -383,19 +387,19 @@ int main(void) {
 
 	// Display parameters to UART
 	MyUARTSendStringZ ("; mode=");
-	MyUARTPrintHex(params.params.operating_mode);
+	MyUARTPrintHex(params_union.params.operating_mode);
 	MyUARTSendCRLF();
 	MyUARTSendStringZ ("; node_addr=");
-	MyUARTPrintHex(params.params.node_addr);
+	MyUARTPrintHex(params_union.params.node_addr);
 	MyUARTSendCRLF();
 	MyUARTSendStringZ ("; poll_interval=");
-	MyUARTPrintHex(params.params.poll_interval);
+	MyUARTPrintHex(params_union.params.poll_interval);
 	MyUARTSendCRLF();
 	MyUARTSendStringZ ("; listen_period=");
-	MyUARTPrintHex(params.params.listen_period_cs);
+	MyUARTPrintHex(params_union.params.listen_period_cs);
 	MyUARTSendCRLF();
 	MyUARTSendStringZ ("; link_loss_timeout=");
-	MyUARTPrintHex(params.params.listen_period_cs);
+	MyUARTPrintHex(params_union.params.listen_period_cs);
 	MyUARTSendCRLF();
 	MyUARTSendStringZ ("; eeprom_addr=");
 	MyUARTPrintHex((uint32_t)eeprom_get_addr());
@@ -408,7 +412,7 @@ int main(void) {
 	MyUARTSendCRLF();
 
 	//tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
-	tx_buffer.header.from_addr = params.params.node_addr;
+	tx_buffer.header.from_addr = params_union.params.node_addr;
 
 #ifdef FEATURE_UART_INTERRUPT
 	// Experimental wake on activity on UART RXD (RXD is normally shared with PIO0_0)
@@ -659,7 +663,7 @@ int main(void) {
 			} while (interrupt_source != WKT_INTERRUPT);
 			*/
 
-			delayMilliseconds(params.params.listen_period_cs*10);
+			delayMilliseconds(params_union.params.listen_period_cs*10);
 		}
 
 
@@ -953,11 +957,11 @@ int main(void) {
 			case 'J' : {
 				if (argc == 1) {
 					MyUARTSendStringZ("j ");
-					MyUARTPrintHex(params.params.link_loss_timeout_s);
+					MyUARTPrintHex(params_union.params.link_loss_timeout_s);
 					MyUARTSendCRLF();
 					break;
 				}
-				params.params.link_loss_timeout_s = parse_hex(args[1]);
+				params_union.params.link_loss_timeout_s = parse_hex(args[1]);
 				break;
 			}
 
@@ -1001,15 +1005,15 @@ int main(void) {
 
 				if (argc == 1) {
 					MyUARTSendStringZ("n ");
-					MyUARTPrintHex(params.params.node_addr);
+					MyUARTPrintHex(params_union.params.node_addr);
 					MyUARTSendCRLF();
 					break;
 				}
 				if (argc != 2) {
 					//return E_WRONG_ARGC;
 				} else {
-					params.params.node_addr = parse_hex(args[1]);
-					tx_buffer.header.from_addr = params.params.node_addr ;
+					params_union.params.node_addr = parse_hex(args[1]);
+					tx_buffer.header.from_addr = params_union.params.node_addr ;
 				}
 				break;
 			}
@@ -1018,7 +1022,7 @@ int main(void) {
 
 				if (argc == 2) {
 					uint32_t param_index = parse_hex(args[1]);
-					MyUARTPrintHex(params.params_buffer[param_index]);
+					MyUARTPrintHex(params_union.params_buffer[param_index]);
 					MyUARTSendCRLF();
 					break;
 				}
@@ -1029,7 +1033,7 @@ int main(void) {
 
 				uint32_t param_index = parse_hex(args[1]);
 				uint32_t param_value = parse_hex(args[2]);
-				params.params_buffer[param_index] = param_value;
+				params_union.params_buffer[param_index] = param_value;
 				break;
 			}
 
@@ -1055,7 +1059,7 @@ int main(void) {
 
 			case 'S' :
 			{
-				eeprom_write(params.params_buffer);
+				eeprom_write(params_union.params_buffer);
 				break;
 			}
 
@@ -1134,8 +1138,8 @@ int main(void) {
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
-			if (params.params.link_loss_timeout_s!=0
-					&& (systick_counter - last_frame_time > params.params.link_loss_timeout_s)) {
+			if (params_union.params.link_loss_timeout_s!=0
+					&& (systick_counter - last_frame_time > params_union.params.link_loss_timeout_s)) {
 				// Report MCU reset (reason=2 link loss timeout)
 				MyUARTSendStringZ("q 2\r\n");
 				MyUARTSendDrain();

@@ -21,11 +21,13 @@ typedef struct {
 } params_struct;
 
 // Allow the parameter block to be accessed either as a structure or a sequence of bytes
+// TODO: is there a better approach? Refering to params as param_union.param.blah is very
+// verbose.
 typedef union {
 	params_struct params;
 	//uint8_t params_buffer[sizeof(params_struct)];
 	uint8_t params_buffer[64];
 	//uint64_t padx[8] = {0,0,0,0, 1,2,3,4};
-} params_type;
+} params_union_type;
 
 #endif

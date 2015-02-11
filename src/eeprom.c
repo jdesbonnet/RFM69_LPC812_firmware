@@ -18,7 +18,7 @@
 //const char eeprom_flashpage[64] __attribute__ ((aligned (64))) = {0};
 
 
-const params_type eeprom_flashpage __attribute__ ((aligned (64))) = {
+const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.params = {
 		.node_addr = 0xff,
 		.operating_mode = 0,
