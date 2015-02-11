@@ -163,20 +163,6 @@ void SwitchMatrix_LPC812_PCB1b_Init()
 }
 #endif
 
-// TODO: isn't this code duped in iap_driver.c?
-/**
- * Retrieve MCU unique ID
- */
-#define IAP_LOCATION 0x1fff1ff1
-typedef void (*IAP)(unsigned int [],unsigned int[]);
-IAP iap_entry = (IAP)0x1fff1ff1;
-uint32_t get_mcu_serial_number () {
-	unsigned long command[5];
-	unsigned long result[4];
-	command[0] = 58; // Read UID
-	iap_entry (command, result);
-	return (uint32_t)result[1];
-}
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
@@ -195,6 +181,7 @@ void report_error (uint8_t cmd, int32_t code) {
 // TODO: move this somewhere else
 /**
  * Use analog comparator with internal reference to find approx battery voltage
+ *
  * @return Battery voltage in mV
  */
 int readBattery () {
@@ -213,16 +200,21 @@ int readBattery () {
 	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
 
 
-	// Measure Vdd relative to bandgap
+	// Measure Vdd relative to 900mV bandgap reference
 	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
-			| (0x6 << 8)  // bandgap
-			| (0x0 << 11) // - of cmp to voltage ladder
+			| (0x6 << 8)  // + of cmp to 900mV bandgap reference
+			| (0x0 << 11) // - of cmp to voltage ladder powered by Vdd
 			;
 
+	// Find k, voltage latter setting that causes comparator output to go low
+	// At this point Vdd * k / 31 = 900mV
+	// so Vdd (mV) = 900mV * 31 / k  =  27900mV / k;
 	int k;
 	for (k = 0; k <32; k++) {
 		LPC_CMP->LAD = 1 | (k<<1);
-		__WFI(); // allow to settle (15us on change, 30us on powerup
+		// allow time to settle (15us on change, 30us on powerup) by
+		// waiting for next SYSTICK interrupt
+		__WFI();
 		if ( ! (LPC_CMP->CTRL & (1<<21))) {
 			return 27900/k; // 900mV*31/k
 		}
@@ -944,7 +936,9 @@ int main(void) {
 			// Display MCU unique ID
 			case 'I' : {
 				MyUARTSendStringZ("i ");
-				MyUARTPrintHex(get_mcu_serial_number());
+				//MyUARTPrintHex(get_mcu_serial_number());
+				MyUARTPrintHex(iap_read_part_id());
+
 				MyUARTSendCRLF();
 				break;
 			}
