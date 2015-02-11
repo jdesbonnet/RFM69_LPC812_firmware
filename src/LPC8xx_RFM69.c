@@ -277,6 +277,10 @@ int main(void) {
     		;
 
 
+	// Read parameter block from eeprom
+	eeprom_read(params_union.params_buffer);
+
+
 #ifdef FEATURE_SYSTICK
     SysTick_Config( SYSTICK_DELAY );
 #endif
@@ -319,7 +323,7 @@ int main(void) {
 	// Setup watchdog oscillator frequency
     /* Freq = 0.5Mhz, div_sel is 0x1F, divided by 64. WDT_OSC should be 7.8125khz */
     LPC_SYSCON->WDTOSCCTRL = (0x1<<5)|0x1F;
-    LPC_WWDT->TC = DEFAULT_WATCHDOG_TIMEOUT;
+    LPC_WWDT->TC = params_union.params.link_loss_timeout_s * 2000;
     LPC_WWDT->MOD = (1<<0) // WDEN enable watchdog
     			| (1<<1); // WDRESET : enable watchdog to reset on timeout
     // Watchdog feed sequence
@@ -374,8 +378,6 @@ int main(void) {
 
 	int argc;
 
-	// Read parameter block from eeprom
-	eeprom_read(params_union.params_buffer);
 
 	// List optional features enabled
 #ifdef FEATURE_TIP_BUCKET_COUNTER
@@ -938,10 +940,18 @@ int main(void) {
 				if (argc == 1) {
 					MyUARTSendStringZ("j ");
 					MyUARTPrintHex(params_union.params.link_loss_timeout_s);
+					MyUARTSendByte(' ');
+					MyUARTPrintHex(LPC_WWDT->TV);
+					MyUARTSendByte(' ');
+					MyUARTPrintHex(LPC_WWDT->TC);
 					MyUARTSendCRLF();
 					break;
 				}
 				params_union.params.link_loss_timeout_s = parse_hex(args[1]);
+				LPC_WWDT->TC = params_union.params.link_loss_timeout_s * 2000;
+			    // Watchdog feed sequence
+			    LPC_WWDT->FEED = 0xAA;
+			    LPC_WWDT->FEED = 0x55;
 				break;
 			}
 
