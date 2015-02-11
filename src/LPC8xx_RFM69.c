@@ -47,6 +47,7 @@ For v0.2.0:
 #include "frame_buffer.h"
 
 #include "lpc8xx_pmu.h"
+#include "onewire.h"
 #include "ds18b20.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
@@ -771,7 +772,7 @@ int main(void) {
 					uint8_t *uart_buf = MyUARTGetBuf();
 					memcpy(uart_buf,rx_buffer.payload,payload_len);
 					uart_buf[payload_len] = 0; // zero terminate buffer
-					MyUARTSendStringZ(uart_buf);
+					MyUARTSendStringZ((char *)uart_buf);
 					MyUARTSendCRLF();
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
