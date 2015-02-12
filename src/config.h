@@ -96,7 +96,7 @@
 #endif
 
 // Enable reroute of RXD to alternative pin due to failure to fix via bug.
-//#define BOARD_V1B_HACK
+#define BOARD_V1B_HACK
 #ifdef BOARD_V1B_HACK
 #define UART_RXD_PIN 11
 #endif

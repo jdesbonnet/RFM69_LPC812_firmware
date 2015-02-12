@@ -11,6 +11,9 @@
 #include "params.h"
 #include "iap_driver.h"
 
+// Flags is deprecated
+#include "flags.h"
+
 // Allocate 64 byte aligned, 64 byte block in flash memory (0x00000000 - 0x00003999) on
 // 16kB LPC812. Assignment to constant ( = {0}) seems necessary to force allocation in
 // flash area.
@@ -21,7 +24,9 @@
 const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.params = {
 		.node_addr = 0xff,
-		.operating_mode = 0,
+		//.operating_mode = MODE_LOW_POWER_POLL,
+		.operating_mode = MODE_AWAKE,
+
 		.poll_interval = 5,
 		.listen_period_cs = 80,
 		.link_loss_timeout_s = 120

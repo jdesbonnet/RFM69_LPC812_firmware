@@ -923,17 +923,22 @@ int main(void) {
 				break;
 			}
 
+			// Transmit remote command
+			case 'D' :
+			{
+				cmd_remote_cmd(argc, args);
+				break;
+			}
+
 			// Display MCU unique ID
 			case 'I' : {
 				MyUARTSendStringZ("i ");
-				//MyUARTPrintHex(get_mcu_serial_number());
 				MyUARTPrintHex(iap_read_part_id());
-
 				MyUARTSendCRLF();
 				break;
 			}
 
-			// Set link loss reset
+			// Set link loss reset timeout
 			case 'J' : {
 				if (argc == 1) {
 					MyUARTSendStringZ("j ");
