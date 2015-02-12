@@ -61,15 +61,6 @@ uint8_t current_loc[32];
 // detracts from code readability. Consider a struct of params instead.
 
 
-// deprecated
-volatile uint32_t flags =
-		//MODE_LOW_POWER_POLL
-		MODE_AWAKE
-		//| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
-		| (0x6<<8) // poll interval 500ms x 2^(6+1) = ?s
-		;
-
-
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
 uint32_t last_frame_time;
 
@@ -929,12 +920,6 @@ int main(void) {
 			case 'C' :
 			{
 				rfm69_config();
-				break;
-			}
-
-			// Read set various flags
-			case 'F' : {
-				cmd_flags(argc, args);
 				break;
 			}
 
