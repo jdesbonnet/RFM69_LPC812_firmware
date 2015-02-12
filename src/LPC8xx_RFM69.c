@@ -237,7 +237,53 @@ void ledBlink (int nblink) {
 	}
 }
 
+/**
+ * Show system settings etc to UART
+ */
+void displayStatus () {
+	// List optional features enabled
+#ifdef FEATURE_TIP_BUCKET_COUNTER
+	MyUARTSendStringZ ("; feature TIP_BUCKET_COUNTER\r\n");
+#endif
+#ifdef FEATURE_DS18B20
+	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
+#endif
 
+	// Display parameters to UART
+	MyUARTSendStringZ ("; mode=");
+	MyUARTPrintHex(params_union.params.operating_mode);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; node_addr=");
+	MyUARTPrintHex(params_union.params.node_addr);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; poll_interval=");
+	MyUARTPrintHex(params_union.params.poll_interval);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; listen_period=");
+	MyUARTPrintHex(params_union.params.listen_period_cs);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; link_loss_timeout=");
+	MyUARTPrintHex(params_union.params.listen_period_cs);
+	MyUARTSendCRLF();
+	MyUARTSendStringZ ("; eeprom_addr=");
+	MyUARTPrintHex((uint32_t)eeprom_get_addr());
+	MyUARTSendCRLF();
+
+#ifdef FEATURE_WATCHDOG_TIMER
+	MyUARTSendStringZ("; WatchDogTimer=");
+	MyUARTPrintHex(LPC_WWDT->TV);
+	MyUARTSendCRLF();
+#endif
+#ifdef FEATURE_TIP_BUCKET_COUNTER
+	MyUARTSendStringZ("; TipBucketCounter=");
+	MyUARTPrintHex(event_counter);
+	MyUARTSendCRLF();
+#endif
+
+	MyUARTSendStringZ ("; supply_voltage_mV=");
+	MyUARTPrintDecimal(readBattery());
+	MyUARTSendCRLF();
+}
 /**
  * New radio system (RFM69 module + MCU) operating modes:
  *
@@ -375,49 +421,7 @@ int main(void) {
 
 	int argc;
 
-
-	// List optional features enabled
-#ifdef FEATURE_TIP_BUCKET_COUNTER
-	MyUARTSendStringZ ("; feature TIP_BUCKET_COUNTER\r\n");
-#endif
-#ifdef FEATURE_DS18B20
-	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
-#endif
-
-	// Display parameters to UART
-	MyUARTSendStringZ ("; mode=");
-	MyUARTPrintHex(params_union.params.operating_mode);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; node_addr=");
-	MyUARTPrintHex(params_union.params.node_addr);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; poll_interval=");
-	MyUARTPrintHex(params_union.params.poll_interval);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; listen_period=");
-	MyUARTPrintHex(params_union.params.listen_period_cs);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; link_loss_timeout=");
-	MyUARTPrintHex(params_union.params.listen_period_cs);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; eeprom_addr=");
-	MyUARTPrintHex((uint32_t)eeprom_get_addr());
-	MyUARTSendCRLF();
-
-#ifdef FEATURE_WATCHDOG_TIMER
-	MyUARTSendStringZ("; WatchDogTimer=");
-	MyUARTPrintHex(LPC_WWDT->TV);
-	MyUARTSendCRLF();
-#endif
-#ifdef FEATURE_TIP_BUCKET_COUNTER
-	MyUARTSendStringZ("; TipBucketCounter=");
-	MyUARTPrintHex(event_counter);
-	MyUARTSendCRLF();
-#endif
-
-	MyUARTSendStringZ ("; supply_voltage_mV=");
-	MyUARTPrintDecimal(readBattery());
-	MyUARTSendCRLF();
+	displayStatus();
 
 	//tx_buffer.header.from_addr = DEFAULT_NODE_ADDR;
 	tx_buffer.header.from_addr = params_union.params.node_addr;
@@ -609,6 +613,9 @@ int main(void) {
 #ifdef FEATURE_DS18B20
 			ow_init(0,DS18B20_PIN);
 			int32_t temperature = ds18b20_temperature_read();
+			MyUARTSendStringZ("; temperature=");
+			MyUARTPrintHex(temperature);
+			MyUARTSendCRLF();
 			tx_buffer.payload[3] = temperature>>8;
 			tx_buffer.payload[4] = temperature&0xff;
 #endif
