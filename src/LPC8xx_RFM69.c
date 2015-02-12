@@ -49,6 +49,7 @@ For v0.2.0:
 #include "lpc8xx_pmu.h"
 #include "onewire.h"
 #include "ds18b20.h"
+#include "iap_driver.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 
@@ -259,14 +260,20 @@ void displayStatus () {
 	MyUARTSendStringZ ("; poll_interval=");
 	MyUARTPrintHex(params_union.params.poll_interval);
 	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; listen_period=");
+	MyUARTSendStringZ ("; listen_period_cs=");
 	MyUARTPrintHex(params_union.params.listen_period_cs);
 	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; link_loss_timeout=");
-	MyUARTPrintHex(params_union.params.listen_period_cs);
+	MyUARTSendStringZ ("; link_loss_timeout_s=");
+	MyUARTPrintHex(params_union.params.link_loss_timeout_s);
 	MyUARTSendCRLF();
 	MyUARTSendStringZ ("; eeprom_addr=");
 	MyUARTPrintHex((uint32_t)eeprom_get_addr());
+	MyUARTSendCRLF();
+
+	uint32_t part_id;
+	iap_read_part_id(&part_id);
+	MyUARTSendStringZ("; mcu_id= ");
+	MyUARTPrintHex(part_id);
 	MyUARTSendCRLF();
 
 #ifdef FEATURE_WATCHDOG_TIMER
@@ -940,7 +947,9 @@ int main(void) {
 			// Display MCU unique ID
 			case 'I' : {
 				MyUARTSendStringZ("i ");
-				MyUARTPrintHex(iap_read_part_id());
+				uint32_t part_id;
+				iap_read_part_id(&part_id);
+				MyUARTPrintHex(part_id);
 				MyUARTSendCRLF();
 				break;
 			}
@@ -986,7 +995,7 @@ int main(void) {
 			// Set radio system operating mode
 			// M (no params) : report current mode
 			// M <mode> : set mode
-			// M <mode> S : set mode and save in EEPROM
+			// M <mode> S : set mode and save in EEPROM (and RESET)
 			case 'M' : {
 				if (argc == 1) {
 					MyUARTSendStringZ("m ");
@@ -997,8 +1006,10 @@ int main(void) {
 				params_union.params.operating_mode = parse_hex(args[1]);
 				if (argc == 3) {
 					if (args[2][0]=='S') {
-						MyUARTSendStringZ("; ModeSave\r\n");
+						MyUARTSendStringZ("; ModeSaveAndReset\r\n");
 						eeprom_write(params_union.params_buffer);
+						MyUARTSendDrain();
+						NVIC_SystemReset();
 					}
 				}
 				break;
