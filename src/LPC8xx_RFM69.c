@@ -1129,7 +1129,11 @@ int main(void) {
 				break;
 			}
 
-
+			// Display system status
+			case '?' : {
+				displayStatus();
+				break;
+			}
 
 			default : {
 				report_error(*args[0], E_INVALID_CMD);
