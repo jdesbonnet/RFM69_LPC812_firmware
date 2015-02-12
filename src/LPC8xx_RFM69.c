@@ -59,12 +59,16 @@ uint8_t current_loc[32];
 // reduce code size and SRAM requirements).
 // TODO: now that we've moved to LPC812, this sort of extreme optimization
 // detracts from code readability. Consider a struct of params instead.
+
+
+// deprecated
 volatile uint32_t flags =
 		//MODE_LOW_POWER_POLL
 		MODE_AWAKE
 		//| (0x4<<8) // poll interval 500ms x 2^(3+1) = 8s
 		| (0x6<<8) // poll interval 500ms x 2^(6+1) = ?s
 		;
+
 
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
 uint32_t last_frame_time;
@@ -258,10 +262,12 @@ void ledBlink (int nblink) {
  *
  * Mode is stored in bits 3:0 of 'flags'.
  */
+/*
 void setOpMode (uint32_t mode) {
 	flags &= ~0xf;
 	flags |= mode;
 }
+*/
 
 int main(void) {
 
@@ -491,7 +497,7 @@ int main(void) {
 
 
 #ifdef FEATURE_RFM69_TEMPERATURE
-		if ((flags&0xf)==MODE_LOW_POWER_POLL) {
+		if (params_union.params.operating_mode==MODE_LOW_POWER_POLL) {
 			// Must read temperature from STDBY or FS mode
 			rfm69_mode(RFM69_OPMODE_Mode_STDBY);
 
@@ -521,13 +527,15 @@ int main(void) {
 
 		// TODO: can we avoid calling rfm69_mode() on every iteration?
 		// TODO: use macro to test flags
-		if ( (flags&0xf) == MODE_AWAKE) {
+		if (params_union.params.operating_mode == MODE_AWAKE) {
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
 		}
 
 #ifdef FEATURE_DEEPSLEEP
 		// Test for MODE_OFF or MODE_LOW_POWER_POLL (LSB==0 for those two modes)
-		if ( (flags&0x1) == 0) {
+		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL
+				|| params_union.params.operating_mode == MODE_RADIO_OFF
+				) {
 
 			// Set radio in SLEEP mode
 			rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
@@ -542,7 +550,7 @@ int main(void) {
 			// Polling interval determined by bits 11:8 of flags.
 			// Ts = 0.5 * 2 ^ flags[11:8]
 			// is 500 ms x 2 to the power of this value (ie 0=500ms, 1=1s, 2=2s,3=4s,4=8s...)
-			uint32_t wakeup_time = 5000 << ((flags>>8)&0xf);
+			uint32_t wakeup_time = 5000  * params_union.params.poll_interval;
 			LPC_WKT->COUNT = wakeup_time ;
 
 			// DeepSleep until WKT interrupt (or PIN interrupt)
@@ -568,7 +576,9 @@ int main(void) {
 			loopDelay(20000);
 
 			if (interrupt_source == UART_INTERRUPT) {
-				setOpMode(MODE_AWAKE);
+				//setOpMode(MODE_AWAKE);
+				params_union.params.operating_mode = MODE_AWAKE;
+
 				// Probably crud in buffer : clear it.
 				MyUARTBufReset();
 			}
@@ -589,7 +599,7 @@ int main(void) {
 
 
 		// If in MODE_LOW_POWER_POLL send poll packet
-		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
+		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
 			// Pullup resistor on PIO0_14
 			//LPC_IOCON->PIO0_14=(0x2<<3);
@@ -656,7 +666,8 @@ int main(void) {
 
 		// Check for received packet on RFM69
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
-		if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
+		//if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
+		if ( IS_PAYLOAD_READY()  ) {
 
 			// Yes, frame ready to be read from FIFO
 #ifdef FEATURE_LED
@@ -684,8 +695,9 @@ int main(void) {
 
 
 			// 0xff is the broadcast address
-			if ( (flags&FLAG_PROMISCUOUS_MODE)
-					|| rx_buffer.header.to_addr == 0xff
+			//if ( (flags&FLAG_PROMISCUOUS_MODE)
+			if (
+					 rx_buffer.header.to_addr == 0xff
 					|| rx_buffer.header.to_addr == tx_buffer.header.from_addr) {
 
 				// This frame is for us! Examine messageType field for appropriate action.
@@ -881,7 +893,8 @@ int main(void) {
 #ifdef FEATURE_DEEPSLEEP
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
 			// TODO: will probably want to exclude remote commands
-			setOpMode(MODE_AWAKE);
+			//setOpMode(MODE_AWAKE);
+			params_union.params.operating_mode = MODE_AWAKE;
 #endif
 
 			MyUARTSendCRLF();
@@ -976,6 +989,7 @@ int main(void) {
 			// Set radio system operating mode
 			case 'M' : {
 				// Clear 4 lower bits
+				/*
 				flags &= ~0xf;
 				if (args[1][0]=='0') {
 					// no action
@@ -984,6 +998,14 @@ int main(void) {
 				} else if (args[1][0]=='3') {
 					flags |= MODE_AWAKE;
 				}
+				*/
+				if (argc == 1) {
+					MyUARTSendStringZ("m ");
+					MyUARTPrintHex(params_union.params.operating_mode);
+					MyUARTSendCRLF();
+					break;
+				}
+				params_union.params.operating_mode = parse_hex(args[1]);
 				break;
 			}
 
@@ -1126,8 +1148,8 @@ int main(void) {
 
 		} // end command switch block
 
-#ifdef FEATURE_LINK_LOSS_RESET
-		if ( (flags&0xf) == MODE_LOW_POWER_POLL) {
+#ifdef x_FEATURE_LINK_LOSS_RESET
+		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 			if (params_union.params.link_loss_timeout_s!=0
 					&& (systick_counter - last_frame_time > params_union.params.link_loss_timeout_s)) {
 				// Report MCU reset (reason=2 link loss timeout)
