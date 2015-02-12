@@ -291,27 +291,7 @@ void displayStatus () {
 	MyUARTPrintDecimal(readBattery());
 	MyUARTSendCRLF();
 }
-/**
- * New radio system (RFM69 module + MCU) operating modes:
- *
- * Mode 0 : Radio off, MCU in deepsleep. Can be woken by host. Current
- * drain ~60uA.
- *
- * Mode 1 : (reserved)
- *
- * Mode 2 : Radio in low power polling mode (poll, and listen, then sleep). MCU in
- * deepsleep during sleep phase. The poll packet replaces the heartbeat feature.
- *
- * Mode 3 : Radio on RX, listening for packets. MCU polling radio module continuously.
- *
- * Mode is stored in bits 3:0 of 'flags'.
- */
-/*
-void setOpMode (uint32_t mode) {
-	flags &= ~0xf;
-	flags |= mode;
-}
-*/
+
 
 int main(void) {
 
@@ -579,6 +559,8 @@ int main(void) {
 
 			if (interrupt_source == UART_INTERRUPT) {
 				//setOpMode(MODE_AWAKE);
+
+				MyUARTSendStringZ("; UART interrupt, awake\r\n");
 				params_union.params.operating_mode = MODE_AWAKE;
 
 				// Probably crud in buffer : clear it.
@@ -1158,10 +1140,14 @@ int main(void) {
 
 		} // end command switch block
 
-#ifdef x_FEATURE_LINK_LOSS_RESET
+#ifdef FEATURE_LINK_LOSS_RESET
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
-			if (params_union.params.link_loss_timeout_s!=0
-					&& (systick_counter - last_frame_time > params_union.params.link_loss_timeout_s)) {
+			uint32_t last_frame_age = systick_counter - last_frame_time;
+			MyUARTSendStringZ ("; last_frame_age=");
+			MyUARTPrintHex(last_frame_age);
+			MyUARTSendStringZ ("\r\n");
+			if (params_union.params.link_loss_timeout_s != 0
+					&& (last_frame_age > params_union.params.link_loss_timeout_s*100)) {
 				// Report MCU reset (reason=2 link loss timeout)
 				MyUARTSendStringZ("q 2\r\n");
 				MyUARTSendDrain();
