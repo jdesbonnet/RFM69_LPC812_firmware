@@ -977,18 +977,10 @@ int main(void) {
 			}
 
 			// Set radio system operating mode
+			// M (no params) : report current mode
+			// M <mode> : set mode
+			// M <mode> S : set mode and save in EEPROM
 			case 'M' : {
-				// Clear 4 lower bits
-				/*
-				flags &= ~0xf;
-				if (args[1][0]=='0') {
-					// no action
-				} else if (args[1][0]=='2') {
-					flags |= MODE_LOW_POWER_POLL;
-				} else if (args[1][0]=='3') {
-					flags |= MODE_AWAKE;
-				}
-				*/
 				if (argc == 1) {
 					MyUARTSendStringZ("m ");
 					MyUARTPrintHex(params_union.params.operating_mode);
@@ -996,6 +988,12 @@ int main(void) {
 					break;
 				}
 				params_union.params.operating_mode = parse_hex(args[1]);
+				if (argc == 3) {
+					if (args[2][0]=='S') {
+						MyUARTSendStringZ("; ModeSave\r\n");
+						eeprom_write(params_union.params_buffer);
+					}
+				}
 				break;
 			}
 
