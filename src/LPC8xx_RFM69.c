@@ -270,11 +270,18 @@ void displayStatus () {
 	MyUARTPrintHex((uint32_t)eeprom_get_addr());
 	MyUARTSendCRLF();
 
-	uint32_t part_id;
-	iap_read_unique_id(&part_id);
-	MyUARTSendStringZ("; mcu_id= ");
-	MyUARTPrintHex(part_id);
+	uint32_t unique_id[4];
+	iap_read_unique_id(unique_id);
+	MyUARTSendStringZ("; mcu_unique_id= ");
+	MyUARTPrintHex(unique_id[0]);
+	MyUARTSendByte(' ');
+	MyUARTPrintHex(unique_id[1]);
+	MyUARTSendByte(' ');
+	MyUARTPrintHex(unique_id[2]);
+	MyUARTSendByte(' ');
+	MyUARTPrintHex(unique_id[3]);
 	MyUARTSendCRLF();
+
 
 #ifdef FEATURE_WATCHDOG_TIMER
 	MyUARTSendStringZ("; WatchDogTimer=");
@@ -308,8 +315,8 @@ int main(void) {
 
 
     // Read MCU serial number
-    uint32_t mcu_part_id;
-	iap_read_unique_id(&mcu_part_id);
+    uint32_t mcu_unique_id[4];
+	iap_read_unique_id(&mcu_unique_id);
 
 	// Read parameter block from eeprom
 	eeprom_read(params_union.params_buffer);
@@ -332,7 +339,7 @@ int main(void) {
     // This is not necessary on all boards as the PCB can be fixed with a little careful
     // knife work. This is one board which I forgot to make that fix. Expect to remove this
     // code after a while as it's just crud to facilitate one prototype board.
-    if (mcu_part_id == BOARD_V1B_HACK_MCU_ID) {
+    if (mcu_unique_id[0] == BOARD_V1B_HACK_MCU_ID) {
     	SwitchMatrix_LPC812_PCB1b_Init();
     } else {
     	SwitchMatrix_Init();
@@ -358,7 +365,7 @@ int main(void) {
 
 
 #ifdef BOARD_V1B_HACK
-	if (mcu_part_id == BOARD_V1B_HACK_MCU_ID) {
+	if (mcu_unique_id[0] == BOARD_V1B_HACK_MCU_ID) {
 		MyUARTSendStringZ("; Board_V1B_Hack in effect (UART RXD on PIO0_11)\r\n");
 	}
 #endif
@@ -954,9 +961,9 @@ int main(void) {
 			// Display MCU unique ID
 			case 'I' : {
 				MyUARTSendStringZ("i ");
-				uint32_t part_id;
-				iap_read_part_id(&part_id);
-				MyUARTPrintHex(part_id);
+				//uint32_t part_id;
+				//iap_read_part_id(&part_id);
+				MyUARTPrintHex(mcu_unique_id[0]);
 				MyUARTSendCRLF();
 				break;
 			}
