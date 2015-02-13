@@ -271,7 +271,7 @@ void displayStatus () {
 	MyUARTSendCRLF();
 
 	uint32_t part_id;
-	iap_read_part_id(&part_id);
+	iap_read_unique_id(&part_id);
 	MyUARTSendStringZ("; mcu_id= ");
 	MyUARTPrintHex(part_id);
 	MyUARTSendCRLF();
@@ -307,6 +307,10 @@ int main(void) {
     		;
 
 
+    // Read MCU serial number
+    uint32_t mcu_part_id;
+	iap_read_unique_id(&mcu_part_id);
+
 	// Read parameter block from eeprom
 	eeprom_read(params_union.params_buffer);
 
@@ -324,7 +328,16 @@ int main(void) {
 
 #ifdef LPC812
 #ifdef BOARD_V1B_HACK
-	SwitchMatrix_LPC812_PCB1b_Init();
+    // Due to rev 1 PCB layout bug it was necessary to re-route RXD to non-default pin (PIO0_11).
+    // This is not necessary on all boards as the PCB can be fixed with a little careful
+    // knife work. This is one board which I forgot to make that fix. Expect to remove this
+    // code after a while as it's just crud to facilitate one prototype board.
+    if (mcu_part_id == BOARD_V1B_HACK_MCU_ID) {
+    	SwitchMatrix_LPC812_PCB1b_Init();
+    } else {
+    	SwitchMatrix_Init();
+    }
+
 #else
 	SwitchMatrix_Init();
 	//SwitchMatrix_Acmp_Init();
@@ -338,8 +351,17 @@ int main(void) {
 
 	MyUARTInit(UART_BPS);
 
+
+
 	// Display firmware version on boot
 	cmd_version(1,NULL);
+
+
+#ifdef BOARD_V1B_HACK
+	if (mcu_part_id == BOARD_V1B_HACK_MCU_ID) {
+		MyUARTSendStringZ("; Board_V1B_Hack in effect (UART RXD on PIO0_11)\r\n");
+	}
+#endif
 
 
 #ifdef FEATURE_WATCHDOG_TIMER
@@ -1098,9 +1120,14 @@ int main(void) {
 				break;
 			}
 
-			// Read battery
+			// Read battery. Return in both x response message and also
+			// human friendly value in decimal in info message
 			case 'X' :  {
-				MyUARTPrintDecimal(readBattery());
+				int battery_vm = readBattery();
+				MyUARTSendStringZ("; power_mV=");
+				MyUARTPrintDecimal(battery_vm);
+				MyUARTSendStringZ("\r\nx ");
+				MyUARTPrintHex(battery_vm);
 				MyUARTSendCRLF();
 				break;
 			}

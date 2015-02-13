@@ -98,6 +98,7 @@
 // Enable reroute of RXD to alternative pin due to failure to fix via bug.
 #define BOARD_V1B_HACK
 #ifdef BOARD_V1B_HACK
+#define BOARD_V1B_HACK_MCU_ID 0x5034039
 #define UART_RXD_PIN 11
 #endif
 
