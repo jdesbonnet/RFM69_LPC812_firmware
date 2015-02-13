@@ -361,6 +361,9 @@ int main(void) {
     LPC_WWDT->FEED = 0x55;
     /* Make sure feed sequence executed properly */
     //loopDelay(1000);
+
+    NVIC_EnableIRQ( (IRQn_Type) WDT_IRQn);
+
 #endif
 
 
@@ -1181,6 +1184,11 @@ void PININT0_IRQHandler (void) {
 }
 #endif
 
+void WDT_IRQHandler (void) {
+	//MyUARTSendStringZ("q 2\r\n");
+	//MyUARTSendDrain();
+	//loopDelay(20000);
+}
 
 #ifdef FEATURE_TIP_BUCKET_COUNTER
 
