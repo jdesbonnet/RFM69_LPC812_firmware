@@ -370,6 +370,20 @@ int main(void) {
 	}
 #endif
 
+	// Auto assign node ID based on MCU ID
+	// TODO: this is a temporary hack: move this configuration to a
+	// structure and initalize in config.h
+	if (params_union.params.node_addr == 0xFF) {
+		switch (mcu_unique_id[0]) {
+		case 0x5034039:
+			params_union.params.node_addr = 0x42;
+			break;
+		case 0x1902E033:
+			params_union.params.node_addr = 0x46;
+			break;
+		}
+	}
+
 
 #ifdef FEATURE_WATCHDOG_TIMER
 	//
