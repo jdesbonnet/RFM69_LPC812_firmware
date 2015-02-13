@@ -709,9 +709,6 @@ int main(void) {
 			//if (frame_len>0) {
 
 #ifdef FEATURE_WATCHDOG_TIMER
-			MyUARTSendStringZ("; WDT=");
-			MyUARTPrintHex(LPC_WWDT->TV);
-			MyUARTSendCRLF();
 			// Feed watchdog
 			LPC_WWDT->FEED = 0xAA;
 			LPC_WWDT->FEED = 0x55;
@@ -753,6 +750,11 @@ int main(void) {
 						report_error('D',E_CMD_DROPPED);
 					}
 
+					MyUARTSendStringZ ("; received remote cmd from ");
+					MyUARTPrintHex(tx_buffer.header.from_addr);
+					MyUARTSendCRLF();
+
+
 					// Echo remote command to UART, copy remote command to UART buffer and
 					// trigger UART command parsing.
 					MyUARTSendStringZ("d ");
@@ -773,6 +775,11 @@ int main(void) {
 				case 'R' :
 				//case 'z' : // for testing only
 				{
+
+					MyUARTSendStringZ ("; received node query request from ");
+					MyUARTPrintHex(tx_buffer.header.from_addr);
+					MyUARTSendCRLF();
+
 					int loc_len = MyUARTGetStrLen(current_loc);
 					// report position
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
@@ -780,6 +787,7 @@ int main(void) {
 					memcpy(tx_buffer.payload,current_loc,loc_len);
 					tx_buffer.payload[loc_len] = rssi;
 					rfm69_frame_tx(tx_buffer.buffer, loc_len+4);
+
 					break;
 				}
 
