@@ -492,11 +492,11 @@ int main(void) {
 	if (rfm69_test() != 0) {
 		// Error communicating with RFM69: 4 blinks
 		ledBlink(4);
-		MyUARTSendByte('0');
+		MyUARTSendByte('1');
 	} else {
 		// Normal: 2 blinks
 		ledBlink(2);
-		MyUARTSendByte('1');
+		MyUARTSendByte('0');
 
 	}
 	MyUARTSendCRLF();
