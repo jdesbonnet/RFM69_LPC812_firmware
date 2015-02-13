@@ -584,17 +584,8 @@ int main(void) {
 			// DeepSleep until WKT interrupt (or PIN interrupt)
 			__WFI();
 
-			//MyUARTSendStringZ("sleep_clock += ");
-			//MyUARTPrintDecimal(wakeup_time - LPC_WKT->COUNT);
-			//MyUARTSendCRLF();
 			// WKT in 100us increments, want sleep_clock in 10ms increments
 			systick_counter += (wakeup_time - LPC_WKT->COUNT)/100;
-			//MyUARTSendStringZ("systick_counter=");
-			//MyUARTPrintDecimal(systick_counter);
-			//MyUARTSendCRLF();
-
-			// Experimental: Reassign UART to external pins
-			//SwitchMatrix_Init();
 
 			// Experimental: Re-set SPI pins after deepsleep/powerdown conditioning
 			spi_init();
@@ -971,6 +962,16 @@ int main(void) {
 				cmd_remote_cmd(argc, args);
 				break;
 			}
+
+			// Transmit arbitrary packet
+			case 'F' : {
+				int status = cmd_node_query(argc, args);
+				if ( status ) {
+					report_error('F', status);
+				}
+				break;
+			}
+
 
 			// Display MCU unique ID
 			case 'I' : {
