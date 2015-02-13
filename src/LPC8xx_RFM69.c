@@ -875,9 +875,11 @@ int main(void) {
 					e_entry();
 					break;
 				}
+				}
+
 
 				// If none of the above cases match, output packet to UART
-				default: {
+				{
 
 					MyUARTSendStringZ("p ");
 
@@ -894,7 +896,6 @@ int main(void) {
 					MyUARTSendByte(' ');
 					print_hex8(rssi);
 					MyUARTSendCRLF();
-				}
 				}
 
 			} else {
