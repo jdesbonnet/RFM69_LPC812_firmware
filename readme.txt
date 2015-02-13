@@ -1,10 +1,10 @@
-LPC810/LPC812 firmware to drive RFM69HW radio modules
-for WRSC2014.  This is an alpha-release 0.1.0.
-Documentation available in shared Google Docs 
-(ask for access links).
+This is firmware to drive my LPC812/RFM69HW radio board. The indended application is for
+use with robot boat competitions, but can be used for any telemetry application.
+
+The LPC812 with this firmware acts as a kinda radio operating system, providing a simplified
+interface between the RFM69 module and the host application. 
 
 Built with LPCxpresso v7.3.0 (free IDE from NXP). 
-GCC make file to  follow soon.
 
 Draft documentation on the UART protocol is
 here:
@@ -12,10 +12,15 @@ https://docs.google.com/document/d/1FBZINVb_g0gnWlEkQYNBEHTwiyHNY0fn5J37EqBPyog/
 
 
 Joe Desbonnet, jdesbonnet@gmail.com
-7 Sep 2014
+13 Feb 2015
 
 Release History:
 
+0.4.1, 13 Feb 2014
+ * Fix MCU unique ID retrieval bug
+ * Use MCU unique ID to implement a hack to fix one faulty PCB board (will be removed later at some point)
+ * Use MCU unique ID to assign node addresses from hard-coded table (can be over ridden with N command)
+  
 0.4.0, 11 Feb 2014
  * Supports saving settings in flash memory
  * Start to remove LPC810 legacy.
