@@ -300,6 +300,11 @@ void displayStatus () {
 }
 
 
+// To facilitate tfp_printf()
+void myputc (void *p, char c) {
+	MyUARTSendByte(c);
+}
+
 int main(void) {
 
 	// Enable MCU subsystems needed in this application in one step. Saves bytes.
@@ -358,7 +363,11 @@ int main(void) {
 
 	MyUARTInit(UART_BPS);
 
-
+	// Doc on this printf() library here:
+	// http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
+	// GNU LGPL license
+	init_printf(NULL,myputc);
+	tfp_printf ("; testing printf() %d, %x\r\n",123, 123);
 
 	// Display firmware version on boot
 	cmd_version(1,NULL);
@@ -765,6 +774,20 @@ int main(void) {
 					MyUARTSendStringZ((char *)uart_buf);
 					MyUARTSendCRLF();
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
+					break;
+				}
+
+				// Ping pong test
+				case 'P' :
+				{
+					MyUARTSendStringZ ("; received ping from ");
+					MyUARTPrintHex(tx_buffer.header.from_addr);
+					MyUARTSendCRLF();
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
+					tx_buffer.header.msg_type = 'P';
+					tx_buffer.payload[0] = rx_buffer.payload[0]+1;
+					tx_buffer.payload[1] = rssi;
+					rfm69_frame_tx(tx_buffer.buffer, 5);
 					break;
 				}
 
