@@ -251,24 +251,35 @@ void displayStatus () {
 #endif
 
 	// Display parameters to UART
-	MyUARTSendStringZ ("; mode=");
-	MyUARTPrintHex(params_union.params.operating_mode);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; node_addr=");
-	MyUARTPrintHex(params_union.params.node_addr);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; poll_interval=");
-	MyUARTPrintHex(params_union.params.poll_interval);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; listen_period_cs=");
-	MyUARTPrintHex(params_union.params.listen_period_cs);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; link_loss_timeout_s=");
-	MyUARTPrintHex(params_union.params.link_loss_timeout_s);
-	MyUARTSendCRLF();
-	MyUARTSendStringZ ("; eeprom_addr=");
-	MyUARTPrintHex((uint32_t)eeprom_get_addr());
-	MyUARTSendCRLF();
+	//MyUARTSendStringZ ("; mode=");
+	//MyUARTPrintHex(params_union.params.operating_mode);
+	//MyUARTSendCRLF();
+	tfp_printf ("; mode=%x\r\n",params_union.params.operating_mode);
+
+	//MyUARTSendStringZ ("; node_addr=");
+	//MyUARTPrintHex(params_union.params.node_addr);
+	//MyUARTSendCRLF();
+	tfp_printf ("; mode_addr=%x\r\n",params_union.params.node_addr);
+
+	//MyUARTSendStringZ ("; poll_interval=");
+	//MyUARTPrintHex(params_union.params.poll_interval);
+	//MyUARTSendCRLF();
+	tfp_printf ("; poll_interval=%x\r\n",params_union.params.poll_interval);
+
+	//MyUARTSendStringZ ("; listen_period_cs=");
+	//MyUARTPrintHex(params_union.params.listen_period_cs);
+	//MyUARTSendCRLF();
+	tfp_printf ("; listen_period=%x\r\n",params_union.params.listen_period_cs);
+
+	//MyUARTSendStringZ ("; link_loss_timeout_s=");
+	//MyUARTPrintHex(params_union.params.link_loss_timeout_s);
+	//MyUARTSendCRLF();
+	tfp_printf ("; link_loss_timeout=%x\r\n",params_union.params.link_loss_timeout_s);
+
+	//MyUARTSendStringZ ("; eeprom_addr=");
+	//MyUARTPrintHex((uint32_t)eeprom_get_addr());
+	//MyUARTSendCRLF();
+	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 
 	uint32_t unique_id[4];
 	iap_read_unique_id(unique_id);
