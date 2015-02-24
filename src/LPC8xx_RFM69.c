@@ -398,6 +398,12 @@ int main(void) {
 		case 0x5034039:
 			params_union.params.node_addr = 0x42;
 			break;
+		case 0x18044043:
+			params_union.params.node_addr = 0x43;
+			break;
+		case 0x05034043:
+			params_union.params.node_addr = 0x44;
+			break;
 		case 0x1902E033:
 			params_union.params.node_addr = 0x46;
 			break;
