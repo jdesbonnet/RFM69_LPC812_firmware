@@ -26,27 +26,37 @@ volatile uint32_t uart_buf_flags=0;
 ** Returned value:		None
 **
 *****************************************************************************/
-void MyUARTInit(uint32_t baudrate)
+static void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 {
 
-	LPC_USART_TypeDef *UARTx = LPC_USART0;
+	//LPC_USART_TypeDef *UARTx = LPC_USART0;
 
 	uint32_t UARTSysClk;
 
 	//UARTClock_Init( UARTx );
 	LPC_SYSCON->UARTCLKDIV = 1;     /* divided by 1 */
-	NVIC_DisableIRQ(UART0_IRQn);
+
+	if (UARTx == LPC_USART0) {
+		NVIC_DisableIRQ(UART0_IRQn);
+	} else if (UARTx == LPC_USART1) {
+		NVIC_DisableIRQ(UART1_IRQn);
+	}
 
 	/* Enable UART clock */
-	// This is done in main() with other peripherals to save space.
-	//LPC_SYSCON->SYSAHBCLKCTRL |= (1<<14);
-
+	if (UARTx == LPC_USART0) {
+		LPC_SYSCON->SYSAHBCLKCTRL |= (1<<14);
+	} else if (UARTx == LPC_USART1) {
+		LPC_SYSCON->SYSAHBCLKCTRL |= (1<<15);
+	}
 
 	/* Peripheral reset control to UART, a "1" bring it out of reset. */
 	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<3);
 	//LPC_SYSCON->PRESETCTRL |= (0x1<<3);
-	lpc8xx_peripheral_reset(3);
-
+	if (UARTx == LPC_USART0) {
+		lpc8xx_peripheral_reset(3);
+	} else if (UARTx == LPC_USART1) {
+		lpc8xx_peripheral_reset(4);
+	}
 
 	UARTSysClk = SystemCoreClock/LPC_SYSCON->UARTCLKDIV;
 	UARTx->CFG = UART_CFG_DATA_LENG_8|UART_CFG_PARITY_NONE|UART_CFG_STOP_BIT_1; /* 8 bits, no Parity, 1 Stop bit */
@@ -68,11 +78,22 @@ void MyUARTInit(uint32_t baudrate)
 	UARTx->STAT = UART_STAT_CTS_DELTA | UART_STAT_DELTA_RXBRK;		/* Clear all status bits. */
 
 	// Enable UART interrupt
-	NVIC_EnableIRQ(UART0_IRQn);
+	if (UARTx == LPC_USART0) {
+		NVIC_EnableIRQ(UART0_IRQn);
+	} else if (UARTx == LPC_USART1) {
+		NVIC_EnableIRQ(UART1_IRQn);
+	}
 
 	UARTx->INTENSET = UART_STAT_RXRDY | UART_STAT_TXRDY | UART_STAT_DELTA_RXBRK;	/* Enable UART interrupt */
 	UARTx->CFG |= UART_CFG_UART_EN;
+
 	return;
+}
+
+void MyUARTInit(uint32_t baudrate)
+{
+	MyUARTxInit (LPC_USART0,baudrate);
+	MyUARTxInit (LPC_USART1,baudrate);
 }
 
 
@@ -143,6 +164,38 @@ void UART0_IRQHandler(void)
 		LPC_USART0->INTENCLR = 0x04;
 	}
 
+}
+
+void UART1_IRQHandler(void)
+{
+	uint32_t uart_status = LPC_USART1->STAT;
+
+	// UM10601 §15.6.3, Table 162, p181. USART Status Register.
+	// Bit 0 RXRDY: 1 = data is available to be read from RXDATA
+	// Bit 2 TXRDY: 1 = data may be written to TXDATA
+	if (uart_status & UART_STAT_RXRDY ) {
+
+		uint8_t c = LPC_USART1->RXDATA;
+
+		// If CR flag EOL
+		if (c=='\r') {
+			uart_buf_flags |= UART_BUF_FLAG_EOL;
+			uart_rxbuf[uart_rxi]=0; // zero-terminate buffer
+		} else if (c>31){
+			// echo
+			MyUARTSendByte(c);
+
+			uart_rxbuf[uart_rxi] = c;
+			uart_rxi++;
+			if (uart_rxi == UART_BUF_SIZE) {
+				MyUARTBufReset();
+			}
+		}
+
+	} else if (uart_status & UART_STAT_TXRDY ){
+
+		LPC_USART1->INTENCLR = 0x04;
+	}
 }
 
 uint8_t* MyUARTGetBuf(void) {

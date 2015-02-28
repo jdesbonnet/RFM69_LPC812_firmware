@@ -136,6 +136,38 @@ void SwitchMatrix_Init()
 
 }
 
+/**
+ * In addition to assigning UART0 on the same pins as ISP TXD, RXD, also assign
+ * UART1 to pins 8,9 to accommodate GPS receiver.
+ *
+ * UART0.RXD -> pin 19 (aka PIO0_0, ISP RXD)
+ * UART0.TXD -> pin 5 (aka PIO0_4, ISP TXD)
+ * UART1.RXD -> pin 8 (aka PIO0_11)
+ * UART1.TXD -> pin 9 (aka PIO0_10)
+ *
+ * all other pins at default.
+ */
+void SwitchMatrix_GPS_UART1_Init()
+{
+       /* Enable the clock to the Switch Matrix */
+       LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+
+       /* Pin Assign 8 bit Configuration */
+       /* U0_TXD */
+       /* U0_RXD */
+       LPC_SWM->PINASSIGN0 = 0xffff0004UL;
+       /* U1_TXD */
+       /* U1_RXD */
+       LPC_SWM->PINASSIGN1 = 0xff0b0affUL;
+
+       /* Pin Assign 1 bit Configuration */
+       /* SWCLK */
+       /* SWDIO */
+       /* RESET */
+       LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+
+}
+
 
 #ifdef BOARD_V1B_HACK
 /**
@@ -358,7 +390,8 @@ int main(void) {
     if (mcu_unique_id[0] == BOARD_V1B_HACK_MCU_ID) {
     	SwitchMatrix_LPC812_PCB1b_Init();
     } else {
-    	SwitchMatrix_Init();
+    	//SwitchMatrix_Init();
+    	SwitchMatrix_GPS_UART1_Init();
     }
 
 #else
