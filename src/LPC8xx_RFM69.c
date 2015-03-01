@@ -1279,7 +1279,7 @@ int main(void) {
 		// Check for NMEA sentence from UART1
 		if (nmea_flags != 0) {
 			nmea_flags = 0;
-			MyUARTSendStringZ("; NMEA ");
+			//MyUARTSendStringZ("; NMEA ");
 			MyUARTSendStringZ(&nmea_buf);
 			MyUARTSendCRLF();
 			nmea_buf_index = 0;
