@@ -1274,6 +1274,17 @@ int main(void) {
 
 		} // end command switch block
 
+		extern volatile uint32_t nmea_flags,nmea_buf_index;
+		extern volatile uint8_t nmea_buf[];
+		// Check for NMEA sentence from UART1
+		if (nmea_flags != 0) {
+			nmea_flags = 0;
+			MyUARTSendStringZ("; NMEA ");
+			MyUARTSendStringZ(&nmea_buf);
+			MyUARTSendCRLF();
+			nmea_buf_index = 0;
+		}
+
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 			uint32_t last_frame_age = systick_counter - last_frame_time;

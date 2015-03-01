@@ -12,9 +12,9 @@
 #include "myuart.h"
 #include "lpc8xx_util.h"
 
-volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
-volatile uint32_t uart_rxi=0;
-volatile uint32_t uart_buf_flags=0;
+static volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
+static volatile uint32_t uart_rxi=0;
+static volatile uint32_t uart_buf_flags=0;
 
 volatile uint8_t nmea_buf[128];
 volatile uint32_t nmea_buf_index = 0;
@@ -189,7 +189,7 @@ void UART1_IRQHandler(void)
 			nmea_flags |= UART_BUF_FLAG_EOL;
 			nmea_buf[nmea_buf_index]=0; // zero-terminate buffer
 		} else if (c>31){
-			nmea_buf[uart_rxi] = c;
+			nmea_buf[nmea_buf_index] = c;
 			nmea_buf_index++;
 			if (nmea_buf_index == 128) {
 				nmea_buf[127]=0;
