@@ -136,6 +136,7 @@ void SwitchMatrix_Init()
 
 }
 
+#ifdef FEATURE_GPS_ON_USART1
 /**
  * In addition to assigning UART0 on the same pins as ISP TXD, RXD, also assign
  * UART1 to pins 8,9 to accommodate GPS receiver.
@@ -167,7 +168,7 @@ void SwitchMatrix_GPS_UART1_Init()
        LPC_SWM->PINENABLE0 = 0xffffffb3UL;
 
 }
-
+#endif
 
 #ifdef BOARD_V1B_HACK
 /**
@@ -281,6 +282,9 @@ void displayStatus () {
 #ifdef FEATURE_DS18B20
 	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
 #endif
+#ifdef FEATURE_GPS_ON_USART1
+	MyUARTSendStringZ ("; feature GPS\r\n");
+#endif
 
 	// Display parameters to UART
 	//MyUARTSendStringZ ("; mode=");
@@ -357,7 +361,6 @@ int main(void) {
     		(1<<7)    // Switch Matrix (SWM)
     		| (1<<6)  // GPIO
     		| (1<<9)  // Wake Timer (WKT)
-    		| (1<<14) // USART0
     		| (1<<17) // Watchdog timer (note: it may not be necessary to have on all the time)
     		;
 
@@ -390,8 +393,12 @@ int main(void) {
     if (mcu_unique_id[0] == BOARD_V1B_HACK_MCU_ID) {
     	SwitchMatrix_LPC812_PCB1b_Init();
     } else {
-    	//SwitchMatrix_Init();
+#ifdef FEATURE_GPS_ON_USART1
     	SwitchMatrix_GPS_UART1_Init();
+
+#else
+    	SwitchMatrix_Init();
+#endif
     }
 
 #else
@@ -405,13 +412,24 @@ int main(void) {
 	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
 	//lpc8xx_peripheral_reset(10);
 
-	MyUARTInit(UART_BPS);
+
+	//
+	// Initialize UART(s)
+	//
+
+	// API UART
+	MyUARTxInit(LPC_USART0, UART_BPS);
+
+#ifdef FEATURE_GPS_ON_USART1
+	// Optional GPS module
+	MyUARTxInit(LPC_USART1, UART_BPS);
+#endif
+
 
 	// Doc on this printf() library here:
 	// http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
 	// GNU LGPL license
 	init_printf(NULL,myputc);
-	tfp_printf ("; testing printf() %d, %x\r\n",123, 123);
 
 	// Display firmware version on boot
 	cmd_version(1,NULL);
@@ -1274,16 +1292,27 @@ int main(void) {
 
 		} // end command switch block
 
-		extern volatile uint32_t nmea_flags,nmea_buf_index;
-		extern volatile uint8_t nmea_buf[];
+#ifdef FEATURE_GPS_ON_USART1
+		extern volatile uint32_t nmea_flags,nmea_uart_rx_buf_index;
+		extern volatile uint8_t nmea_uart_rx_buf[];
+		extern volatile uint32_t nmea_line;
+		uint8_t nmea[GPS_NMEA_SIZE];
 		// Check for NMEA sentence from UART1
 		if (nmea_flags != 0) {
+
 			nmea_flags = 0;
-			//MyUARTSendStringZ("; NMEA ");
-			MyUARTSendStringZ(&nmea_buf);
-			MyUARTSendCRLF();
-			nmea_buf_index = 0;
+
+			//memcpy (nmea, nmea_uart_rx_buf[], nmea_uart_rx_buf_index);
+			int i=0;
+			int line = (nmea_line-1) % 2;
+			//MyUARTSendStringZ(nmea_uart_rx_buf[line]);
+			//MyUARTSendStringZ("; NMEA\r\n");
+			//nmea_uart_rx_buf[line]=0;
+
+			//MyUARTSendStringZ(&nmea);
+			//MyUARTSendCRLF();
 		}
+#endif
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {

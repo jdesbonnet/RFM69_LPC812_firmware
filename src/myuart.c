@@ -9,6 +9,7 @@
 
 #include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
 
+#include "config.h"
 #include "myuart.h"
 #include "lpc8xx_util.h"
 
@@ -16,8 +17,10 @@ static volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 static volatile uint32_t uart_rxi=0;
 static volatile uint32_t uart_buf_flags=0;
 
-volatile uint8_t nmea_buf[128];
-volatile uint32_t nmea_buf_index = 0;
+volatile uint32_t nmea_line = 0;
+#define NMEA_NUM_BUF 4
+volatile uint8_t nmea_uart_rx_buf[NMEA_NUM_BUF][GPS_NMEA_SIZE];
+volatile uint32_t nmea_uart_rx_buf_index = 0;
 volatile uint32_t nmea_flags = 0;
 
 /*****************************************************************************
@@ -30,7 +33,7 @@ volatile uint32_t nmea_flags = 0;
 ** Returned value:		None
 **
 *****************************************************************************/
-static void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
+void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 {
 
 	//LPC_USART_TypeDef *UARTx = LPC_USART0;
@@ -173,6 +176,11 @@ void UART0_IRQHandler(void)
 
 }
 
+#ifdef FEATURE_GPS_ON_USART1
+/**
+ * Second UART (USART1) interrupt handler to handle incoming NMEA sentences
+ * from GPS receiver. (Optional feature).
+ */
 void UART1_IRQHandler(void)
 {
 	uint32_t uart_status = LPC_USART1->STAT;
@@ -187,19 +195,25 @@ void UART1_IRQHandler(void)
 		// If CR flag EOL
 		if (c=='\r') {
 			nmea_flags |= UART_BUF_FLAG_EOL;
-			nmea_buf[nmea_buf_index]=0; // zero-terminate buffer
+			//nmea_uart_rx_buf[nmea_line % NMEA_NUM_BUF][nmea_uart_rx_buf_index]=0; // zero-terminate buffer
+			nmea_line++;
 		} else if (c>31){
-			nmea_buf[nmea_buf_index] = c;
-			nmea_buf_index++;
-			if (nmea_buf_index == 128) {
-				nmea_buf[127]=0;
+			nmea_uart_rx_buf[nmea_line % NMEA_NUM_BUF][nmea_uart_rx_buf_index] = c;
+			nmea_uart_rx_buf_index++;
+			if (nmea_uart_rx_buf_index == GPS_NMEA_SIZE) {
+				//nmea_uart_rx_buf[nmea_line % NMEA_NUM_BUF][GPS_NMEA_SIZE-1]=0;
 				nmea_flags |= UART_BUF_FLAG_EOL;
+				nmea_line++;
 			}
 		}
+
+		//LPC_USART0->TXDATA = c;
+
 	} else if (uart_status & UART_STAT_TXRDY ){
 		LPC_USART1->INTENCLR = 0x04;
 	}
 }
+#endif
 
 uint8_t* MyUARTGetBuf(void) {
 	return (uint8_t*)uart_rxbuf;

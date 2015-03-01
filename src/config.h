@@ -42,7 +42,6 @@
 // MCU memory read/write/exec from UART API
 #define FEATURE_UART_MEM_RWX
 
-#ifdef LPC812
 // Diagnostic LED (only available on LPC812)
 #define FEATURE_LED
 // Enable ARM Cortex M SysTick timer
@@ -64,7 +63,8 @@
 // Use LPC8xx watchdog timer
 #define FEATURE_WATCHDOG_TIMER
 
-#endif
+// GPS on second UART port.
+//#define FEATURE_GPS_ON_USART1
 
 
 //
@@ -118,6 +118,7 @@
 #define UART_BPS (9600)
 //#define UART_BPS (115200)
 
-
+// Max size of NMEA sentence: standard specifies 79 + '$' + CRLF
+#define GPS_NMEA_SIZE 84
 
 #endif
