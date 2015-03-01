@@ -16,6 +16,10 @@ volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 volatile uint32_t uart_rxi=0;
 volatile uint32_t uart_buf_flags=0;
 
+volatile uint8_t nmea_buf[128];
+volatile uint32_t nmea_buf_index = 0;
+volatile uint32_t nmea_flags = 0;
+
 /*****************************************************************************
 ** Function name:		UARTInit
 **
@@ -84,7 +88,10 @@ static void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 		NVIC_EnableIRQ(UART1_IRQn);
 	}
 
-	UARTx->INTENSET = UART_STAT_RXRDY | UART_STAT_TXRDY | UART_STAT_DELTA_RXBRK;	/* Enable UART interrupt */
+	/* Enable UART interrupt on receving byte */
+	//UARTx->INTENSET = UART_STAT_RXRDY | UART_STAT_TXRDY | UART_STAT_DELTA_RXBRK;
+	UARTx->INTENSET = UART_STAT_RXRDY;
+
 	UARTx->CFG |= UART_CFG_UART_EN;
 
 	return;
@@ -179,21 +186,17 @@ void UART1_IRQHandler(void)
 
 		// If CR flag EOL
 		if (c=='\r') {
-			uart_buf_flags |= UART_BUF_FLAG_EOL;
-			uart_rxbuf[uart_rxi]=0; // zero-terminate buffer
+			nmea_flags |= UART_BUF_FLAG_EOL;
+			nmea_buf[nmea_buf_index]=0; // zero-terminate buffer
 		} else if (c>31){
-			// echo
-			MyUARTSendByte(c);
-
-			uart_rxbuf[uart_rxi] = c;
-			uart_rxi++;
-			if (uart_rxi == UART_BUF_SIZE) {
-				MyUARTBufReset();
+			nmea_buf[uart_rxi] = c;
+			nmea_buf_index++;
+			if (nmea_buf_index == 128) {
+				nmea_buf[127]=0;
+				nmea_flags |= UART_BUF_FLAG_EOL;
 			}
 		}
-
 	} else if (uart_status & UART_STAT_TXRDY ){
-
 		LPC_USART1->INTENCLR = 0x04;
 	}
 }
