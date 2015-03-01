@@ -33,9 +33,6 @@
 // Support MCU deep-sleep (~10uA)
 #define FEATURE_DEEPSLEEP
 
-// Read RFM69 temperature sensor
-#define FEATURE_RFM69_TEMPERATURE
-
 // Remote MCU memory read/write and execute (+160bytes)
 #define FEATURE_REMOTE_MEM_RWX
 
@@ -44,16 +41,22 @@
 
 // Diagnostic LED (only available on LPC812)
 #define FEATURE_LED
+
 // Enable ARM Cortex M SysTick timer
 #define FEATURE_SYSTICK
+
 // Experimental application to count rain tip bucket
-#define FEATURE_TIP_BUCKET_COUNTER
+//#define FEATURE_TIP_BUCKET_COUNTER
+
 // DS18B20 one wire temperature sensor
-#define FEATURE_DS18B20
+//#define FEATURE_DS18B20
+
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
+
 // Support NMEA sentences for location
 #define FEATURE_NMEA_INPUT
+
 // Remote packet broadcast
 #define FEATURE_REMOTE_PKT_TX
 
@@ -64,7 +67,7 @@
 #define FEATURE_WATCHDOG_TIMER
 
 // GPS on second UART port.
-//#define FEATURE_GPS_ON_USART1
+#define FEATURE_GPS_ON_USART1
 
 
 //

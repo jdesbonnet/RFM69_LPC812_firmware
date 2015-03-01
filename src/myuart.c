@@ -17,11 +17,13 @@ static volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 static volatile uint32_t uart_rxi=0;
 static volatile uint32_t uart_buf_flags=0;
 
+#ifdef FEATURE_GPS_ON_USART1
 volatile uint32_t nmea_line = 0;
 #define NMEA_NUM_BUF 4
 volatile uint8_t nmea_uart_rx_buf[NMEA_NUM_BUF][GPS_NMEA_SIZE];
 volatile uint32_t nmea_uart_rx_buf_index = 0;
 volatile uint32_t nmea_flags = 0;
+#endif
 
 /*****************************************************************************
 ** Function name:		UARTInit
@@ -100,11 +102,13 @@ void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 	return;
 }
 
+/*
 void MyUARTInit(uint32_t baudrate)
 {
 	MyUARTxInit (LPC_USART0,baudrate);
 	MyUARTxInit (LPC_USART1,baudrate);
 }
+*/
 
 
 void MyUARTSendByte (uint8_t v) {
@@ -191,7 +195,7 @@ void UART1_IRQHandler(void)
 	if (uart_status & UART_STAT_RXRDY ) {
 
 		uint8_t c = LPC_USART1->RXDATA;
-
+/*
 		// If CR flag EOL
 		if (c=='\r') {
 			nmea_flags |= UART_BUF_FLAG_EOL;
@@ -206,6 +210,7 @@ void UART1_IRQHandler(void)
 				nmea_line++;
 			}
 		}
+*/
 
 		//LPC_USART0->TXDATA = c;
 
