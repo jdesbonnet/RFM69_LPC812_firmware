@@ -16,18 +16,22 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 Release History:
 
-0.4.1, 13 Feb 2014
+0.5.0, 1 Mar 2015
+ * Support GPS module on second LPC812 UART (USART1). GPS UART TXD to pin 8 (PIO0_11). Reads NMEA 
+ sentences from the GPS and echos to the main API UART (USART0).
+ 
+0.4.1, 13 Feb 2015
  * Fix MCU unique ID retrieval bug
  * Use MCU unique ID to implement a hack to fix one faulty PCB board (will be removed later at some point)
  * Use MCU unique ID to assign node addresses from hard-coded table (can be over ridden with N command)
   
-0.4.0, 11 Feb 2014
+0.4.0, 11 Feb 2015
  * Supports saving settings in flash memory
  * Start to remove LPC810 legacy.
  * Display config at boot time
  * Display self-test status at boot time
  
- 0.4.1, 12 Feb 2014
+ 0.4.1, 12 Feb 2015
  * WDT timer set command working
  * MCU Unique ID working properly
  * Read MCU unique ID to auto implement V1B PCB hack
