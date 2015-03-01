@@ -1292,7 +1292,7 @@ int main(void) {
 
 		} // end command switch block
 
-#ifdef FEATURE_GPS_ON_USART1
+#ifdef xFEATURE_GPS_ON_USART1
 		extern volatile uint32_t nmea_flags,nmea_uart_rx_buf_index;
 		extern volatile uint8_t nmea_uart_rx_buf[];
 		extern volatile uint32_t nmea_line;
