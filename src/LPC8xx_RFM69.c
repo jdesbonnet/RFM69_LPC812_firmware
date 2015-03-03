@@ -365,7 +365,9 @@ void displayGPS () {
 	//tfp_printf ("; gps=%s %s %s\r\n", &time_of_day, &latitude, &longitude);
 
 	if (gps_last_position_t != t) {
-		tfp_printf ("; gps=%s %s %s\r\n", &gps_time_of_day, &gps_latitude, &gps_longitude);
+		tfp_printf ("g %d %s %s %s\r\n",
+				(systick_counter - gps_last_position_t),
+				&gps_time_of_day, &gps_latitude, &gps_longitude);
 		t = gps_last_position_t;
 	}
 }
