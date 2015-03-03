@@ -271,6 +271,7 @@ void ledBlink (int nblink) {
 	}
 }
 
+
 /**
  * Show system settings etc to UART
  */
@@ -317,6 +318,9 @@ void displayStatus () {
 	//MyUARTSendCRLF();
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 
+	displayGPS();
+
+
 	uint32_t unique_id[4];
 	iap_read_unique_id(unique_id);
 	MyUARTSendStringZ("; mcu_unique_id= ");
@@ -346,6 +350,25 @@ void displayStatus () {
 	MyUARTSendCRLF();
 }
 
+void displayGPS () {
+
+	static uint32_t t;
+
+	/*
+	uint32_t gps_last_position;
+	uint8_t time_of_day[12], latitude[12], longitude[12];
+	GetGPS(&gps_last_position, &time_of_day, &latitude, &longitude);
+	*/
+	// TODO: is volatile necessary?
+	extern volatile uint32_t gps_last_position_t;
+	extern volatile uint8_t gps_time_of_day[12], gps_latitude[12], gps_longitude[12];
+	//tfp_printf ("; gps=%s %s %s\r\n", &time_of_day, &latitude, &longitude);
+
+	if (gps_last_position_t != t) {
+		tfp_printf ("; gps=%s %s %s\r\n", &gps_time_of_day, &gps_latitude, &gps_longitude);
+		t = gps_last_position_t;
+	}
+}
 
 // To facilitate tfp_printf()
 void myputc (void *p, char c) {
@@ -1291,6 +1314,8 @@ int main(void) {
 
 
 		} // end command switch block
+
+		displayGPS();
 
 #ifdef xFEATURE_GPS_ON_USART1
 		extern volatile uint32_t nmea_flags,nmea_uart_rx_buf_index;
