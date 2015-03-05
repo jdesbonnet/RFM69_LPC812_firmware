@@ -362,6 +362,34 @@ void displayGPS () {
 			&gps_time_of_day, &gps_latitude, &gps_longitude);
 }
 
+void sendGPSUpdate (uint8_t to_addr) {
+
+	// report position
+	tx_buffer.header.to_addr = to_addr;
+	tx_buffer.header.msg_type = 'r';
+
+	int n;
+	strcpy (tx_buffer.payload,gps_time_of_day);
+	n  = strlen(gps_time_of_day);
+	tx_buffer.payload[n] = ' ';
+	n++;
+	strcpy (tx_buffer.payload+n,gps_latitude);
+	n += strlen(gps_latitude);
+	tx_buffer.payload[n] = ' ';
+	n++;
+	strcpy (tx_buffer.payload+n,gps_longitude);
+	n += strlen(gps_longitude);
+
+	//tx_buffer.payload[n] = rssi;
+	LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+	rfm69_frame_tx(tx_buffer.buffer, n+4);
+	LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+
+	//MyUARTSendStringZ(tx_buffer.payload);
+	//MyUARTSendCRLF();
+
+}
+
 // To facilitate tfp_printf()
 void myputc (void *p, char c) {
 	MyUARTSendByte(c);
@@ -875,25 +903,15 @@ int main(void) {
 				}
 
 				// Ping
-				//case 'P' :
 				// Message requesting position report. This will return the string
-				// set by the UART 'L' command verbatim.
+				// set by the GPS or the 'G' command
 				case 'R' :
-				//case 'z' : // for testing only
 				{
 
 					MyUARTSendStringZ ("; received node query request from ");
 					MyUARTPrintHex(tx_buffer.header.from_addr);
 					MyUARTSendCRLF();
-
-					int loc_len = MyUARTGetStrLen(current_loc);
-					// report position
-					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
-					tx_buffer.header.msg_type = 'r';
-					memcpy(tx_buffer.payload,current_loc,loc_len);
-					tx_buffer.payload[loc_len] = rssi;
-					rfm69_frame_tx(tx_buffer.buffer, loc_len+4);
-
+					sendGPSUpdate(rx_buffer.header.from_addr);
 					break;
 				}
 
@@ -1102,6 +1120,8 @@ int main(void) {
 				strcpy(gps_longitude,args[3]);
 
 				gps_last_position_t = systick_counter;
+
+				sendGPSUpdate(0xff);
 
 				break;
 			}
