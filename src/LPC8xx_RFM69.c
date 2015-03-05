@@ -350,26 +350,16 @@ void displayStatus () {
 	MyUARTSendCRLF();
 }
 
+// TODO: is volatile necessary?
+extern volatile uint32_t gps_last_position_t;
+extern volatile uint8_t gps_time_of_day[12], gps_latitude[12], gps_longitude[12];
+
+static uint32_t last_gps_report_t = 0;
+
 void displayGPS () {
-
-	static uint32_t t;
-
-	/*
-	uint32_t gps_last_position;
-	uint8_t time_of_day[12], latitude[12], longitude[12];
-	GetGPS(&gps_last_position, &time_of_day, &latitude, &longitude);
-	*/
-	// TODO: is volatile necessary?
-	extern volatile uint32_t gps_last_position_t;
-	extern volatile uint8_t gps_time_of_day[12], gps_latitude[12], gps_longitude[12];
-	//tfp_printf ("; gps=%s %s %s\r\n", &time_of_day, &latitude, &longitude);
-
-	if (gps_last_position_t != t) {
-		tfp_printf ("g %d %s %s %s\r\n",
-				(systick_counter - gps_last_position_t),
-				&gps_time_of_day, &gps_latitude, &gps_longitude);
-		t = gps_last_position_t;
-	}
+	tfp_printf ("g %d %s %s %s\r\n",
+			(systick_counter - gps_last_position_t),
+			&gps_time_of_day, &gps_latitude, &gps_longitude);
 }
 
 // To facilitate tfp_printf()
@@ -1097,6 +1087,24 @@ int main(void) {
 				break;
 			}
 
+			// Set/override GPS position
+			case 'G' : {
+				if (argc == 1) {
+					displayGPS();
+					break;
+				}
+				if (argc != 4) {
+					report_error('G',E_INVALID_ARG);
+					break;
+				}
+				strcpy(gps_time_of_day, args[1]);
+				strcpy(gps_latitude,args[2]);
+				strcpy(gps_longitude,args[3]);
+
+				gps_last_position_t = systick_counter;
+
+				break;
+			}
 
 			// Display MCU unique ID
 			case 'I' : {
@@ -1317,7 +1325,12 @@ int main(void) {
 
 		} // end command switch block
 
-		displayGPS();
+		// Display GPS info if changed
+		if (gps_last_position_t != last_gps_report_t) {
+			displayGPS();
+			last_gps_report_t = gps_last_position_t;
+		}
+
 
 #ifdef xFEATURE_GPS_ON_USART1
 		extern volatile uint32_t nmea_flags,nmea_uart_rx_buf_index;
