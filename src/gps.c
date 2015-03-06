@@ -6,7 +6,8 @@
 #include "config.h"
 #include "myuart.h"
 
-
+#include "params.h"
+extern params_union_type params_union;
 
 #ifdef FEATURE_GPS_ON_USART1
 //volatile uint32_t nmea_line = 0;
@@ -86,7 +87,9 @@ void UART1_IRQHandler(void)
 
 		}
 
-		//LPC_USART0->TXDATA = c;
+		if (params_union.params.gps_echo) {
+			LPC_USART0->TXDATA = c;
+		}
 
 	} else if (uart_status & UART_STAT_TXRDY ){
 		LPC_USART1->INTENCLR = 0x04;

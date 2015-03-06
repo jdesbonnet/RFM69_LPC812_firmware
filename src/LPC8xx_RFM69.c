@@ -1096,6 +1096,16 @@ int main(void) {
 				break;
 			}
 
+			// Echo GPS from UART1 to UART0
+			case 'E' :
+			{
+				if (argc != 2) {
+					report_error('E',E_INVALID_ARG);
+					break;
+				}
+				params_union.params.gps_echo = parse_hex(args[1]);
+			}
+
 			// Transmit arbitrary packet
 			case 'F' : {
 				int status = cmd_node_query(argc, args);
