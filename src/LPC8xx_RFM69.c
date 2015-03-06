@@ -1124,13 +1124,15 @@ int main(void) {
 					displayGPS();
 					break;
 				}
-				if (argc != 4) {
+				if (argc != 6) {
 					report_error('G',E_INVALID_ARG);
 					break;
 				}
 				strcpy(gps_time_of_day, args[1]);
 				strcpy(gps_latitude,args[2]);
 				strcpy(gps_longitude,args[3]);
+				strcpy(gps_heading,args[4]);
+				strcpy(gps_speed,args[5]);
 
 				gps_last_position_t = systick_counter;
 
