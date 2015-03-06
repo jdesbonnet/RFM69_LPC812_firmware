@@ -16,6 +16,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 Release History:
 
+0.5.1, 6 Mar 2015
+ * Add 'E' commend to en/disable echo of NMEA from GPS UART port to main UART port.
+ * Add GPS fix type and HDOP to 'g' message
+ 
 0.5.0, 1 Mar 2015
  * Support GPS module on second LPC812 UART (USART1). GPS UART TXD to pin 8 (PIO0_11). Reads NMEA 
  sentences from the GPS and echos to the main API UART (USART0).

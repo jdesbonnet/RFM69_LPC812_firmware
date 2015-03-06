@@ -19,6 +19,8 @@ volatile int32_t nmea_word_count=0;
 volatile uint8_t gps_latitude[12];
 volatile uint8_t gps_longitude[12];
 volatile uint8_t gps_time_of_day[12];
+volatile uint8_t gps_hdop[8];
+volatile uint8_t gps_fix[2];
 volatile uint8_t nmea_buf[GPS_NMEA_SIZE];
 #endif
 
@@ -58,7 +60,8 @@ void UART1_IRQHandler(void)
 				memcpy (gps_time_of_day, nmea_words[0],(nmea_words[1]-nmea_words[0])-1);
 				memcpy (gps_latitude, nmea_words[1],(nmea_words[2]-nmea_words[1])-1);
 				memcpy (gps_longitude, nmea_words[3],(nmea_words[4]-nmea_words[3])-1);
-
+				memcpy (gps_fix, nmea_words[5], (nmea_words[6]-nmea_words[5])-1 );
+				memcpy (gps_hdop, nmea_words[7], (nmea_words[8]-nmea_words[7])-1 );
 
 				/*
 				MyUARTSendStringZ("g ");
