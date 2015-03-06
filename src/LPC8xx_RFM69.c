@@ -1361,33 +1361,17 @@ int main(void) {
 		} // end command switch block
 
 		// Display GPS info if changed
-		if (gps_last_position_t != last_gps_report_t) {
+		if ( (gps_last_position_t) != last_gps_report_t && (params_union.params.gps_echo&0x2) ) {
 			displayGPS();
+
+			// Send GPS position over radio
+			if (params_union.params.gps_echo&(1<<2)) {
+				sendGPSUpdate(0xFF);
+			}
 			last_gps_report_t = gps_last_position_t;
 		}
 
 
-#ifdef xFEATURE_GPS_ON_USART1
-		extern volatile uint32_t nmea_flags,nmea_uart_rx_buf_index;
-		extern volatile uint8_t nmea_uart_rx_buf[];
-		extern volatile uint32_t nmea_line;
-		uint8_t nmea[GPS_NMEA_SIZE];
-		// Check for NMEA sentence from UART1
-		if (nmea_flags != 0) {
-
-			nmea_flags = 0;
-
-			//memcpy (nmea, nmea_uart_rx_buf[], nmea_uart_rx_buf_index);
-			int i=0;
-			int line = (nmea_line-1) % 2;
-			//MyUARTSendStringZ(nmea_uart_rx_buf[line]);
-			//MyUARTSendStringZ("; NMEA\r\n");
-			//nmea_uart_rx_buf[line]=0;
-
-			//MyUARTSendStringZ(&nmea);
-			//MyUARTSendCRLF();
-		}
-#endif
 
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
