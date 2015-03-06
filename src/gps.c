@@ -21,6 +21,8 @@ volatile uint8_t gps_longitude[12];
 volatile uint8_t gps_time_of_day[12];
 volatile uint8_t gps_hdop[8];
 volatile uint8_t gps_fix[2];
+volatile uint8_t gps_heading[8];
+volatile uint8_t gps_speed[8];
 volatile uint8_t nmea_buf[GPS_NMEA_SIZE];
 #endif
 
@@ -51,8 +53,8 @@ void UART1_IRQHandler(void)
 
 			nmea_word_count = 0;
 
+			// $GPGGA NMEA sentence
 			if (nmea_buf[3]=='G' && nmea_buf[4] == 'G' && nmea_buf[5] == 'A') {
-
 				extern uint32_t systick_counter;
 				gps_last_position_t = systick_counter;
 
@@ -62,14 +64,16 @@ void UART1_IRQHandler(void)
 				memcpy (gps_longitude, nmea_words[3],(nmea_words[4]-nmea_words[3])-1);
 				memcpy (gps_fix, nmea_words[5], (nmea_words[6]-nmea_words[5])-1 );
 				memcpy (gps_hdop, nmea_words[7], (nmea_words[8]-nmea_words[7])-1 );
+			}
 
-				/*
-				MyUARTSendStringZ("g ");
-				MyUARTSendStringZ(&latitude);
-				MyUARTSendStringZ(" ");
-				MyUARTSendStringZ(&longitude);
-				MyUARTSendCRLF();
-				*/
+			// $GPRMC NMEA sentence
+			if (nmea_buf[3]=='R' && nmea_buf[4] == 'M' && nmea_buf[5] == 'C') {
+				//extern uint32_t systick_counter;
+				//gps_last_position_t = systick_counter;
+
+				// Make copy from NMEA buffer to avoid data being clobbered in the background by incoming chars
+				memcpy (gps_heading, nmea_words[6],(nmea_words[7]-nmea_words[6])-1);
+				memcpy (gps_speed, nmea_words[7],(nmea_words[8]-nmea_words[7])-1);
 			}
 
 		} else if (c>31){
