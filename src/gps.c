@@ -14,7 +14,7 @@ extern params_union_type params_union;
 volatile uint32_t gps_last_position_t;
 volatile uint32_t nmea_buf_index = 0;
 //volatile uint32_t nmea_flags = 0;
-volatile uint8_t *nmea_words[24];
+volatile uint8_t nmea_words[24];
 volatile int32_t nmea_word_count=0;
 volatile uint8_t gps_latitude[12];
 volatile uint8_t gps_longitude[12];
@@ -29,6 +29,17 @@ volatile uint8_t nmea_buf[GPS_NMEA_SIZE];
 
 
 #ifdef FEATURE_GPS_ON_USART1
+
+static void copy_nmea_word (uint8_t *dst, uint8_t *src) {
+	while (*src != ',') {
+		*dst = *src;
+		dst++;
+		src++;
+	}
+	// Terminate with 0
+	*dst = 0;
+}
+
 /**
  * Second UART (USART1) interrupt handler to handle incoming NMEA sentences
  * from GPS receiver. (Optional feature).
@@ -59,11 +70,11 @@ void UART1_IRQHandler(void)
 				gps_last_position_t = systick_counter;
 
 				// Make copy from NMEA buffer to avoid data being clobbered in the background by incoming chars
-				memcpy (gps_time_of_day, nmea_words[0],(nmea_words[1]-nmea_words[0])-1);
-				memcpy (gps_latitude, nmea_words[1],(nmea_words[2]-nmea_words[1])-1);
-				memcpy (gps_longitude, nmea_words[3],(nmea_words[4]-nmea_words[3])-1);
-				memcpy (gps_fix, nmea_words[5], (nmea_words[6]-nmea_words[5])-1 );
-				memcpy (gps_hdop, nmea_words[7], (nmea_words[8]-nmea_words[7])-1 );
+				copy_nmea_word (gps_time_of_day, nmea_buf + nmea_words[0]);
+				copy_nmea_word (gps_latitude, nmea_buf + nmea_words[1]);
+				copy_nmea_word (gps_longitude, nmea_buf + nmea_words[3]);
+				copy_nmea_word (gps_fix, nmea_buf + nmea_words[5]);
+				copy_nmea_word (gps_hdop, nmea_buf + nmea_words[7]);
 			}
 
 			// $GPRMC NMEA sentence
@@ -72,26 +83,23 @@ void UART1_IRQHandler(void)
 				//gps_last_position_t = systick_counter;
 
 				// Make copy from NMEA buffer to avoid data being clobbered in the background by incoming chars
-				memcpy (gps_heading, nmea_words[6],(nmea_words[7]-nmea_words[6])-1);
-				memcpy (gps_speed, nmea_words[7],(nmea_words[8]-nmea_words[7])-1);
+				copy_nmea_word (gps_heading, nmea_buf + nmea_words[6]);
+				copy_nmea_word (gps_speed, nmea_buf + nmea_words[7]);
 			}
 
 		} else if (c>31){
-			nmea_buf[nmea_buf_index++] = c;
 
 			if (nmea_buf_index == GPS_NMEA_SIZE) {
 				nmea_buf[GPS_NMEA_SIZE-1]=0;
 				nmea_buf_index = 0;
 			}
+
 			if (c == ',') {
-				//nmea_buf[nmea_buf_index] = c;
-				nmea_words[nmea_word_count++] = &nmea_buf[nmea_buf_index];
-			} else {
-				//nmea_buf[nmea_buf_index] = c;
+				nmea_words[nmea_word_count++] = nmea_buf_index+1;
+				//c = 0;
 			}
 
-			//nmea_buf_index++;
-
+			nmea_buf[nmea_buf_index++] = c;
 		}
 
 		if (params_union.params.gps_echo) {
