@@ -41,6 +41,13 @@ static void copy_nmea_word (uint8_t *dst, uint8_t *src) {
 }
 
 /**
+ * Get length of a NMEA sentence word
+ */
+static int nmea_word_len (int word_index) {
+	return nmea_words[word_index+1] - nmea_words[word_index] - 1;
+}
+
+/**
  * Second UART (USART1) interrupt handler to handle incoming NMEA sentences
  * from GPS receiver. (Optional feature).
  */
@@ -79,11 +86,14 @@ void UART1_IRQHandler(void)
 
 			// $GPRMC NMEA sentence
 			if (nmea_buf[3]=='R' && nmea_buf[4] == 'M' && nmea_buf[5] == 'C') {
-				//extern uint32_t systick_counter;
-				//gps_last_position_t = systick_counter;
 
-				// Make copy from NMEA buffer to avoid data being clobbered in the background by incoming chars
-				copy_nmea_word (gps_heading, nmea_buf + nmea_words[6]);
+				// If no heading substitute with "999"
+				if ( nmea_word_len(6) == 0) {
+					strcpy(gps_heading,"999");
+				} else {
+					copy_nmea_word (gps_heading, nmea_buf + nmea_words[6]);
+				}
+
 				copy_nmea_word (gps_speed, nmea_buf + nmea_words[7]);
 			}
 
@@ -102,7 +112,8 @@ void UART1_IRQHandler(void)
 			nmea_buf[nmea_buf_index++] = c;
 		}
 
-		if (params_union.params.gps_echo) {
+		// If bit 0 if gps_echo param set then echo to UART0
+		if (params_union.params.gps_echo&0x1) {
 			LPC_USART0->TXDATA = c;
 		}
 
