@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>LPC8xx/RFM69 board UI</title>
+
+
+     
+<link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+<!-- JQuery -->      
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+
+<!-- Bootstrap -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+
+<style>
+#mapContainer {width:540px;height:540px;background-color:yellow;}
+</style>
+
+</head>
+
+<body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">LPC8xx/RFM69 UI</a>
+        </div>
+
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">  	
+<!--
+		<li class="menu_projects"><a href="project-list.jsp"><span class='fa fa-database'></span> Datasets</a></li>
+-->
+
+          </ul>
+         </div>
+
+      </div>
+    </div>
+    
+    
+<br />
+<br />
+<br />
+
+<div class="container-fluid">
+<div class="row">
+
+<form>
+<div class="form-group">
+<label>Latitude</label>
+<input type="text" id="latitude" name="latitude" />
+<label>Longitude</label>
+<input type="text" id="longitude" name="longitude" />
+<label>Heading</label>
+<input type="text" id="heading" name="heading" size="4" value="0"/>
+<button type="button" class="btn btn-default" id="heading_dec">-</button>
+<button type="button" class="btn btn-default" id="heading_inc">+</button>
+
+<label>Speed</label>
+<input type="text" id="speed" name="speed" size="4" value="0.1"/>
+<button type="button" class="btn btn-default" id="speed_dec">-</button>
+<button type="button" class="btn btn-default" id="speed_inc">+</button>
+
+<label>Update period</label>
+<input type="text" name="update_period" size="4" value="1"/>
+</div>
+
+</form>
+
+</div>
+
+<div class="row">
+
+
+<!--  main area -->
+<div class="col-sm-6 col-md-6">
+<div id="mapContainer"></div>
+</div><!-- end map area-->
+
+<div class="col-sm-6 col-md-6">
+
+</div><!-- end map area-->
+
+
+
+</div><!--  end div.row -->
+</div><!--  end div.container-fluid -->
+
+<script src="https://maps.googleapis.com/maps/api/js?libraries=geometry"></script>
+
+<script>
+// Icon used to represent a boat
+var boatIcon = {
+    url: 'circle-red.png',
+    size: new google.maps.Size(16, 16),
+    origin: new google.maps.Point(0,0),
+    anchor: new google.maps.Point(8,8)
+};
+
+var boatMarker;
+var currentPosition;
+var currentLatitude = 53.282;
+var currentLongitude = -9.0604;
+
+function initializeMap() {
+
+	centerPoint = new google.maps.LatLng(currentLatitude,currentLongitude);
+
+	var mapOptions = {
+		center: centerPoint,
+		zoom: 18
+	};
+
+	map = new google.maps.Map(document.getElementById('mapContainer'),
+		mapOptions);
+
+	boatMarker = new google.maps.Marker({
+		position: centerPoint,
+		map: map,
+		icon: boatIcon,
+	});
+
+
+}
+
+
+jQuery(function() {
+	initializeMap();
+
+
+	$("#heading_dec").click(function(){
+		var heading = $("#heading").val() | 0;
+		heading -= 10;
+		heading %= 360;
+		$("#heading").val(heading);
+	});
+	$("#heading_inc").click(function(){
+		var heading = $("#heading").val() | 0;
+		heading += 10;
+		heading %= 360;
+		$("#heading").val(heading);
+	});
+	$("#speed_dec").click(function(){
+		var speed = $("#speed").val() * 1;
+		speed -= 0.1;
+		if (speed<0) speed = 0;
+		$("#speed").val(speed.toFixed(1));
+	});
+	$("#speed_inc").click(function(){
+		var speed = $("#speed").val() * 1;
+		speed += 0.1;
+		$("#speed").val(speed.toFixed(1));
+	});
+
+	setInterval (function(){
+
+		var heading = $("#heading").val();
+		var speed = $("#speed").val();
+
+		var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
+		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed, heading);
+		currentLatitude = newPos.lat();
+		currentLongitude = newPos.lng();
+		boatMarker.setPosition( newPos );
+		$("#latitude").val(currentLatitude.toFixed(7));
+		$("#longitude").val(currentLongitude.toFixed(7));
+	 }, 1000);
+
+});
+</script>
+
+
+</body>
+   
+</html>
