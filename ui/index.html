@@ -75,9 +75,7 @@
 <div class="col-sm-4 col-md-4">
 
 <form>
-
 <div class="form-group">
-
 <div class="row">
 <div class="col-sm-6 col-md-6">
 <label>Latitude</label>
@@ -88,43 +86,54 @@
 <input type="text" class="form-control" id="longitude" name="longitude" size="12" />
 </div>
 </div><!-- end .row -->
+</div><!-- end .form-group -->
+</form>
 
 <div class="row">
 <div class="col-sm-6 col-md-6">
-<label>Heading</label>
+<div class="form-group form-inline">
+<label>Heading</label><br />
 <input type="text" class="form-control" id="heading" name="heading" size="4" value="0"/>
-<button type="button" class="btn btn-default" id="heading_dec">-</button>
-<button type="button" class="btn btn-default" id="heading_inc">+</button>
-</div>
-
+<button type="button" class="btn btn-default" id="heading_dec"><span class="glyphicon glyphicon-minus"></span></button>
+<button type="button" class="btn btn-default" id="heading_inc"><span class="glyphicon glyphicon-plus"></span></button>
+</div><!-- end .form-group-->
+</div><!-- end col -->
 <div class="col-sm-6 col-md-6">
-<label>Speed</label>
+<div class="form-group form-inline">
+<label>Speed</label><br />
 <input type="text" class="form-control" id="speed" name="speed" size="4" value="0.1"/>
-<button type="button" class="btn btn-default" id="speed_dec">-</button>
-<button type="button" class="btn btn-default" id="speed_inc">+</button>
-</div>
+<button type="button" class="btn btn-default" id="speed_dec"><span class="glyphicon glyphicon-minus"></span></button>
+<button type="button" class="btn btn-default" id="speed_inc"><span class="glyphicon glyphicon-plus"></span></button>
+</div><!-- end .form-group -->
+</div><!-- end col -->
 </div><!-- end .row -->
 
+</div><!-- end controls column-->
 
 
+<div class="col-sm-4 col-md-4">
+
+<form class="form-inline">
+<div class="form-group">
+<label>UART Serivce</label><br />
+<input type="text" class="form-control" id="ws_url" size="32" value="ws://localhost:8887" />
+<button type="button" class="btn btn-default" id="ws_connect_btn"><img src="circle-red.png" /> Connect</button>
 </div>
 </form>
 
-</div><!-- end controls-->
 
-<div class="col-sm-4 col-md-4">
-<form>
+<form class="form-inline">
 <div class="form-group">
-<label>UART Serivce</label>
-<input type="text" class="form-control" id="ws_url" size="32" value="ws://localhost:8887" />
-<button type="button" class="btn btn-default" id="ws_connect_btn">Connect</button>
+<label>Send Radio Command</label><br />
+<input type="text" class="form-control" id="radio_cmd" size="32" value="" />
+<button type="button" class="btn btn-default" id="radio_cmd_send_btn">Send</button>
 </div>
 </form>
 
 <div id="messages">
 </div>
 
-</div><!-- end map area-->
+</div><!-- end message area-->
 
 
 
@@ -256,6 +265,9 @@ jQuery(function() {
 		boatMarker.setPosition( newPos );
 		$("#latitude").val(currentLatitude.toFixed(7));
 		$("#longitude").val(currentLongitude.toFixed(7));
+
+		webSocket.send("test");
+
 	 }, updatePeriod*1000);
 
 });
