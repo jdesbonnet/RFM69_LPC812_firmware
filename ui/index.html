@@ -130,8 +130,11 @@
 </div>
 </form>
 
-<div id="messages">
-</div>
+<table id="message_table" class="list">
+<tr><td></td></tr>
+</table>
+
+
 
 </div><!-- end message area-->
 
@@ -157,6 +160,9 @@ var currentLatitude = 53.282;
 var currentLongitude = -9.0604;
 var updatePeriod = 1;
 var webSocket;
+
+var numMessageRows = 0;
+var maxMessageRows = 15;
 
 function initializeMap() {
 
@@ -191,10 +197,21 @@ function formatTimestamp (date) {
 }
 
 function logEvent (message) {
-	$("#messages").append("<div class='message'>" 
-	+ formatTimestamp(new Date())
-	+ " "
-	+ message + "</div>");
+
+	var newRow = jQuery('<tr><td>'
+			+ formatTimestamp(new Date())
+			+ " " + message
+			+'</td></tr>').hide();
+		
+	if (numMessageRows>=maxMessageRows) {
+		jQuery('#message_table tr:last').remove();
+		jQuery('#message_table tr:first').before(newRow);
+		newRow.fadeIn(1000);	
+    	} else {
+		jQuery("#message_table tr:first").before(newRow);
+		newRow.fadeIn(1000);
+		numMessageRows++;
+	}
 }
 
 
