@@ -74,20 +74,41 @@
 
 <div class="col-sm-4 col-md-4">
 
-<form>
-<div class="form-group">
+
 <div class="row">
 <div class="col-sm-6 col-md-6">
+<div class="form-group">
+<label>GPS emulator</label>
+<select class="form-control">
+<option value="1">Enable</option>
+<option value="0">Disable</option>
+</select>
+</div>
+</div>
+<div class="col-sm-6 col-md-6">
+<div class="form-group">
+<label>Update Rate</label>
+<input type="text" class="form-control" id="update_period" size="4" value="1" />
+</div>
+</div>
+</div><!-- end .row -->
+
+
+<div class="row">
+<div class="col-sm-6 col-md-6">
+<div class="form-group">
 <label>Latitude</label>
 <input type="text" class="form-control" id="latitude" name="latitude" size="12" />
 </div>
+</div>
 <div class="col-sm-6 col-md-6">
+<div class="form-group">
 <label>Longitude</label>
 <input type="text" class="form-control" id="longitude" name="longitude" size="12" />
 </div>
+</div>
 </div><!-- end .row -->
-</div><!-- end .form-group -->
-</form>
+
 
 <div class="row">
 <div class="col-sm-6 col-md-6">
@@ -162,7 +183,7 @@ var updatePeriod = 1;
 var webSocket;
 
 var numMessageRows = 0;
-var maxMessageRows = 15;
+var maxMessageRows = 20;
 
 function initializeMap() {
 
@@ -214,7 +235,13 @@ function logEvent (message) {
 	}
 }
 
-
+function nmeaLatLonToDecimal(nmeaLatLon) {
+	var degmin = nmeaLatLon | 0;
+	var min = degmin % 100;
+	var deg = (degmin/100)|0;
+	var fracmin = nmeaLatLon - degmin;
+	return deg + (min+fracmin)/60;
+}
 
 jQuery(function() {
 	initializeMap();
@@ -259,9 +286,19 @@ jQuery(function() {
 		};
 		webSocket.onmessage=function(event){
 			logEvent(event.data);
+			var p = event.data.split(" ");
+			if (p[0] === 'g'); {
+				currentLatitude = nmeaLatLonToDecimal(p[3]);
+				currentLongitude = -nmeaLatLonToDecimal(p[4]);
+			}
 		};
 
 	});
+
+	$("#radio_cmd_send_btn").click(function(){
+		webSocket.send($("#radio_cmd").val());
+	});
+
 
 	setInterval (function(){
 
@@ -277,13 +314,15 @@ jQuery(function() {
 		});
 
 		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed*updatePeriod, heading);
+
+		map.setCenter (newPos);
+
 		currentLatitude = newPos.lat();
 		currentLongitude = newPos.lng();
 		boatMarker.setPosition( newPos );
 		$("#latitude").val(currentLatitude.toFixed(7));
 		$("#longitude").val(currentLongitude.toFixed(7));
 
-		webSocket.send("test");
 
 	 }, updatePeriod*1000);
 
