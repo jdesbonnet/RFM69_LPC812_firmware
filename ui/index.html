@@ -79,7 +79,7 @@
 <div class="col-sm-6 col-md-6">
 <div class="form-group">
 <label>GPS emulator</label>
-<select class="form-control">
+<select class="form-control" id="gps_emulator_enable">
 <option value="1">Enable</option>
 <option value="0">Disable</option>
 </select>
@@ -243,6 +243,14 @@ function nmeaLatLonToDecimal(nmeaLatLon) {
 	return deg + (min+fracmin)/60;
 }
 
+function updateMap() {
+	var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
+	boatMarker.setPosition(curPos);
+	$("#latitude").val(currentLatitude.toFixed(7));
+	$("#longitude").val(currentLongitude.toFixed(7));
+	map.setCenter (curPos);
+}
+
 jQuery(function() {
 	initializeMap();
 
@@ -287,9 +295,10 @@ jQuery(function() {
 		webSocket.onmessage=function(event){
 			logEvent(event.data);
 			var p = event.data.split(" ");
-			if (p[0] === 'g'); {
+			if (p[0] === 'g' && $("#gps_emulator_enable").val()==0) {
 				currentLatitude = nmeaLatLonToDecimal(p[3]);
 				currentLongitude = -nmeaLatLonToDecimal(p[4]);
+				updateMap();
 			}
 		};
 
@@ -301,6 +310,8 @@ jQuery(function() {
 
 
 	setInterval (function(){
+
+		if ($("#gps_emulator_enable").val()==1) {
 
 		var heading = $("#heading").val();
 		var speed = $("#speed").val();
@@ -315,14 +326,12 @@ jQuery(function() {
 
 		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed*updatePeriod, heading);
 
-		map.setCenter (newPos);
-
 		currentLatitude = newPos.lat();
 		currentLongitude = newPos.lng();
-		boatMarker.setPosition( newPos );
-		$("#latitude").val(currentLatitude.toFixed(7));
-		$("#longitude").val(currentLongitude.toFixed(7));
+		updateMap();
 
+		webSocket.send("G 120000 " + currentLatitude + " " + currentLongitude + " " + heading + " " + speed);
+		}
 
 	 }, updatePeriod*1000);
 
