@@ -20,7 +20,7 @@
 
 
 <style>
-#mapContainer {width:540px;height:540px;background-color:yellow;}
+#mapContainer {width:100%;height:540px;background-color:yellow;}
 </style>
 
 </head>
@@ -60,27 +60,7 @@
 <div class="container-fluid">
 <div class="row">
 
-<form>
-<div class="form-group">
-<label>Latitude</label>
-<input type="text" id="latitude" name="latitude" />
-<label>Longitude</label>
-<input type="text" id="longitude" name="longitude" />
-<label>Heading</label>
-<input type="text" id="heading" name="heading" size="4" value="0"/>
-<button type="button" class="btn btn-default" id="heading_dec">-</button>
-<button type="button" class="btn btn-default" id="heading_inc">+</button>
 
-<label>Speed</label>
-<input type="text" id="speed" name="speed" size="4" value="0.1"/>
-<button type="button" class="btn btn-default" id="speed_dec">-</button>
-<button type="button" class="btn btn-default" id="speed_inc">+</button>
-
-<label>Update period</label>
-<input type="text" name="update_period" size="4" value="1"/>
-</div>
-
-</form>
 
 </div>
 
@@ -88,11 +68,61 @@
 
 
 <!--  main area -->
-<div class="col-sm-6 col-md-6">
+<div class="col-sm-4 col-md-4">
 <div id="mapContainer"></div>
 </div><!-- end map area-->
 
+<div class="col-sm-4 col-md-4">
+
+<form>
+
+<div class="form-group">
+
+<div class="row">
 <div class="col-sm-6 col-md-6">
+<label>Latitude</label>
+<input type="text" class="form-control" id="latitude" name="latitude" size="12" />
+</div>
+<div class="col-sm-6 col-md-6">
+<label>Longitude</label>
+<input type="text" class="form-control" id="longitude" name="longitude" size="12" />
+</div>
+</div><!-- end .row -->
+
+<div class="row">
+<div class="col-sm-6 col-md-6">
+<label>Heading</label>
+<input type="text" class="form-control" id="heading" name="heading" size="4" value="0"/>
+<button type="button" class="btn btn-default" id="heading_dec">-</button>
+<button type="button" class="btn btn-default" id="heading_inc">+</button>
+</div>
+
+<div class="col-sm-6 col-md-6">
+<label>Speed</label>
+<input type="text" class="form-control" id="speed" name="speed" size="4" value="0.1"/>
+<button type="button" class="btn btn-default" id="speed_dec">-</button>
+<button type="button" class="btn btn-default" id="speed_inc">+</button>
+</div>
+</div><!-- end .row -->
+
+
+
+</div>
+</form>
+
+</div><!-- end controls-->
+
+<div class="col-sm-4 col-md-4">
+<form>
+<div class="form-group">
+<label>UART Serivce</label>
+<input type="text" class="form-control" id="ws_url" size="32" value="ws://localhost:8887" />
+<button type="button" class="btn btn-default" id="ws_connect_btn">Connect</button>
+</div>
+</form>
+
+<div id="messages">
+</div>
 
 </div><!-- end map area-->
 
@@ -116,6 +146,8 @@ var boatMarker;
 var currentPosition;
 var currentLatitude = 53.282;
 var currentLongitude = -9.0604;
+var updatePeriod = 1;
+var webSocket;
 
 function initializeMap() {
 
@@ -137,6 +169,25 @@ function initializeMap() {
 
 
 }
+
+function formatTimestamp (date) {
+	var hh = date.getUTCHours();
+	var mm = date.getUTCMinutes();
+	var ss = date.getSeconds();
+	var frac_s = (date.getMilliseconds()/1000).toFixed(1);
+	if (hh < 10) {hh = "0"+hh;}
+	if (mm < 10) {mm = "0"+mm;}
+	if (ss < 10) {ss = "0"+ss;}
+	return hh+":"+mm+":"+ss;
+}
+
+function logEvent (message) {
+	$("#messages").append("<div class='message'>" 
+	+ formatTimestamp(new Date())
+	+ " "
+	+ message + "</div>");
+}
+
 
 
 jQuery(function() {
@@ -167,19 +218,45 @@ jQuery(function() {
 		$("#speed").val(speed.toFixed(1));
 	});
 
+	$("#ws_connect_btn").click(function(){
+		var ws_url = $("#ws_url").val();
+		logEvent("connecting to " + ws_url);
+		webSocket = new WebSocket(ws_url);
+		webSocket.onopen=function(){
+			alert('open');
+		};
+		webSocket.onclose=function(){
+			alert('close');
+		};
+		webSocket.onerror=function(){
+			alert('error: ' + error);
+		};
+		webSocket.onmessage=function(event){
+			logEvent(event.data);
+		};
+
+	});
+
 	setInterval (function(){
 
 		var heading = $("#heading").val();
 		var speed = $("#speed").val();
 
 		var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
-		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed, heading);
+
+		var trailMarker = new google.maps.Marker({
+			position: curPos,
+			map: map,
+			icon: boatIcon,
+		});
+
+		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed*updatePeriod, heading);
 		currentLatitude = newPos.lat();
 		currentLongitude = newPos.lng();
 		boatMarker.setPosition( newPos );
 		$("#latitude").val(currentLatitude.toFixed(7));
 		$("#longitude").val(currentLongitude.toFixed(7));
-	 }, 1000);
+	 }, updatePeriod*1000);
 
 });
 </script>
