@@ -233,8 +233,8 @@ var boatMarker;
 var currentPosition;
 var currentLatitude = 53.282;
 var currentLongitude = -9.0604;
-var updatePeriod = 1;
 var webSocket;
+var gpsEmulationInterval;
 
 var numMessageRows = 0;
 var maxMessageRows = 22;
@@ -390,6 +390,7 @@ function gpsEmulator () {
 
 	var heading = $("#heading").val();
 	var speed = $("#speed").val();
+	var updatePeriod = $("#update_period").val()*1;
 
 	// Given current position, heading and speed, calculate new position
 	var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
@@ -443,6 +444,11 @@ jQuery(function() {
 		var speed = $("#speed").val() * 1;
 		speed += 0.1;
 		$("#speed").val(speed.toFixed(1));
+	});
+	
+	$("#update_period").change(function(){
+		clearInterval(gpsEmulationInterval);
+		gpsEmulationInterval = setInterval(gpsEmulator, $("#update_period").val()*1000);
 	});
 
 	$("#ws_connect_btn").click(function(){
@@ -499,10 +505,8 @@ jQuery(function() {
 	});
 
 
-	gpsEmulatorInterval = setInterval (function(){
-		gpsEmulator();
-	}, updatePeriod*1000);
-
+	gpsEmulationInterval = setInterval (gpsEmulator,1000);
+	
 });
 </script>
 
