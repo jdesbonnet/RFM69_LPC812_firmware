@@ -21,8 +21,9 @@
 
 <style>
 #mapContainer {width:100%;height:540px;background-color:yellow;}
-.incoming {color:blue}
+.incoming {color:black}
 .outgoing {color:red}
+#message_table tr {font-size:8pt}
 .indicator-off {color: #ccc}
 .indicator-on {color: red}
 .command-buttons BUTTON {margin:0.25em}
@@ -84,24 +85,27 @@
 
 
 <div class="row">
-<div class="col-sm-4 col-md-4">
+
+<div class="col-sm-6 col-md-6">
 <div class="form-group">
 <label>GPS emulator</label>
 <select class="form-control" id="gps_emulator_enable">
-<option value="1">Enable</option>
 <option value="0">Disable</option>
+<option value="1">Enable (local)</option>
+<option value="2">Enable (remote)</option>
 </select>
 </div>
 </div>
 
-<div class="col-sm-4 col-md-4">
+
+<div class="col-sm-3 col-md-3">
 <div class="form-group">
 <label>To Addr</label>
 <input type="text" class="form-control" id="to_addr" size="4" value="51" />
 </div>
 </div>
 
-<div class="col-sm-4 col-md-4">
+<div class="col-sm-3 col-md-3">
 <div class="form-group">
 <label>Update Rate</label>
 <input type="text" class="form-control" id="update_period" size="4" value="1" />
@@ -192,11 +196,6 @@
 </div>
 </form>
 
-
-
-
-<span class="incoming">incoming</span>
-<span class="outgoing">outgoing</span>
 
 <table id="message_table" class="list">
 <tr><td></td></tr>
@@ -379,6 +378,43 @@ function updateSpeed (newSpeed) {
 	$("#speed").val(newSpeed);
 }
 
+/**
+ * Called from within a setInterval() function.
+ */
+function gpsEmulator () {
+
+	// Return if emulation disabled
+	if ($("#gps_emulator_enable").val()==0) {
+		return;
+	}
+
+	var heading = $("#heading").val();
+	var speed = $("#speed").val();
+
+	// Given current position, heading and speed, calculate new position
+	var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
+	var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed*updatePeriod, heading);
+
+	updateMap(newPos.lat(), newPos.lng());
+
+	var setPosCmd = "G "
+			+ formatNMEATimestamp(new Date()) + " " 
+			+ decimalDegreesToNmea(currentLatitude).toFixed(5) + " " 
+			+ decimalDegreesToNmea(currentLongitude).toFixed(5) + " " 
+			+ heading + " " + speed;
+			
+	// Send to local or remote radio depending on emulation mode
+	if ($("#gps_emulator_enable").val()==1) {
+		// Send positions to device on UART
+		webSocket.send(setPosCmd);
+	} else if  ($("#gps_emulator_enable").val()==2) {
+		// Send position over air to remote radio
+		// D <to-addr> <remote-cmd>
+		webSocket.send("D " + $("#to_addr").val() + " " + setPosCmd);
+	}
+}
+
+
 jQuery(function() {
 	initializeMap();
 
@@ -463,30 +499,9 @@ jQuery(function() {
 	});
 
 
-	setInterval (function(){
-
-		if ($("#gps_emulator_enable").val()==1) {
-
-		var heading = $("#heading").val();
-		var speed = $("#speed").val();
-
-		var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
-
-
-
-		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed*updatePeriod, heading);
-
-		updateMap(newPos.lat(), newPos.lng());
-
-		// D <to-addr> <remote-cmd>
-		webSocket.send("D " + $("#to_addr").val() + " G "
-			+ formatNMEATimestamp(new Date()) + " " 
-			+ decimalDegreesToNmea(currentLatitude).toFixed(5) + " " 
-			+ decimalDegreesToNmea(currentLongitude).toFixed(5) + " " 
-			+ heading + " " + speed);
-		}
-
-	 }, updatePeriod*1000);
+	gpsEmulatorInterval = setInterval (function(){
+		gpsEmulator();
+	}, updatePeriod*1000);
 
 });
 </script>
