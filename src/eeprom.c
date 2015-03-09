@@ -29,7 +29,7 @@ const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 
 		.poll_interval = 5,
 		.listen_period_cs = 80,
-		.link_loss_timeout_s = 1800
+		.link_loss_timeout_s = 3600*2
 		}
 };
 
