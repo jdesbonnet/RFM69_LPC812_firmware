@@ -23,6 +23,8 @@
 #mapContainer {width:100%;height:540px;background-color:yellow;}
 .incoming {color:blue}
 .outgoing {color:red}
+.indicator-off {color: #ccc}
+.indicator-on {color: red}
 </style>
 
 </head>
@@ -72,6 +74,9 @@
 <!--  main area -->
 <div class="col-sm-4 col-md-4">
 <div id="mapContainer"></div>
+<input type="checkbox" id="center_map_cb" checked /> Center map
+&nbsp;
+<input type="checkbox" id="trail_cb" checked /> Enable map trail
 </div><!-- end map area-->
 
 <div class="col-sm-4 col-md-4">
@@ -172,7 +177,8 @@
 <div class="form-group">
 <label>UART Serivce</label><br />
 <input type="text" class="form-control" id="ws_url" size="32" value="ws://localhost:8887" />
-<button type="button" class="btn btn-default" id="ws_connect_btn"><img src="circle-red.png" /> Connect</button>
+<button type="button" class="btn btn-default" id="ws_connect_btn">
+<span id="websocket_indicator" class="glyphicon glyphicon-off indicator-off"></span> Connect</button>
 </div>
 </form>
 
@@ -301,12 +307,31 @@ function decimalDegreesToNmea(degrees) {
 	return (degint*100 + mins);
 }
 
-function updateMap() {
-	var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
-	boatMarker.setPosition(curPos);
-	$("#latitude").val(currentLatitude.toFixed(7));
-	$("#longitude").val(currentLongitude.toFixed(7));
-	map.setCenter (curPos);
+function updateMap(newLatitude, newLongitude) {
+
+	var oldPos = new google.maps.LatLng(currentLatitude,currentLongitude);
+	var newPos = new google.maps.LatLng(newLatitude,newLongitude);
+	boatMarker.setPosition(newPos);
+	
+	// Insert trail marker if enabled
+	if ($("#trail_cb").is(":checked")) {
+			var trailMarker = new google.maps.Marker({
+			position: oldPos,
+			map: map,
+			icon: boatIcon,
+		});
+	}
+	
+	$("#latitude").val(newLatitude.toFixed(7));
+	$("#longitude").val(newLongitude.toFixed(7));
+	
+	// If 'center map' checkbox checked, center on marker
+	if ($("#center_map_cb").is(":checked")) {
+		map.setCenter (newPos);
+	}
+	
+	currentLatitude = newLatitude;
+	currentLongitude = newLongitude;
 }
 
 jQuery(function() {
@@ -338,14 +363,25 @@ jQuery(function() {
 	});
 
 	$("#ws_connect_btn").click(function(){
+	
+		// If already open, then close it.
+		if (webSocket && webSocket.readyState==1) {
+			webSocket.close();
+			return;
+		}
+		
 		var ws_url = $("#ws_url").val();
 		logEvent("connecting to " + ws_url);
 		webSocket = new WebSocket(ws_url);
 		webSocket.onopen=function(){
-			alert('open');
+			$("#websocket_indicator").removeClass("indicator-off");
+			$("#websocket_indicator").addClass("indicator-on");
+			logEvent("connection open");
 		};
 		webSocket.onclose=function(){
-			alert('close');
+			$("#websocket_indicator").removeClass("indicator-on");
+			$("#websocket_indicator").addClass("indicator-off");
+			logEvent("connection closed");
 		};
 		webSocket.onerror=function(){
 			alert('error: ' + error);
@@ -354,9 +390,7 @@ jQuery(function() {
 			logEvent(event.data,"incoming");
 			var p = event.data.split(" ");
 			if (p[0] === 'g' && $("#gps_emulator_enable").val()==0) {
-				currentLatitude = nmeaToDecimalDegrees(p[3]);
-				currentLongitude = nmeaToDecimalDegrees(p[4]);
-				updateMap();
+				updateMap(nmeaToDecimalDegrees(p[3]),nmeaToDecimalDegrees(p[4]));
 			}
 		};
 
@@ -388,17 +422,11 @@ jQuery(function() {
 
 		var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
 
-		var trailMarker = new google.maps.Marker({
-			position: curPos,
-			map: map,
-			icon: boatIcon,
-		});
+
 
 		var newPos = google.maps.geometry.spherical.computeOffset(curPos, speed*updatePeriod, heading);
 
-		currentLatitude = newPos.lat();
-		currentLongitude = newPos.lng();
-		updateMap();
+		updateMap(newPos.lat(), newPos.lng());
 
 		webSocket.send("G "
 			+ formatNMEATimestamp(new Date()) + " " 
