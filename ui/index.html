@@ -84,7 +84,7 @@
 
 
 <div class="row">
-<div class="col-sm-6 col-md-6">
+<div class="col-sm-4 col-md-4">
 <div class="form-group">
 <label>GPS emulator</label>
 <select class="form-control" id="gps_emulator_enable">
@@ -93,7 +93,15 @@
 </select>
 </div>
 </div>
-<div class="col-sm-6 col-md-6">
+
+<div class="col-sm-4 col-md-4">
+<div class="form-group">
+<label>To Addr</label>
+<input type="text" class="form-control" id="to_addr" size="4" value="51" />
+</div>
+</div>
+
+<div class="col-sm-4 col-md-4">
 <div class="form-group">
 <label>Update Rate</label>
 <input type="text" class="form-control" id="update_period" size="4" value="1" />
@@ -464,7 +472,8 @@ jQuery(function() {
 
 		updateMap(newPos.lat(), newPos.lng());
 
-		webSocket.send("G "
+		// D <to-addr> <remote-cmd>
+		webSocket.send("D " + $("#to_addr").val() + " G "
 			+ formatNMEATimestamp(new Date()) + " " 
 			+ decimalDegreesToNmea(currentLatitude).toFixed(5) + " " 
 			+ decimalDegreesToNmea(currentLongitude).toFixed(5) + " " 
