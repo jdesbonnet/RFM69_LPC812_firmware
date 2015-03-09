@@ -25,6 +25,7 @@
 .outgoing {color:red}
 .indicator-off {color: #ccc}
 .indicator-on {color: red}
+.command-buttons BUTTON {margin:0.25em}
 </style>
 
 </head>
@@ -161,7 +162,8 @@
 
 <br />
 
-<div class="form-group">
+<!-- command buttons: set command in data-cmd attribute and attach cmd_btn class to element -->
+<div class="command-buttons">
 <button class="btn btn-default cmd_btn" data-cmd="Q">Reset</button>
 <button class="btn btn-default cmd_btn" data-cmd="V">Get firmware version</button>
 <button class="btn btn-default cmd_btn" data-cmd="E 2">Enable GPS Reporting</button>
@@ -206,7 +208,15 @@
 <script>
 // Icon used to represent a boat
 var boatIcon = {
-    url: 'circle-red.png',
+	url: 'circle-red.png',
+	size: new google.maps.Size(16, 16),
+	origin: new google.maps.Point(0,0),
+	anchor: new google.maps.Point(8,8),
+};
+
+// Icon used to represent trail point
+var trailIcon = {
+    url: 'trail.png',
     size: new google.maps.Size(16, 16),
     origin: new google.maps.Point(0,0),
     anchor: new google.maps.Point(8,8)
@@ -237,7 +247,13 @@ function initializeMap() {
 	boatMarker = new google.maps.Marker({
 		position: centerPoint,
 		map: map,
-		icon: boatIcon,
+		icon: {
+			path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+			anchor: new google.maps.Point(0,4),
+			scale: 4,
+			strokeColor: "red",
+			//rotation: 90
+		}
 	});
 
 
@@ -318,7 +334,7 @@ function updateMap(newLatitude, newLongitude) {
 			var trailMarker = new google.maps.Marker({
 			position: oldPos,
 			map: map,
-			icon: boatIcon,
+			icon: trailIcon,
 		});
 	}
 	
@@ -334,6 +350,23 @@ function updateMap(newLatitude, newLongitude) {
 	currentLongitude = newLongitude;
 }
 
+function updateHeading (newHeading) {
+	$("#heading").val(newHeading);
+	boatMarker.setMap(null);
+	var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
+	boatMarker = new google.maps.Marker({
+		position: curPos,
+		map: map,
+		icon: {
+			path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+			anchor: new google.maps.Point(0,4),
+			scale: 4,
+			strokeColor: "red",
+			rotation: newHeading
+		}
+	});
+}
+
 jQuery(function() {
 	initializeMap();
 
@@ -342,13 +375,15 @@ jQuery(function() {
 		var heading = $("#heading").val() | 0;
 		heading -= 10;
 		heading %= 360;
-		$("#heading").val(heading);
+		updateHeading(heading);
+		//$("#heading").val(heading);
 	});
 	$("#heading_inc").click(function(){
 		var heading = $("#heading").val() | 0;
 		heading += 10;
 		heading %= 360;
-		$("#heading").val(heading);
+		updateHeading(heading);
+		//$("#heading").val(heading);
 	});
 	$("#speed_dec").click(function(){
 		var speed = $("#speed").val() * 1;
