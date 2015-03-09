@@ -130,7 +130,7 @@
 <div class="col-sm-6 col-md-6">
 <div class="form-group form-inline">
 <label>Heading</label><br />
-<input type="text" class="form-control" id="heading" name="heading" size="4" value="0"/>
+<input type="text" class="form-control" id="heading" size="4" value="0"/>
 <button type="button" class="btn btn-default" id="heading_dec"><span class="glyphicon glyphicon-minus"></span></button>
 <button type="button" class="btn btn-default" id="heading_inc"><span class="glyphicon glyphicon-plus"></span></button>
 </div><!-- end .form-group-->
@@ -138,7 +138,7 @@
 <div class="col-sm-6 col-md-6">
 <div class="form-group form-inline">
 <label>Speed</label><br />
-<input type="text" class="form-control" id="speed" name="speed" size="4" value="0.1"/>
+<input type="text" class="form-control" id="speed" size="4" value="0.1"/>
 <button type="button" class="btn btn-default" id="speed_dec"><span class="glyphicon glyphicon-minus"></span></button>
 <button type="button" class="btn btn-default" id="speed_inc"><span class="glyphicon glyphicon-plus"></span></button>
 </div><!-- end .form-group -->
@@ -370,9 +370,13 @@ function updateHeading (newHeading) {
 			anchor: new google.maps.Point(0,4),
 			scale: 4,
 			strokeColor: "red",
-			rotation: newHeading
+			rotation: (newHeading|0)
 		}
 	});
+}
+
+function updateSpeed (newSpeed) {
+	$("#speed").val(newSpeed);
 }
 
 jQuery(function() {
@@ -434,6 +438,8 @@ jQuery(function() {
 			var p = event.data.split(" ");
 			if (p[0] === 'g' && $("#gps_emulator_enable").val()==0) {
 				updateMap(nmeaToDecimalDegrees(p[3]),nmeaToDecimalDegrees(p[4]));
+				updateHeading(p[5]);
+				updateSpeed(p[6]);
 			}
 		};
 
