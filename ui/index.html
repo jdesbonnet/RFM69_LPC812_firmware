@@ -399,9 +399,10 @@ jQuery(function() {
 	$("#radio_cmd_send_btn").click(function(){
 		sendCommand($("#radio_cmd").val());
 	});
-	$("#radio_cmd").change(function(){
-		alert('change');
-		sendCommand($("#radio_cmd").val());
+	$("#radio_cmd").keydown(function(e){
+		if (e.which == 13) {
+			sendCommand($("#radio_cmd").val());
+		}
 	});
 
 	$("#btn_reset_board").click(function(){
