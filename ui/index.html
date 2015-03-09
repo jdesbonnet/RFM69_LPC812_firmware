@@ -21,6 +21,8 @@
 
 <style>
 #mapContainer {width:100%;height:540px;background-color:yellow;}
+.incoming {color:blue}
+.outgoing {color:red}
 </style>
 
 </head>
@@ -131,6 +133,35 @@
 
 <hr />
 
+<div class="form-group">
+<label>Over-air bit rate</label>
+<select id="radio_bps" class="form-control">
+<option value="300">300</option>
+<option value="300">600</option>
+<option value="300">1200</option>
+<option value="300">2400</option>
+<option value="300">4800</option>
+<option value="300">9600</option>
+</select>
+</div>
+
+
+<form class="form-inline" onsubmit="return false;">
+<div class="form-group">
+<label>Send Radio Command</label><br />
+<input type="text" class="form-control" id="radio_cmd" size="32" value="" />
+<button type="button" class="btn btn-default" id="radio_cmd_send_btn">Send</button>
+</div>
+</form>
+
+<br />
+
+<div class="form-group">
+<button class="btn btn-default cmd_btn" data-cmd="Q">Reset</button>
+<button class="btn btn-default cmd_btn" data-cmd="V">Get firmware version</button>
+<button class="btn btn-default cmd_btn" data-cmd="E 2">Enable GPS Reporting</button>
+<button class="btn btn-default cmd_btn" data-cmd="E 6">Enable NMEA echo</button>
+</div>
 
 </div><!-- end controls column-->
 
@@ -146,13 +177,10 @@
 </form>
 
 
-<form class="form-inline">
-<div class="form-group">
-<label>Send Radio Command</label><br />
-<input type="text" class="form-control" id="radio_cmd" size="32" value="" />
-<button type="button" class="btn btn-default" id="radio_cmd_send_btn">Send</button>
-</div>
-</form>
+
+
+<span class="incoming">incoming</span>
+<span class="outgoing">outgoing</span>
 
 <table id="message_table" class="list">
 <tr><td></td></tr>
@@ -186,7 +214,7 @@ var updatePeriod = 1;
 var webSocket;
 
 var numMessageRows = 0;
-var maxMessageRows = 20;
+var maxMessageRows = 22;
 
 function initializeMap() {
 
@@ -219,14 +247,27 @@ function formatTimestamp (date) {
 	if (ss < 10) {ss = "0"+ss;}
 	return hh+":"+mm+":"+ss;
 }
+function formatNMEATimestamp (date) {
+	var hh = date.getUTCHours();
+	var mm = date.getUTCMinutes();
+	var ss = date.getSeconds();
+	var frac_s = (date.getMilliseconds()/1000).toFixed(1);
+	if (hh < 10) {hh = "0"+hh;}
+	if (mm < 10) {mm = "0"+mm;}
+	if (ss < 10) {ss = "0"+ss;}
+	return hh + "" + mm + "" + ss;
+}
+function logEvent (message,style) {
 
-function logEvent (message) {
-
-	var newRow = jQuery('<tr><td>'
+	var newRow = $('<tr><td>'
 			+ formatTimestamp(new Date())
 			+ " " + message
 			+'</td></tr>').hide();
-		
+	
+	if (style) {
+		newRow.addClass(style);
+	}
+
 	if (numMessageRows>=maxMessageRows) {
 		jQuery('#message_table tr:last').remove();
 		jQuery('#message_table tr:first').before(newRow);
@@ -238,12 +279,26 @@ function logEvent (message) {
 	}
 }
 
-function nmeaLatLonToDecimal(nmeaLatLon) {
+function sendCommand (cmd) {
+	logEvent(cmd,"outgoing");
+	webSocket.send(cmd);
+}
+
+/**
+ * Convert lat/lon in NMEA format (dddmm.mmmm) into decimal degress
+ */
+function nmeaToDecimalDegrees(nmeaLatLon) {
 	var degmin = nmeaLatLon | 0;
 	var min = degmin % 100;
 	var deg = (degmin/100)|0;
 	var fracmin = nmeaLatLon - degmin;
 	return deg + (min+fracmin)/60;
+}
+function decimalDegreesToNmea(degrees) {
+	var degint = degrees|0;
+	var fracdeg = degrees - degint;
+	var mins = fracdeg * 60;
+	return (degint*100 + mins);
 }
 
 function updateMap() {
@@ -296,11 +351,11 @@ jQuery(function() {
 			alert('error: ' + error);
 		};
 		webSocket.onmessage=function(event){
-			logEvent(event.data);
+			logEvent(event.data,"incoming");
 			var p = event.data.split(" ");
 			if (p[0] === 'g' && $("#gps_emulator_enable").val()==0) {
-				currentLatitude = nmeaLatLonToDecimal(p[3]);
-				currentLongitude = -nmeaLatLonToDecimal(p[4]);
+				currentLatitude = nmeaToDecimalDegrees(p[3]);
+				currentLongitude = nmeaToDecimalDegrees(p[4]);
 				updateMap();
 			}
 		};
@@ -308,7 +363,19 @@ jQuery(function() {
 	});
 
 	$("#radio_cmd_send_btn").click(function(){
-		webSocket.send($("#radio_cmd").val());
+		sendCommand($("#radio_cmd").val());
+	});
+	$("#radio_cmd").change(function(){
+		alert('change');
+		sendCommand($("#radio_cmd").val());
+	});
+
+	$("#btn_reset_board").click(function(){
+		sendCommand("Q");
+	});
+
+	$(".cmd_btn").click(function(){
+		sendCommand($(this).data("cmd"));
 	});
 
 
@@ -333,7 +400,11 @@ jQuery(function() {
 		currentLongitude = newPos.lng();
 		updateMap();
 
-		webSocket.send("G 120000 " + currentLatitude + " " + currentLongitude + " " + heading + " " + speed);
+		webSocket.send("G "
+			+ formatNMEATimestamp(new Date()) + " " 
+			+ decimalDegreesToNmea(currentLatitude).toFixed(5) + " " 
+			+ decimalDegreesToNmea(currentLongitude).toFixed(5) + " " 
+			+ heading + " " + speed);
 		}
 
 	 }, updatePeriod*1000);
