@@ -78,8 +78,23 @@ void UART1_IRQHandler(void)
 
 				// Make copy from NMEA buffer to avoid data being clobbered in the background by incoming chars
 				copy_nmea_word (gps_time_of_day, nmea_buf + nmea_words[0]);
-				copy_nmea_word (gps_latitude, nmea_buf + nmea_words[1]);
-				copy_nmea_word (gps_longitude, nmea_buf + nmea_words[3]);
+
+				// Prefix with negative sign if south of equator
+				if (nmea_buf[nmea_words[2]]=='S') {
+					gps_latitude[0] = '-';
+					copy_nmea_word (gps_latitude+1, nmea_buf + nmea_words[1]);
+				} else {
+					copy_nmea_word (gps_latitude, nmea_buf + nmea_words[1]);
+				}
+
+				// Prefix with negative sign of west of Greenwich meridian
+				if (nmea_buf[nmea_words[4]]=='W') {
+					gps_longitude[0] = '-';
+					copy_nmea_word (gps_longitude+1, nmea_buf + nmea_words[3]);
+				} else {
+					copy_nmea_word (gps_longitude, nmea_buf + nmea_words[3]);
+				}
+
 				copy_nmea_word (gps_fix, nmea_buf + nmea_words[5]);
 				copy_nmea_word (gps_hdop, nmea_buf + nmea_words[7]);
 			}
