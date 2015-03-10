@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "config.h"
 #include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"
@@ -48,17 +49,17 @@ int cmd_remote_cmd (int argc, uint8_t **argv) {
 
 	cmd_len = MyUARTGetStrLen(tx_buffer.buffer+3);
 
-	/*
-	MyUARTSendStringZ("; cmd_len=");
-	MyUARTPrintDecimal(cmd_len);
-
-	MyUARTSendStringZ("; cmd=");
-	MyUARTSendStringZ(tx_buffer.buffer+3);
-	MyUARTSendCRLF();
-	*/
-
+	//
 	// Transmit frame
+	//
+
+	// LED on
+	LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+
 	rfm69_frame_tx (tx_buffer.buffer,cmd_len+3);
+
+	// LED off
+	LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
 
 	return E_OK;
 }

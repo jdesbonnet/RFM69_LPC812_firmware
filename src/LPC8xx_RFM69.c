@@ -1297,13 +1297,16 @@ int main(void) {
 				break;
 			}
 
-			// Write RFM69 register
+			// Write RFM69 register(s)
+			// <base-addr> <val0> <val1>....
 			case 'W' : {
-				// Parameter is register address
-				//uint8_t *b;
 				int regAddr = parse_hex(args[1]);
-				int regValue = parse_hex(args[2]);
-				rfm69_register_write(regAddr,regValue);
+				int regValue;
+				int i;
+				for (i = 2; i < argc; i++) {
+					regValue = parse_hex(args[i]);
+					rfm69_register_write(regAddr++,regValue);
+				}
 				break;
 			}
 
