@@ -15,7 +15,11 @@ Joe Desbonnet, jdesbonnet@gmail.com
 13 Feb 2015
 
 Release History:
-
+0.5.2,
+ * Fix bug where S lat and W longitude were not being reported as negative.
+ * RFM69 register write command can now take multiple value params. Each param written to successive register location. 
+ This facilitates issuing remote commands to change parameters that span more than one byte (eg radio bps)
+ 
 0.5.1, 6 Mar 2015
  * Add 'E' commend to en/disable echo of NMEA from GPS UART port to main UART port.
  * Add GPS fix type and HDOP to 'g' message
