@@ -242,7 +242,7 @@ var currentLongitude = -9.0602588;
 var currentHeading;
 var webSocket;
 var gpsEmulationInterval;
-
+var trailCounter = 0;
 var numMessageRows = 0;
 var maxMessageRows = 22;
 
@@ -342,12 +342,16 @@ function decimalDegreesToNmea(degrees) {
  */
 function updateMap(newLatitude, newLongitude) {
 
+	trailCounter++;
+	
 	var oldPos = new google.maps.LatLng(currentLatitude,currentLongitude);
 	var newPos = new google.maps.LatLng(newLatitude,newLongitude);
 	boatMarker.setPosition(newPos);
 	
-	// Insert trail marker if enabled
+	// Insert trail marker if enabled. Alternate black/white trail marker to enable
+	// visibility on dark satellite views as well as map views.
 	if ($("#trail_cb").is(":checked")) {
+			trailIcon.strokeColor = (trailCounter % 2 == 0 ? "black" : "white")
 			var trailMarker = new google.maps.Marker({
 			position: oldPos,
 			map: map,
