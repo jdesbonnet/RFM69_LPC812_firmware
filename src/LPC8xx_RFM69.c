@@ -873,10 +873,7 @@ int main(void) {
 						report_error('D',E_CMD_DROPPED);
 					}
 
-					MyUARTSendStringZ ("; received remote cmd from ");
-					MyUARTPrintHex(tx_buffer.header.from_addr);
-					MyUARTSendCRLF();
-
+					tfp_printf ("; received remote cmd from %x\r\n",tx_buffer.header.from_addr);
 
 					// Echo remote command to UART, copy remote command to UART buffer and
 					// trigger UART command parsing.
@@ -1136,8 +1133,8 @@ int main(void) {
 
 				gps_last_position_t = systick_counter;
 
-				sendGPSUpdate(0xff);
-
+				//sendGPSUpdate(0xff);
+				displayGPS();
 				break;
 			}
 

@@ -30,6 +30,10 @@ volatile uint8_t nmea_buf[GPS_NMEA_SIZE];
 
 #ifdef FEATURE_GPS_ON_USART1
 
+/**
+ * Copy a data field from NMEA sentence to address dst. Like strcpy()
+ * except terminating on comma ','.
+ */
 static void copy_nmea_word (uint8_t *dst, uint8_t *src) {
 	while (*src != ',') {
 		*dst = *src;
@@ -121,7 +125,6 @@ void UART1_IRQHandler(void)
 
 			if (c == ',') {
 				nmea_words[nmea_word_count++] = nmea_buf_index+1;
-				//c = 0;
 			}
 
 			nmea_buf[nmea_buf_index++] = c;
