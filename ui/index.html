@@ -155,11 +155,11 @@
 <label>Over-air bit rate</label>
 <select id="radio_bps" class="form-control">
 <option value="300">300</option>
-<option value="300">600</option>
-<option value="300">1200</option>
-<option value="300">2400</option>
-<option value="300">4800</option>
-<option value="300">9600</option>
+<option value="600">600</option>
+<option value="1200" selected>1200</option>
+<option value="2400">2400</option>
+<option value="4800">4800</option>
+<option value="9600">9600</option>
 </select>
 </div>
 
@@ -180,6 +180,9 @@
 <button class="btn btn-default cmd_btn" data-cmd="V">Get firmware version</button>
 <button class="btn btn-default cmd_btn" data-cmd="E 2">Enable GPS Reporting</button>
 <button class="btn btn-default cmd_btn" data-cmd="E 6">Enable NMEA echo</button>
+<button class="btn btn-default cmd_btn" data-cmd="U 1">Led On</button>
+<button class="btn btn-default cmd_btn" data-cmd="U 0">Led Off</button>
+
 </div>
 
 </div><!-- end controls column-->
@@ -233,6 +236,7 @@ var boatMarker;
 var currentPosition;
 var currentLatitude = 53.2814746;
 var currentLongitude = -9.0602588;
+var currentHeading;
 var webSocket;
 var gpsEmulationInterval;
 
@@ -330,6 +334,9 @@ function decimalDegreesToNmea(degrees) {
 	return (degint*100 + mins);
 }
 
+/**
+ * Update position marker on map.
+ */
 function updateMap(newLatitude, newLongitude) {
 
 	var oldPos = new google.maps.LatLng(currentLatitude,currentLongitude);
@@ -358,7 +365,14 @@ function updateMap(newLatitude, newLongitude) {
 }
 
 function updateHeading (newHeading) {
+
+	if (newHeading == currentHeading) {
+		return;
+	}
+	
 	$("#heading").val(newHeading);
+	
+	/*
 	boatMarker.setMap(null);
 	var curPos = new google.maps.LatLng(currentLatitude,currentLongitude);
 	boatMarker = new google.maps.Marker({
@@ -372,6 +386,17 @@ function updateHeading (newHeading) {
 			rotation: (newHeading|0)
 		}
 	});
+	*/
+	boatMarker.setIcon (
+	 {
+			path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+			anchor: new google.maps.Point(0,4),
+			scale: 4,
+			strokeColor: "red",
+			rotation: (newHeading|0)
+		}
+	);
+	currentHeading = newHeading;
 }
 
 function updateSpeed (newSpeed) {
