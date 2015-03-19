@@ -9,6 +9,9 @@
 #include "params.h"
 extern params_union_type params_union;
 
+extern uint32_t systick_counter;
+
+
 #ifdef FEATURE_GPS_ON_USART1
 //volatile uint32_t nmea_line = 0;
 volatile uint32_t gps_last_position_t;
@@ -21,9 +24,11 @@ volatile uint8_t gps_longitude[12];
 volatile uint8_t gps_time_of_day[12];
 volatile uint8_t gps_hdop[8];
 volatile uint8_t gps_fix[2];
-volatile uint8_t gps_heading[8];
-volatile uint8_t gps_speed[8];
-volatile uint8_t nmea_buf[GPS_NMEA_SIZE];
+volatile uint8_t gps_heading[8];          // heading in degrees (0=North)
+volatile uint8_t gps_speed[8];            // speed from NMEA sentence (in knots)
+volatile uint8_t nmea_buf[GPS_NMEA_SIZE]; // buffer for incoming NMEA sentences
+volatile uint32_t gps_top_of_second_t;    // systick time of top of last UTC second
+static volatile uint32_t gps_dollar_t;    // systick time at which NMEA '$' received
 #endif
 
 
@@ -106,6 +111,11 @@ void UART1_IRQHandler(void)
 			// $GPRMC NMEA sentence
 			if (nmea_buf[3]=='R' && nmea_buf[4] == 'M' && nmea_buf[5] == 'C') {
 
+				// The "$" of $GPRMC sentence (the first in sequence) is measured by
+				// oscilloscope to be about 250ms +/- 5ms after PPS signal. This allows
+				// the systick timer to be tied to GPS UTC within +/- 5ms.
+				gps_top_of_second_t = gps_dollar_t - 25;
+
 				// If no heading substitute with "999"
 				if ( nmea_word_len(6) == 0) {
 					strcpy(gps_heading,"999");
@@ -118,6 +128,10 @@ void UART1_IRQHandler(void)
 
 		} else if (c>31){
 
+			if (c == '$') {
+				gps_dollar_t = systick_counter;
+			}
+
 			if (nmea_buf_index == GPS_NMEA_SIZE) {
 				nmea_buf[GPS_NMEA_SIZE-1]=0;
 				nmea_buf_index = 0;
@@ -126,6 +140,8 @@ void UART1_IRQHandler(void)
 			if (c == ',') {
 				nmea_words[nmea_word_count++] = nmea_buf_index+1;
 			}
+
+
 
 			nmea_buf[nmea_buf_index++] = c;
 		}
