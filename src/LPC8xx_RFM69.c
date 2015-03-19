@@ -351,7 +351,7 @@ void displayStatus () {
 }
 
 // TODO: is volatile necessary?
-extern volatile uint32_t gps_last_position_t;
+extern volatile uint32_t gps_last_position_t, gps_top_of_second_t;
 extern volatile uint8_t gps_time_of_day[], gps_latitude[], gps_longitude[], gps_fix[], gps_hdop[];
 extern volatile uint8_t gps_heading[], gps_speed[];
 
@@ -359,7 +359,8 @@ static uint32_t last_gps_report_t = 0;
 
 void displayGPS () {
 	tfp_printf ("g %d %s %s %s %s %s %s %s\r\n",
-			(systick_counter - gps_last_position_t),
+			//(systick_counter - gps_last_position_t),
+			(systick_counter - gps_top_of_second_t),
 			&gps_time_of_day, &gps_latitude, &gps_longitude,
 			&gps_heading, &gps_speed,
 			&gps_fix, &gps_hdop);
