@@ -17,8 +17,8 @@ extern uint32_t systick_counter;
 volatile uint32_t gps_last_position_t;
 volatile uint32_t nmea_buf_index = 0;
 //volatile uint32_t nmea_flags = 0;
-volatile uint8_t nmea_words[24];
-volatile int32_t nmea_word_count=0;
+volatile uint8_t nmea_fields[24];        // NMEA buffer field byte offset
+volatile int32_t nmea_field_count=0;
 volatile uint8_t gps_latitude[12];
 volatile uint8_t gps_longitude[12];
 volatile uint8_t gps_time_of_day[12];
@@ -39,7 +39,7 @@ static volatile uint32_t gps_dollar_t;    // systick time at which NMEA '$' rece
  * Copy a data field from NMEA sentence to address dst. Like strcpy()
  * except terminating on comma ','.
  */
-static void copy_nmea_word (uint8_t *dst, uint8_t *src) {
+static void copy_nmea_field (uint8_t *dst, uint8_t *src) {
 	while (*src != ',') {
 		*dst = *src;
 		dst++;
@@ -50,10 +50,10 @@ static void copy_nmea_word (uint8_t *dst, uint8_t *src) {
 }
 
 /**
- * Get length of a NMEA sentence word
+ * Get length of a NMEA sentence field
  */
-static int nmea_word_len (int word_index) {
-	return nmea_words[word_index+1] - nmea_words[word_index] - 1;
+static int nmea_field_len (int field_index) {
+	return nmea_fields[field_index+1] - nmea_fields[field_index] - 1;
 }
 
 /**
@@ -78,7 +78,7 @@ void UART1_IRQHandler(void)
 			//nmea_line++;
 			nmea_buf_index = 0;
 
-			nmea_word_count = 0;
+			nmea_field_count = 0;
 
 			// $GPGGA NMEA sentence
 			if (nmea_buf[3]=='G' && nmea_buf[4] == 'G' && nmea_buf[5] == 'A') {
@@ -86,26 +86,26 @@ void UART1_IRQHandler(void)
 				gps_last_position_t = systick_counter;
 
 				// Make copy from NMEA buffer to avoid data being clobbered in the background by incoming chars
-				copy_nmea_word (gps_time_of_day, nmea_buf + nmea_words[0]);
+				copy_nmea_field (gps_time_of_day, nmea_buf + nmea_fields[0]);
 
 				// Prefix with negative sign if south of equator
-				if (nmea_buf[nmea_words[2]]=='S') {
+				if (nmea_buf[nmea_fields[2]]=='S') {
 					gps_latitude[0] = '-';
-					copy_nmea_word (gps_latitude+1, nmea_buf + nmea_words[1]);
+					copy_nmea_field (gps_latitude+1, nmea_buf + nmea_fields[1]);
 				} else {
-					copy_nmea_word (gps_latitude, nmea_buf + nmea_words[1]);
+					copy_nmea_field (gps_latitude, nmea_buf + nmea_fields[1]);
 				}
 
 				// Prefix with negative sign of west of Greenwich meridian
-				if (nmea_buf[nmea_words[4]]=='W') {
+				if (nmea_buf[nmea_fields[4]]=='W') {
 					gps_longitude[0] = '-';
-					copy_nmea_word (gps_longitude+1, nmea_buf + nmea_words[3]);
+					copy_nmea_field (gps_longitude+1, nmea_buf + nmea_fields[3]);
 				} else {
-					copy_nmea_word (gps_longitude, nmea_buf + nmea_words[3]);
+					copy_nmea_field (gps_longitude, nmea_buf + nmea_fields[3]);
 				}
 
-				copy_nmea_word (gps_fix, nmea_buf + nmea_words[5]);
-				copy_nmea_word (gps_hdop, nmea_buf + nmea_words[7]);
+				copy_nmea_field (gps_fix, nmea_buf + nmea_fields[5]);
+				copy_nmea_field (gps_hdop, nmea_buf + nmea_fields[7]);
 			}
 
 			// $GPRMC NMEA sentence
@@ -117,13 +117,13 @@ void UART1_IRQHandler(void)
 				gps_top_of_second_t = gps_dollar_t - 25;
 
 				// If no heading substitute with "999"
-				if ( nmea_word_len(6) == 0) {
+				if ( nmea_field_len(6) == 0) {
 					strcpy(gps_heading,"999");
 				} else {
-					copy_nmea_word (gps_heading, nmea_buf + nmea_words[6]);
+					copy_nmea_field (gps_heading, nmea_buf + nmea_fields[6]);
 				}
 
-				copy_nmea_word (gps_speed, nmea_buf + nmea_words[7]);
+				copy_nmea_field (gps_speed, nmea_buf + nmea_fields[7]);
 			}
 
 		} else if (c>31){
@@ -138,7 +138,7 @@ void UART1_IRQHandler(void)
 			}
 
 			if (c == ',') {
-				nmea_words[nmea_word_count++] = nmea_buf_index+1;
+				nmea_fields[nmea_field_count++] = nmea_buf_index+1;
 			}
 
 
