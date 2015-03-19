@@ -112,9 +112,9 @@ void UART1_IRQHandler(void)
 			if (nmea_buf[3]=='R' && nmea_buf[4] == 'M' && nmea_buf[5] == 'C') {
 
 				// The "$" of $GPRMC sentence (the first in sequence) is measured by
-				// oscilloscope to be about 250ms +/- 5ms after PPS signal. This allows
+				// oscilloscope to be about 55ms +/- 5ms after PPS signal. This allows
 				// the systick timer to be tied to GPS UTC within +/- 5ms.
-				gps_top_of_second_t = gps_dollar_t - 25;
+				gps_top_of_second_t = gps_dollar_t - 5;
 
 				// If no heading substitute with "999"
 				if ( nmea_field_len(6) == 0) {
