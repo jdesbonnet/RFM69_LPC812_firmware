@@ -70,6 +70,10 @@ int ow_bit_read () {
 	return b;
 }
 
+/**
+ * Reset one wire bus.
+ * @return -1 if successful.
+ */
 int ow_reset() {
 	ow_low();
 	delayMicroseconds(480);

@@ -582,19 +582,10 @@ int main(void) {
 #endif
 
 #ifdef FEATURE_DS18B20
-			// Pullup resistor on DS18B20 data pin PIO0_14
-			//LPC_IOCON->PIO0_14=(0x2<<3);
-			//GPIOSetDir(0,DS18B20_PIN,1);
-			ow_init(0,DS18B20_PIN);
-
-			//while(1) {
-
-				//GPIOSetBitValue(0,DS18B20_PIN,1);
-				//GPIOSetBitValue(0,DS18B20_PIN,0);
-
-				//MyUARTPrintHex(ds18b20_temperature_read());
-				//MyUARTSendByte(' ');
-			//}
+	// Pullup resistor on DS18B20 data pin PIO0_14
+	//LPC_IOCON->PIO0_14=(0x2<<3);
+	//GPIOSetDir(0,DS18B20_PIN,1);
+	ow_init(0,DS18B20_PIN);
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -607,18 +598,39 @@ int main(void) {
 	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
 #endif
 
-	// Self test (just RFM69 for the moment)
-	MyUARTSendStringZ("k ");
+	//
+	// Tests
+	//
+
+	// Bit indicating pass/fail of each test. Bit high indicates failure.
+	// Bit 0 : RFM69 module
+	// Bit 1 : DS18B20 temperature sensor
+
+	uint32_t test_result = 0;
+
+
+	// Test RFM69 radio module
 	if (rfm69_test() != 0) {
 		// Error communicating with RFM69: 4 blinks
 		ledBlink(4);
-		MyUARTSendByte('1');
-	} else {
+		test_result |= 1<<0;
+	}
+
+#ifdef FEATURE_DS18B20
+	tfp_printf("ow_reset=%d\r\n", ow_reset());
+	if (ow_reset() == 0) {
+		test_result |= 1<<1;
+	}
+#endif
+
+	if (test_result == 0){
 		// Normal: 2 blinks
 		ledBlink(2);
-		MyUARTSendByte('0');
-
+	} else {
+		ledBlink(2+test_result);
 	}
+	MyUARTSendStringZ("k ");
+	MyUARTPrintHex(test_result);
 	MyUARTSendCRLF();
 
 
@@ -1301,9 +1313,9 @@ int main(void) {
 				MyUARTPrintHex(rom_addr);
 				MyUARTSendCRLF();
 
-				MyUARTSendStringZ("y ");
-				MyUARTPrintHex(ds18b20_temperature_read());
-				MyUARTSendCRLF();
+				//MyUARTSendStringZ("y ");
+				//MyUARTPrintHex(ds18b20_temperature_read());
+				//MyUARTSendCRLF();
 				break;
 			}
 
