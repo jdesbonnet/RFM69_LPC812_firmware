@@ -67,7 +67,7 @@
 #define FEATURE_WATCHDOG_TIMER
 
 // GPS on second UART port.
-//#define FEATURE_GPS_ON_USART1
+#define FEATURE_GPS_ON_USART1
 
 
 //

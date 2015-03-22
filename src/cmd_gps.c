@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "config.h"
 #include "parse_util.h"
 #include "rfm69.h"
 #include "cmd.h"

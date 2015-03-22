@@ -617,7 +617,6 @@ int main(void) {
 	}
 
 #ifdef FEATURE_DS18B20
-	tfp_printf("ow_reset=%d\r\n", ow_reset());
 	if (ow_reset() == 0) {
 		test_result |= 1<<1;
 	}
@@ -737,11 +736,8 @@ int main(void) {
 #endif
 
 
-		// If in MODE_LOW_POWER_POLL send poll packet
+		// If in MODE_LOW_POWER_POLL send status packet
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
-
-
-
 
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
@@ -1215,6 +1211,7 @@ int main(void) {
 				break;
 			}
 
+			// Set parameter <byte-index> <value>
 			case 'P' : {
 
 				if (argc == 2) {
@@ -1308,14 +1305,14 @@ int main(void) {
 			}
 
 			case 'Y' : {
-				uint64_t rom_addr = ds18b20_rom_read();
-				MyUARTPrintHex(rom_addr>>32);
-				MyUARTPrintHex(rom_addr);
-				MyUARTSendCRLF();
-
-				//MyUARTSendStringZ("y ");
-				//MyUARTPrintHex(ds18b20_temperature_read());
+				//uint64_t rom_addr = ds18b20_rom_read();
+				//MyUARTPrintHex(rom_addr>>32);
+				//MyUARTPrintHex(rom_addr);
 				//MyUARTSendCRLF();
+
+				MyUARTSendStringZ("y ");
+				MyUARTPrintHex(ds18b20_temperature_read());
+				MyUARTSendCRLF();
 				break;
 			}
 
