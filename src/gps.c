@@ -39,7 +39,7 @@ uint32_t gps_get_last_position_t () {
 	return gps_last_position_t;
 }
 
-void displayGPS () {
+void gps_report_status () {
 	tfp_printf ("g %d %s %s %s %s %s %s %s\r\n",
 			//(systick_counter - gps_last_position_t),
 			(systick_counter - gps_top_of_second_t),
@@ -48,7 +48,7 @@ void displayGPS () {
 			&gps_fix, &gps_hdop);
 }
 
-void sendGPSUpdate (uint8_t to_addr) {
+void gps_send_status (uint8_t to_addr) {
 
 	// report position
 	tx_buffer.header.to_addr = to_addr;

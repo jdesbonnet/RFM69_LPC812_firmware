@@ -29,7 +29,7 @@ extern uint32_t systick_counter;
 int cmd_gps (int argc, uint8_t **args) {
 
 	if (argc == 1) {
-		displayGPS();
+		gps_report_status();
 		return;
 	}
 	if (argc != 6) {
@@ -45,6 +45,6 @@ int cmd_gps (int argc, uint8_t **args) {
 	gps_last_position_t = systick_counter;
 
 	//sendGPSUpdate(0xff);
-	displayGPS();
+	gps_report_status();
 }
 #endif

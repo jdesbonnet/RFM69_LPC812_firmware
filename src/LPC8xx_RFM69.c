@@ -320,7 +320,7 @@ void displayStatus () {
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 
 #ifdef FEATURE_GPS_ON_USART1
-	displayGPS();
+	gps_report_status();
 #endif
 
 
@@ -906,7 +906,7 @@ int main(void) {
 					MyUARTSendStringZ ("; received node query request from ");
 					MyUARTPrintHex(tx_buffer.header.from_addr);
 					MyUARTSendCRLF();
-					sendGPSUpdate(rx_buffer.header.from_addr);
+					gps_send_status(rx_buffer.header.from_addr);
 					break;
 				}
 #endif
@@ -1357,11 +1357,11 @@ int main(void) {
 #ifdef FEATURE_GPS_ON_USART1
 		// Display GPS info if changed
 		if ( (gps_get_last_position_t() != last_gps_report_t) && (params_union.params.gps_echo&0x2) ) {
-			displayGPS();
+			gps_report_status();
 
 			// Send GPS position over radio
 			if (params_union.params.gps_echo&(1<<2)) {
-				sendGPSUpdate(0xFF);
+				gps_send_status(0xFF);
 			}
 			last_gps_report_t = gps_get_last_position_t();
 		}
