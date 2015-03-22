@@ -7,12 +7,16 @@
 #include "myuart.h"
 
 #include "params.h"
-extern params_union_type params_union;
-
-extern uint32_t systick_counter;
-
+#include "frame_buffer.h"
 
 #ifdef FEATURE_GPS_ON_USART1
+
+
+extern params_union_type params_union;
+extern uint32_t systick_counter;
+extern frame_buffer_type tx_buffer;
+
+
 //volatile uint32_t nmea_line = 0;
 volatile uint32_t gps_last_position_t;
 volatile uint32_t nmea_buf_index = 0;
@@ -29,11 +33,45 @@ volatile uint8_t gps_speed[8];            // speed from NMEA sentence (in knots)
 volatile uint8_t nmea_buf[GPS_NMEA_SIZE]; // buffer for incoming NMEA sentences
 volatile uint32_t gps_top_of_second_t;    // systick time of top of last UTC second
 static volatile uint32_t gps_dollar_t;    // systick time at which NMEA '$' received
-#endif
 
 
+uint32_t gps_get_last_position_t () {
+	return gps_last_position_t;
+}
 
-#ifdef FEATURE_GPS_ON_USART1
+void displayGPS () {
+	tfp_printf ("g %d %s %s %s %s %s %s %s\r\n",
+			//(systick_counter - gps_last_position_t),
+			(systick_counter - gps_top_of_second_t),
+			&gps_time_of_day, &gps_latitude, &gps_longitude,
+			&gps_heading, &gps_speed,
+			&gps_fix, &gps_hdop);
+}
+
+void sendGPSUpdate (uint8_t to_addr) {
+
+	// report position
+	tx_buffer.header.to_addr = to_addr;
+	tx_buffer.header.msg_type = 'r';
+
+	int n;
+	strcpy (tx_buffer.payload,gps_time_of_day);
+	n  = strlen(gps_time_of_day);
+	tx_buffer.payload[n] = ' ';
+	n++;
+	strcpy (tx_buffer.payload+n,gps_latitude);
+	n += strlen(gps_latitude);
+	tx_buffer.payload[n] = ' ';
+	n++;
+	strcpy (tx_buffer.payload+n,gps_longitude);
+	n += strlen(gps_longitude);
+
+	//tx_buffer.payload[n] = rssi;
+	LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+	rfm69_frame_tx(tx_buffer.buffer, n+4);
+	LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+}
+
 
 /**
  * Copy a data field from NMEA sentence to address dst. Like strcpy()

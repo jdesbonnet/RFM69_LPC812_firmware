@@ -46,10 +46,10 @@
 #define FEATURE_SYSTICK
 
 // Experimental application to count rain tip bucket
-//#define FEATURE_TIP_BUCKET_COUNTER
+#define FEATURE_TIP_BUCKET_COUNTER
 
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
+#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
@@ -67,7 +67,7 @@
 #define FEATURE_WATCHDOG_TIMER
 
 // GPS on second UART port.
-#define FEATURE_GPS_ON_USART1
+//#define FEATURE_GPS_ON_USART1
 
 
 //

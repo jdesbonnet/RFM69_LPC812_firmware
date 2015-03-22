@@ -8,4 +8,5 @@ int cmd_version(int argc, uint8_t **argv);
 int cmd_set_uart_speed (int argc, uint8_t **argv);
 int cmd_remote_cmd (int argc, uint8_t **argv);
 int cmd_node_query (int argc, uint8_t **argv);
+int cmd_gps (int argc, uint8_t **argv);
 #endif

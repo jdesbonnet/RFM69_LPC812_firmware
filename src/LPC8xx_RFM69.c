@@ -49,6 +49,7 @@ For v0.2.0:
 #include "lpc8xx_pmu.h"
 #include "onewire.h"
 #include "ds18b20.h"
+#include "gps.h"
 #include "iap_driver.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
@@ -318,7 +319,9 @@ void displayStatus () {
 	//MyUARTSendCRLF();
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 
+#ifdef FEATURE_GPS_ON_USART1
 	displayGPS();
+#endif
 
 
 	uint32_t unique_id[4];
@@ -351,48 +354,9 @@ void displayStatus () {
 }
 
 // TODO: is volatile necessary?
-extern volatile uint32_t gps_last_position_t, gps_top_of_second_t;
-extern volatile uint8_t gps_time_of_day[], gps_latitude[], gps_longitude[], gps_fix[], gps_hdop[];
-extern volatile uint8_t gps_heading[], gps_speed[];
 
 static uint32_t last_gps_report_t = 0;
 
-void displayGPS () {
-	tfp_printf ("g %d %s %s %s %s %s %s %s\r\n",
-			//(systick_counter - gps_last_position_t),
-			(systick_counter - gps_top_of_second_t),
-			&gps_time_of_day, &gps_latitude, &gps_longitude,
-			&gps_heading, &gps_speed,
-			&gps_fix, &gps_hdop);
-}
-
-void sendGPSUpdate (uint8_t to_addr) {
-
-	// report position
-	tx_buffer.header.to_addr = to_addr;
-	tx_buffer.header.msg_type = 'r';
-
-	int n;
-	strcpy (tx_buffer.payload,gps_time_of_day);
-	n  = strlen(gps_time_of_day);
-	tx_buffer.payload[n] = ' ';
-	n++;
-	strcpy (tx_buffer.payload+n,gps_latitude);
-	n += strlen(gps_latitude);
-	tx_buffer.payload[n] = ' ';
-	n++;
-	strcpy (tx_buffer.payload+n,gps_longitude);
-	n += strlen(gps_longitude);
-
-	//tx_buffer.payload[n] = rssi;
-	LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-	rfm69_frame_tx(tx_buffer.buffer, n+4);
-	LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
-
-	//MyUARTSendStringZ(tx_buffer.payload);
-	//MyUARTSendCRLF();
-
-}
 
 // To facilitate tfp_printf()
 void myputc (void *p, char c) {
@@ -906,6 +870,7 @@ int main(void) {
 				// Ping
 				// Message requesting position report. This will return the string
 				// set by the GPS or the 'G' command
+#ifdef FEATURE_GPS_ON_USART1
 				case 'R' :
 				{
 
@@ -915,6 +880,7 @@ int main(void) {
 					sendGPSUpdate(rx_buffer.header.from_addr);
 					break;
 				}
+#endif
 
 
 
@@ -1117,27 +1083,12 @@ int main(void) {
 			}
 
 			// Set/override GPS position
+#ifdef FEATURE_GPS_ON_USART1
 			case 'G' : {
-				if (argc == 1) {
-					displayGPS();
-					break;
-				}
-				if (argc != 6) {
-					report_error('G',E_INVALID_ARG);
-					break;
-				}
-				strcpy(gps_time_of_day, args[1]);
-				strcpy(gps_latitude,args[2]);
-				strcpy(gps_longitude,args[3]);
-				strcpy(gps_heading,args[4]);
-				strcpy(gps_speed,args[5]);
-
-				gps_last_position_t = systick_counter;
-
-				//sendGPSUpdate(0xff);
-				displayGPS();
+				cmd_gps (argc, args);
 				break;
 			}
+#endif
 
 			// Display MCU unique ID
 			case 'I' : {
@@ -1361,17 +1312,19 @@ int main(void) {
 
 		} // end command switch block
 
+
+#ifdef FEATURE_GPS_ON_USART1
 		// Display GPS info if changed
-		if ( (gps_last_position_t) != last_gps_report_t && (params_union.params.gps_echo&0x2) ) {
+		if ( (gps_get_last_position_t() != last_gps_report_t) && (params_union.params.gps_echo&0x2) ) {
 			displayGPS();
 
 			// Send GPS position over radio
 			if (params_union.params.gps_echo&(1<<2)) {
 				sendGPSUpdate(0xFF);
 			}
-			last_gps_report_t = gps_last_position_t;
+			last_gps_report_t = gps_get_last_position_t();
 		}
-
+#endif
 
 
 #ifdef FEATURE_LINK_LOSS_RESET
