@@ -691,11 +691,10 @@ int main(void) {
 			// Setup power management registers so that WFI causes DEEPSLEEP
 			prepareForPowerDown();
 
-			// Writing into WKT counter automatically starts wakeup timer
-			// Polling interval determined by bits 11:8 of flags.
-			// Ts = 0.5 * 2 ^ flags[11:8]
-			// is 500 ms x 2 to the power of this value (ie 0=500ms, 1=1s, 2=2s,3=4s,4=8s...)
-			uint32_t wakeup_time = 5000  * params_union.params.poll_interval;
+			// Writing into WKT counter automatically starts wakeup timer. WKT timer
+			// is driven by 10kHz low power oscillator. However this is +/- 40%.
+			// Finding 7.5kHz closer to the mark.
+			uint32_t wakeup_time = 7500  * params_union.params.poll_interval;
 			LPC_WKT->COUNT = wakeup_time ;
 
 			// DeepSleep until WKT interrupt (or PIN interrupt)
@@ -1213,21 +1212,10 @@ int main(void) {
 
 			// Set parameter <byte-index> <value>
 			case 'P' : {
-
-				if (argc == 2) {
-					uint32_t param_index = parse_hex(args[1]);
-					MyUARTPrintHex(params_union.params_buffer[param_index]);
-					MyUARTSendCRLF();
-					break;
+				int status = cmd_param (argc, args);
+				if ( status ) {
+					report_error('P', status);
 				}
-
-				if (argc != 3) {
-					return E_WRONG_ARGC;
-				}
-
-				uint32_t param_index = parse_hex(args[1]);
-				uint32_t param_value = parse_hex(args[2]);
-				params_union.params_buffer[param_index] = param_value;
 				break;
 			}
 
