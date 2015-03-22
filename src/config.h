@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.5.2"
+#define VERSION "RFM69 0.5.3"
 
 //#define DEFAULT_NODE_ADDR 0x42 // Garden
 //#define DEFAULT_NODE_ADDR 0x43 // Master RX

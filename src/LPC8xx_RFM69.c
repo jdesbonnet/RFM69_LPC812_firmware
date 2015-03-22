@@ -453,6 +453,8 @@ int main(void) {
 #endif
 
 	// Auto assign node ID based on MCU ID
+	// TODO: MCU unique ID is actually a 128bit value, but for convenience
+	// incorrectly assuming that first 32bits are unique.
 	// TODO: this is a temporary hack: move this configuration to a
 	// structure and initalize in config.h
 	if (params_union.params.node_addr == 0xFF) {
@@ -577,6 +579,22 @@ int main(void) {
 
 	// No need for additional modifications to ACMP registers. Switch off clock.
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<19);
+#endif
+
+#ifdef FEATURE_DS18B20
+			// Pullup resistor on DS18B20 data pin PIO0_14
+			//LPC_IOCON->PIO0_14=(0x2<<3);
+			//GPIOSetDir(0,DS18B20_PIN,1);
+			ow_init(0,DS18B20_PIN);
+
+			//while(1) {
+
+				//GPIOSetBitValue(0,DS18B20_PIN,1);
+				//GPIOSetBitValue(0,DS18B20_PIN,0);
+
+				//MyUARTPrintHex(ds18b20_temperature_read());
+				//MyUARTSendByte(' ');
+			//}
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -710,8 +728,7 @@ int main(void) {
 		// If in MODE_LOW_POWER_POLL send poll packet
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
-			// Pullup resistor on PIO0_14
-			//LPC_IOCON->PIO0_14=(0x2<<3);
+
 
 
 			tx_buffer.header.to_addr = 0xff; // broadcast
@@ -725,6 +742,10 @@ int main(void) {
 			tx_buffer.payload[2] = readBattery()/100;
 
 #ifdef FEATURE_DS18B20
+
+			// Pullup resistor on DS18B20 data pin PIO0_14
+			LPC_IOCON->PIO0_14=(0x2<<3);
+
 			ow_init(0,DS18B20_PIN);
 			int32_t temperature = ds18b20_temperature_read();
 			MyUARTSendStringZ("; temperature=");
@@ -1274,6 +1295,17 @@ int main(void) {
 				break;
 			}
 
+			case 'Y' : {
+				uint64_t rom_addr = ds18b20_rom_read();
+				MyUARTPrintHex(rom_addr>>32);
+				MyUARTPrintHex(rom_addr);
+				MyUARTSendCRLF();
+
+				MyUARTSendStringZ("y ");
+				MyUARTPrintHex(ds18b20_temperature_read());
+				MyUARTSendCRLF();
+				break;
+			}
 
 			// Experimental write to memory. Write 8 bits at a time as writing more
 			// might trigger a fault if not correctly aligned.

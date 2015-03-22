@@ -12,8 +12,8 @@
 #include "delay.h"
 
 
-uint32_t ow_port;
-uint32_t ow_pin;
+static uint32_t ow_port;
+static uint32_t ow_pin;
 
 void ow_init(int port, int pin) {
 	ow_port=port;
