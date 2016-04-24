@@ -107,7 +107,7 @@
 
 <div class="col-sm-3 col-md-3">
 <div class="form-group">
-<label>Update Rate</label>
+<label>Update Period (s)</label>
 <input type="text" class="form-control" id="update_period" size="4" value="1" />
 </div>
 </div>
@@ -173,6 +173,17 @@
 </form>
 
 <br />
+
+<form class="form-inline" onsubmit="return false;">
+<div class="form-group">
+<label>Radio frequency (MHz)</label><br />
+<input type="text" class="form-control" id="frequency" size="32" value="433.0" />
+<button type="button" class="btn btn-default" id="freq_set_btn">Set Frequency</button>
+</div>
+</form>
+
+<br />
+
 
 <!-- command buttons: set command in data-cmd attribute and attach cmd_btn class to element -->
 <div class="command-buttons">
@@ -522,12 +533,25 @@ jQuery(function() {
 	$("#radio_cmd_send_btn").click(function(){
 		sendCommand($("#radio_cmd").val());
 	});
+	$("#freq_set_btn").click(function(){
+		var fMHz = $("#frequency").val()
+		var frfReg = ((fMHz*1000000/61)|0)&0xffffff;
+		var frfMsb = frfReg>>16;
+		var frfMid = (frfReg>>8)&0xff;
+		var frfLsb = frfReg&0xff;
+		// Write to FRF register to set center frequency
+		sendCommand("W 7 " 
+			+ frfMsb.toString(16) + " " 
+			+ frfMid.toString(16) + " " 
+			+ frfLsb.toString(16)
+		);
+	});
+
 	$("#radio_cmd").keydown(function(e){
 		if (e.which == 13) {
 			sendCommand($("#radio_cmd").val());
 		}
 	});
-
 	$("#btn_reset_board").click(function(){
 		sendCommand("Q");
 	});
