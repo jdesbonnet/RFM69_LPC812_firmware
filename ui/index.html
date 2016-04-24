@@ -154,12 +154,15 @@
 <div class="form-group">
 <label>Over-air bit rate</label>
 <select id="radio_bps" class="form-control">
-<option value="300">300</option>
 <option value="600">600</option>
 <option value="1200" selected>1200</option>
 <option value="2400">2400</option>
 <option value="4800">4800</option>
 <option value="9600">9600</option>
+<option value="19200">19200</option>
+<option value="38400">38400</option>
+<option value="57600">57600</option>
+<option value="115200">115200</option>
 </select>
 </div>
 
@@ -534,7 +537,7 @@ jQuery(function() {
 		sendCommand($("#radio_cmd").val());
 	});
 	$("#freq_set_btn").click(function(){
-		var fMHz = $("#frequency").val()
+		var fMHz = $("#frequency").val();
 		var frfReg = ((fMHz*1000000/61)|0)&0xffffff;
 		var frfMsb = frfReg>>16;
 		var frfMid = (frfReg>>8)&0xff;
@@ -544,6 +547,17 @@ jQuery(function() {
 			+ frfMsb.toString(16) + " " 
 			+ frfMid.toString(16) + " " 
 			+ frfLsb.toString(16)
+		);
+	});
+	$("#radio_bps").change(function(){
+		var bps = $("#radio_bps").val();
+		// bitrate_reg = FXO(32MHz)/bps
+		var bitrate_reg = ((32000000/bps)|0)&0xffff;
+		var bitrate_msb = bitrate_reg>>8;
+		var bitrate_lsb = bitrate_reg&0xff;
+		sendCommand("W 3 "
+			+ bitrate_msb.toString(16) + " "
+			+ bitrate_lsb.toString(16)
 		);
 	});
 
