@@ -1,8 +1,4 @@
-This is firmware to drive my LPC812/RFM69HW radio board. The indended application is for
-use with robot boat competitions, but can be used for any telemetry application.
-
-The LPC812 with this firmware acts as a kinda radio operating system, providing a simplified
-interface between the RFM69 module and the host application. 
+This is radio operating system for my LPC812/RFM69HW radio board (see https://github.com/jdesbonnet/RFMxx_LPC812_PCB).  It provides a simiplified interface to a host application, or can run an embedded application.
 
 Built with LPCxpresso v7.3.0 (free IDE from NXP). 
 
