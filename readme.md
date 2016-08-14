@@ -27,7 +27,11 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
-## 0.5.2,
+## 0.5.3, 22 Mar 2015
+
+ * DS18B20 temperature sensor optional feature on PIO0_14.
+
+## 0.5.2, 9 Mar 2015
 
  * Fix bug where S lat and W longitude were not being reported as negative.
  * RFM69 register write command can now take multiple value params. Each param written to successive register location. 
