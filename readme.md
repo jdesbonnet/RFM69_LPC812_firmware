@@ -8,7 +8,9 @@ interface between the RFM69 module and the host application.
 
 Built with LPCxpresso v7.3.0 (free IDE from NXP). 
 
-Draft documentation on the UART protocol is
+PCB project is here: https://github.com/jdesbonnet/RFMxx_LPC812_PCB
+
+Documentation on the UART protocol is
 here:
 https://docs.google.com/document/d/1FBZINVb_g0gnWlEkQYNBEHTwiyHNY0fn5J37EqBPyog/edit?usp=sharing
 
