@@ -14,17 +14,20 @@
 // When in low power polling mode, timeout in 10ms units to trigger reset
 #define DEFAULT_LINK_LOSS_TIMEOUT 0
 
-// Version of MCU used (only LPC812 supported, LPC824 later)
+// MCU used (only LPC812 supported, LPC824 later. LPC810 dropped due to lack of flash)
 #define LPC812
 
 // What PCB board or pin layout?
 //#define BOARD_LPC812_V0 // Deadbug LPC812 made back in Sep 2014.
 #define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
 
+// One board was populated without the trace cut: reroute RXD. Enable this in addition
+// to BOARD_LPC812_V1
+//#define BOARD_V1B_HACK
+
 
 //
-// Optional features are enabled by defining macro FEATURE_xxxxxx. As space is very
-// limited on LPC810 (4KiB) not all features can be supported simultaneously.
+// Optional features are enabled by defining macro FEATURE_xxxxxx.
 //
 
 
@@ -69,6 +72,8 @@
 // GPS on second UART port.
 #define FEATURE_GPS_ON_USART1
 
+// WS2812B RGB LED driver
+#define FEATURE_WS2812B
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
@@ -96,10 +101,10 @@
 #define LED_PIN 17
 #define UART_RXD_PIN 0
 #define DS18B20_PIN 14
+#define WS2812B_PIN 14
 #endif
 
 // Enable reroute of RXD to alternative pin due to failure to fix via bug.
-#define BOARD_V1B_HACK
 #ifdef BOARD_V1B_HACK
 #define BOARD_V1B_HACK_MCU_ID 0x5034039
 #define UART_RXD_PIN 11

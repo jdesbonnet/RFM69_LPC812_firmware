@@ -284,6 +284,9 @@ void displayStatus () {
 #ifdef FEATURE_DS18B20
 	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
 #endif
+#ifdef FEATURE_WS2812B
+	MyUARTSendStringZ ("; feature WS2812B_LED\r\n");
+#endif
 #ifdef FEATURE_GPS_ON_USART1
 	MyUARTSendStringZ ("; feature GPS\r\n");
 #endif
@@ -1211,6 +1214,7 @@ int main(void) {
 			}
 
 			// Set parameter <byte-index> <value>
+			/*
 			case 'P' : {
 				int status = cmd_param (argc, args);
 				if ( status ) {
@@ -1218,6 +1222,7 @@ int main(void) {
 				}
 				break;
 			}
+			*/
 
 			case 'Q' : {
 				// Report reset for reason=1 (explicit reset command)
