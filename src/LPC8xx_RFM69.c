@@ -888,10 +888,12 @@ int main(void) {
 				case 'P' :
 				{
 					MyUARTSendStringZ ("; received ping from ");
-					MyUARTPrintHex(tx_buffer.header.from_addr);
+					MyUARTPrintHex(rx_buffer.header.from_addr);
 					MyUARTSendCRLF();
+					// Return ping-pong request to source
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
-					tx_buffer.header.msg_type = 'P';
+					tx_buffer.header.msg_type = 'P'; // ping-pong message
+					// payload[0] has a message counter: increment
 					tx_buffer.payload[0] = rx_buffer.payload[0]+1;
 					tx_buffer.payload[1] = rssi;
 					rfm69_frame_tx(tx_buffer.buffer, 5);
