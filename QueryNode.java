@@ -34,16 +34,17 @@ public class QueryNode {
 		//String remoteCmd1 = "T FF 583E01"; // Read temp stored in AesKey1
 		//String remoteCmd1 = "T FF 3E0c80004011223344"; // Read MCU memory 0x4000800C
 		//String remoteCmd1 = "T FF 3E0400024055227744"; // Read MCU memory 0x4000800C
-		String remoteCmd1 = "T FF 3E0001001002040000"; // Read MCU memory 0x4000800C
+		//String remoteCmd1 = "T FF 3E0001001002040000"; // Read MCU memory 0x4000800C
 
 		//String remoteCmd1 = "T FF 581101"; // Read PALevel
 		//String remoteCmd1 = "T FF 59119F"; // Write low power to PALevel
 		//String remoteCmd1 = "T FF 4456"; // Remote 'V' command
-		//String remoteCmd1 = "T FF 444620343032"; // Remote 'F 402' (low power poll)
+		String remoteCmd1 = "T 42 444620343032"; // Remote 'F 502' (low power poll)
 		//String remoteCmd1 = "T FF 44462032"; // Remote 'F 2' (low power poll)
 
 		ArrayList<String> commands = new ArrayList<String>();
 
+		commands.add(remoteCmd1);
 		commands.add(peek(0x10000100));
 		commands.add(peek(0x10000100));
 		commands.add(peek(0x10000100));
