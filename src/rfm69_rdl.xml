@@ -1,0 +1,709 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<device>
+
+<sname>RFM69</sname>
+<name>RFM69 Radio Module</name>
+<manufacturer>HopeRF</manufacturer>
+<datasheet-url></datasheet-url>
+
+<description>
+HopeRF RFM69/RFM69HW radio module
+</description>
+
+<register>
+    <sname>FIFO</sname>
+    <address>0</address>
+</register>
+
+<register>
+<sname>OPMODE</sname>
+<name>Operation Mode</name>
+<address>0x01</address>
+
+<bitfield bit="7" rwmode="rw">
+<sname>SequencerOff</sname>
+<description>Controls the automatic Sequencer (see section 4.2)</description>
+<!--  
+<fieldvalue default="true"><value>0</value><name>Operating mode as selected with 
+    <ref>OpMode.Mode</ref> is automatically reached with the Sequencer
+</name></fieldvalue>
+<fieldvalue><value>1</value><sname>Off</sname><name>Mode is forced by user</name></fieldvalue>
+-->
+</bitfield>
+
+<bitfield bit="6" rwmode="rw">
+<sname>ListenOn</sname>
+<description>Enables Listen Mode, should be enabled whilst in Standby mode.</description>
+<fieldvalue><value>0</value><sname>OFF</sname></fieldvalue>
+<fieldvalue><value>1</value><sname>ON</sname></fieldvalue>
+</bitfield>
+
+<bitfield bit="4:2" rwmode="rw">
+<sname>Mode</sname>
+<description>Tranceiver's operating mode</description>
+<reference>section 6.2</reference>
+<fieldvalue><value>0</value><sname>SLEEP</sname><name>Sleep mode</name></fieldvalue>
+<fieldvalue><value>1</value><sname>STDBY</sname><name>Standby mode</name></fieldvalue>
+<fieldvalue><value>2</value><sname>FS</sname><name>Frequency Synthesis mode</name></fieldvalue>
+<fieldvalue><value>3</value><sname>TX</sname><name>Transmitter mode</name></fieldvalue>
+<fieldvalue><value>4</value><sname>RX</sname><name>Receiver mode</name></fieldvalue>
+</bitfield>
+
+</register>
+
+<register>
+<sname>DataModul</sname>
+<name>Data Modulation</name>
+<address>0x02</address>
+<bitfield bit="6:5" rwmode="rw">
+<sname>DataMode</sname>
+<description>Data processing mode</description>
+<fieldvalue><value>0</value><sname>Packet</sname><name>Packet mode</name></fieldvalue>
+<fieldvalue><value>2</value><sname>ContinuousBitSync</sname><name>Continuous mode with bit synchronizer</name></fieldvalue>
+<fieldvalue><value>3</value><sname>Continuous</sname><name>Continuous without bit synchronizer</name></fieldvalue>
+</bitfield>
+
+<bitfield bit="4:3" rwmode="rw">
+<sname>ModulationType</sname>
+<description>Modulate type</description>
+<fieldvalue><value>0</value><sname>FSK</sname><name>Frequency Shift Keying (FSK)</name></fieldvalue>
+<fieldvalue><value>1</value><sname>OOK</sname><name>On-Off Keying</name></fieldvalue>
+</bitfield>
+
+<bitfield bit="1:0" rwmode="rw">
+<sname>ModulationShaping</sname>
+<description>Modulating shaping</description>
+<fieldvalue><value>0</value><sname>None</sname><name>no shaping</name></fieldvalue>
+<fieldvalue><value>1</value><sname>SHAPING_OPT1</sname><name>FSK: Gaussian filter, BT=1.0; OOK: fcutoff=BR</name></fieldvalue>
+<fieldvalue><value>2</value><sname>SHAPING_OPT2</sname><name>FSK: Gaussian filter, BT=0.5; OOK: fcutoff=2BR</name></fieldvalue>
+<fieldvalue><value>3</value><sname>SHAPING_OPT3</sname><name>FSK: Gaussian filter, BT=0.3; OOK: reserved</name></fieldvalue>
+</bitfield>
+
+</register>
+
+<register>
+<sname>BitRateMsb</sname>
+<address>0x03</address>
+<name>MSB of Bit Rate (Chip Rate when Manchesterencoing is enabled)</name>
+<description></description>
+<defaultvalue>0x1a</defaultvalue>
+</register>
+
+<register>
+<sname>BitRateLsb</sname>
+<address>0x04</address>
+<name>LSB of Bit Rate (Chip Rate when Manchesterencoing is enabled)</name>
+<description>BitRate = CrystalFreq / (BitRateMsb*256 + BitRateLsb)</description>
+<defaultvalue>0x0b</defaultvalue>
+</register>
+
+<register>
+<sname>FdevMsb</sname>
+<address>0x05</address>
+<name>MSB of frequency deviation</name>
+<description>Bits 7,6 always 0.</description>
+<defaultvalue>0</defaultvalue>
+</register>
+
+<register>
+<sname>FdevMsb</sname>
+<address>0x06</address>
+<name>LSB of frequency deviation</name>
+<description>Fdev = Fstep * (FdevMsb*256+FdevLsb)</description>
+<defaultvalue>0x52</defaultvalue>
+</register>
+
+<register>
+<sname>FrfMsb</sname>
+<address>0x07</address>
+<name>MSB of the RF carrier frequency</name>
+<description></description>
+<defaultvalue>0xe4</defaultvalue>
+</register>
+<register>
+<sname>FrfMid</sname>
+<address>0x08</address>
+<name>Middle byte of the RF carrier frequency</name>
+<description></description>
+<defaultvalue>0xc0</defaultvalue>
+</register>
+<register>
+<sname>FrfLsb</sname>
+<address>0x09</address>
+<name>LSB of the RF carrier frequency</name>
+<description>Frf = Fstep * (FrfMsb*65536 + FrfMid*256 + FrfLsb). Default value Frf=915MHz (32MHz crystal)</description>
+<defaultvalue>0x0</defaultvalue>
+</register>
+
+<register>
+<sname>Osc1</sname>
+<address>0x0a</address>
+<name>RS Oscillator configuration</name>
+<bitfield bit="7" rwmode="w">
+<sname>RcCalStart</sname>
+<description>Triggers the calibration of the RC oscillator when set. Always reads 0. 
+    RC calibration must be triggered in Standby mode.</description>
+<fieldvalue><value>1</value><sname>Trig</sname><name></name></fieldvalue>
+</bitfield>
+<bitfield bit="6" rwmode="r">
+<sname>RcCalDone</sname>
+<description>Indicated if calibration is in progress (value 0) or done (value 1)</description>
+<fieldvalue><value>0</value><sname>InProgress</sname><name></name></fieldvalue>
+<fieldvalue><value>1</value><sname>Done</sname><name></name></fieldvalue>
+</bitfield>
+</register>
+
+<register>
+<sname>AfcCtrl</sname>
+<address>0x0b</address>
+<name>Automatic frequency control configuration</name>
+<bitfield bit="5" rwmode="rw">
+<sname>AfcLowBetaOn</sname>
+<description>Improved AFC routine for signals with modulation index lower than 2. </description>
+<fieldvalue><value>1</value><sname>Trig</sname><name></name></fieldvalue>
+</bitfield>
+<bitfield bit="6" rwmode="r">
+<sname>RcCalDone</sname>
+<description>Indicated if calibration is in progress (value 0) or done (value 1)</description>
+<fieldvalue><value>0</value><sname>InProgress</sname><name></name></fieldvalue>
+<fieldvalue><value>1</value><sname>Done</sname><name></name></fieldvalue>
+</bitfield>
+</register>
+
+<register>
+<sname>Listen1</sname>
+<address>0x0d</address>
+<name>Listen mode configuration</name>
+<bitfield bit="7:6" rwmode="rw">
+<sname>ListenResolIdle</sname>
+<description>Resolution of Listen mode idle time (calibrated RC osc)</description>
+<fieldvalue default="true"><value>1</value><sname>64_us</sname><name>64 µs</name></fieldvalue>
+<fieldvalue><value>2</value><sname>4100_us</sname><name>4.1ms</name></fieldvalue>
+<fieldvalue><value>3</value><sname>262_ms</sname><name>262ms</name></fieldvalue>
+</bitfield>
+
+<bitfield bit="5:4" rwmode="rw">
+<sname>ListenResolRx</sname>
+<description>Resolution of Listen mode Rx time (calibrated RC osc)</description>
+<fieldvalue default="true"><value>1</value><sname>64_us</sname><name>64 µs</name></fieldvalue>
+<fieldvalue><value>2</value><sname>4100_us</sname><name>4.1ms</name></fieldvalue>
+<fieldvalue><value>3</value><sname>262_ms</sname><name>262ms</name></fieldvalue>
+</bitfield>
+
+<bitfield bit="3" rwmode="rw">
+<sname>ListenCriteria</sname>
+<description>Criteria for packet acceptance in Listen mode</description>
+<fieldvalue default="true"><value>0</value><sname>GT_RSSI_THRESH</sname><name>signal strength is above  <ref>RssiThreshold</ref> </name></fieldvalue>
+<fieldvalue><value>1</value><sname>GT_RSSI_THRESH_AND_SYNCADDR</sname><name>signal strength is above <ref>RssiThreshold</ref> and SyncAddress match</name></fieldvalue>
+</bitfield>
+
+<bitfield bit="2:1" rwmode="rw">
+<sname>ListenEnd</sname>
+<description>Action taken afteracceptance of apacket in Listen mode</description>
+<fieldvalue><value>0</value><sname>OPT0</sname><name>stay in Rx (ref §4.3)</name></fieldvalue>
+<fieldvalue default="true"><value>1</value><sname>OPT1</sname><name>stays in Rx until PayloadReady or Timeout</name></fieldvalue>
+<fieldvalue><value>2</value><sname>OPT2</sname><name>stays in Rx until PayloadReady or Timeout interrupt. Listen mode then resumes in Idle state. FIFO content is lost at next Rx wakeup.</name></fieldvalue>
+</bitfield>
+
+</register>
+
+<register>
+<sname>Listen2</sname>
+<address>0x0e</address>
+<name>Listen mode configuration</name>    
+<bitfield bit="7:0" rwmode="rw">
+<sname>ListenCoefIdle</sname>
+<description>Duration of the Idle phase in Listen mode. t_listen_idle=ListenCoefIdle*ListenResolIdle</description>
+<defaultvalue>0xf5</defaultvalue>
+</bitfield>
+</register>
+
+
+<register>
+<sname>Listen3</sname>
+<address>0x0f</address>
+<name>Listen mode configuration</name>    
+<bitfield bit="7:0" rwmode="rw">
+<sname>ListenCoefRx</sname>
+<description>Duration of the Rx phase in Listen mode (startup time included, see §4.2.3). t_listen_rx=ListenCoefRx*ListenResolRx</description>
+<defaultvalue>0x20</defaultvalue>
+</bitfield>
+</register>
+
+<register>
+<sname>Version</sname>
+<address>0x10</address>
+<name>Version of chip</name>    
+<bitfield bit="7:0" rwmode="r">
+<sname>Version</sname>
+<description>Chip version. Bits 7:4 give the full revision number, bits 3:0 the metal mask revision number.</description>
+<defaultvalue>0x24</defaultvalue>
+</bitfield>
+</register>
+
+<register>
+<sname>PaLevel</sname>
+<address>0x11</address>
+<name>Power Amplifier (PA) power configuration</name>
+<bitfield bit="7" rwmode="rw">
+    <sname>Pa0On</sname>
+    <name>Enables PA0</name>
+    <fieldvalue><value>1</value><sname>ON</sname></fieldvalue>
+</bitfield>
+<bitfield bit="6" rwmode="rw">
+    <sname>Pa1On</sname>
+    <name>Enables PA1</name>
+</bitfield>
+<bitfield bit="5" rwmode="rw">
+    <sname>Pa2On</sname>
+    <name>Enables PA2</name>
+</bitfield>
+<bitfield bit="4:0" rwmode="rw">
+    <sname>OutputPower</sname>
+    <name>Output power setting in 1dB steps</name>
+    <description>
+        Pout = -18 + OutputPower[dBm] with PA0; 
+        Pout = -18 + OutputPower[dBm] with PA1; 
+        Pout = -14 + OutputPower[dBm] with PA1 and PA2;
+        Pout = -11 + OutputPower[dBm] with PA1 and PA2 and high Power PA settings (ref §3.3.7);
+    </description>
+</bitfield>
+
+</register>
+
+<register>
+    <sname>PaRamp</sname>
+    <name>Rise/fall time of ramp up/down in FSK</name>
+    <address>0x12</address>
+    <bitfield bit="3:0" rwmode="rw">
+        <fieldvalue><value>0</value><sname>3400us</sname></fieldvalue>
+        <fieldvalue><value>1</value><sname>2000us</sname></fieldvalue>
+        <fieldvalue><value>2</value><sname>1000us</sname></fieldvalue>
+        <fieldvalue><value>3</value><sname>500us</sname></fieldvalue>
+        <fieldvalue><value>4</value><sname>250us</sname></fieldvalue>
+        <fieldvalue><value>5</value><sname>125us</sname></fieldvalue>
+        <fieldvalue><value>6</value><sname>100us</sname></fieldvalue>
+        <fieldvalue><value>7</value><sname>62us</sname></fieldvalue>
+        <fieldvalue><value>8</value><sname>50us</sname></fieldvalue>
+        <fieldvalue default="true"><value>9</value><sname>40us</sname></fieldvalue>
+        <fieldvalue><value>10</value><sname>31us</sname></fieldvalue>
+        <fieldvalue><value>11</value><sname>25us</sname></fieldvalue>
+        <fieldvalue><value>12</value><sname>20us</sname></fieldvalue>
+        <fieldvalue><value>13</value><sname>15us</sname></fieldvalue>
+        <fieldvalue><value>14</value><sname>12us</sname></fieldvalue>
+        <fieldvalue><value>15</value><sname>10us</sname></fieldvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>Ocp</sname>
+    <name>Over current protection (OCP) for the PA configuration</name>
+    <address>0x13</address>
+    <bitfield bit="4" rwmode="rw">
+        <sname>OcpOn</sname>
+        <name>Enable OCP</name>
+    </bitfield>
+    <bitfield bit="3:0" rwmode="rw">
+        <sname>OcpTrim</sname>
+        <name>OCP current trim</name>
+        <description>Imax (mA) = 45 + 5*OcpTrim. 95mA by default.</description>
+        <defaultvalue>10</defaultvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>Lna</sname>
+    <name>Low Noise Amplifier (LNA) configuration</name>
+    <address>0x18</address>
+    <bitfield bit="7" rwmode="rw">
+        <sname>LnaZin</sname>
+        <name>LNA input impedence 0=50ohms; 1=200ohms</name>
+    </bitfield>
+    <bitfield bit="5:3" rwmode="rw">
+        <sname>LnaCurrentGain</sname>
+        <name>Current LNA gain, set either manually or by AGC</name>
+        <defaultvalue>1</defaultvalue>
+    </bitfield>
+    <bitfield bit="2:0" rwmode="rw">
+        <sname>LnaGainSelect</sname>
+        <name>LNA gain setting</name>
+        <fieldvalue><value>0</value><sname>AGC</sname><name>Set by AGC loop</name></fieldvalue>
+        <fieldvalue><value>1</value><sname>G1</sname><name>higest gain</name></fieldvalue>
+        <fieldvalue><value>2</value><sname>G2</sname><name>higest gain - 6dB</name></fieldvalue>
+        <fieldvalue><value>3</value><sname>G3</sname><name>higest gain - 12dB</name></fieldvalue>
+        <fieldvalue><value>4</value><sname>G4</sname><name>higest gain - 23dB</name></fieldvalue>
+        <fieldvalue><value>5</value><sname>G5</sname><name>higest gain - 36dB</name></fieldvalue>
+        <fieldvalue><value>6</value><sname>G6</sname><name>higest gain - 48dB</name></fieldvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>RxBw</sname>
+    <address>0x19</address>
+    <bitfield bit="7:5" rwmode="rw">
+        <sname>DccFreq</sname>
+        <defaultvalue>2</defaultvalue>
+        <description>Cut-off frequency of the DC offset canceller (DCC): fc = 4*RxBw / (2*pi*2^(DccFreq+2))) . Set to ~ 4% of the RxBw by default.</description>
+    </bitfield>
+    <bitfield bit="4:3">
+        <sname>RxBwMant</sname>
+        <name>Mantissa component of channel filter bandwidth control </name>
+    </bitfield>
+    <bitfield bit="2:0">
+        <sname>RxBwExp</sname>
+        <name>Exponent component of channel filter bandwidth control</name>
+        <description>In FSK RxBw = Fosc / (RxBwMant*2^(RxBwExp+2)); in OOK RxBw = Fosc/(RxBwMant*2^(RxBwExp+3))</description>
+    </bitfield>      
+</register>
+
+<register>
+    <sname>AfcBw</sname>
+    <address>0x1A</address>
+    <bitfield bit="7:5" rwmode="rw">
+        <sname>DccFreqAfc</sname>
+        <name>DccFreq parameter used during the AFC</name>
+        <defaultvalue>8</defaultvalue>
+    </bitfield>
+    <bitfield bit="4:3" rwmode="rw">
+        <sname>RxBwMantAfc</sname>
+        <name>RxBwMant parameter using during the AFC</name>
+        <defaultvalue>1</defaultvalue>
+    </bitfield>
+    <bitfield bit="2:0" rwmode="rw">
+        <sname>RxBwExpAfc</sname>
+        <name>RxBwExp parameter using during the AFC</name>
+        <defaultvalue>3</defaultvalue>
+    </bitfield>    
+</register>
+
+<register>
+    <sname>RssiConfig</sname>
+    <address>0x23</address>
+    <bitfield bit="1" rwmode="r">
+        <sname>RssiDone</sname>
+        <fieldvalue><value>1</value><sname>RssiDone</sname></fieldvalue>
+    </bitfield>
+    <bitfield bit="0" rwmode="w">
+        <sname>RssiStart</sname>
+    </bitfield>
+</register>
+<register>
+    <sname>RssiValue</sname>
+    <address>0x24</address>
+    <name>RSSI</name>
+    <description>Absolute value of RSSI in dBm in 0.5dB steps. RSSI (dBm) = -RssiValue/2</description>
+    <bitfield bit="7:0" rwmode="r">
+        <sname>RssiValue</sname>
+    </bitfield>
+</register>
+
+
+
+<register>
+    <sname>IrqFlags1</sname>
+    <name>IRQ Flags 1</name>
+    <address>0x27</address>
+    <bitfield bit="7" rwmode="r">
+        <sname>ModeReady</sname>
+        <name>Mode switch complete flag</name>
+        <description>When a radio mode switch is commanded a value of 1 indicates the mode switch is complete.</description>
+    </bitfield>
+    <bitfield bit="6" rwmode="r">
+        <sname>RxReady</sname>
+        <name>Rx mode ready (RSSI, AGC, AFC complete)</name>
+        <description>Set in Rx mode after RSSI, AGC and AFC. Cleared when leaving Rx mode.</description>
+    </bitfield>
+    <bitfield bit="5" rwmode="r">
+        <sname>TxReady</sname>
+        <name>Tx mode ready (PA ramped up)</name>
+        <description>Set in Tx mode after PA ramp-up. Cleared when leaving Tx mode.</description>
+    </bitfield>
+    <bitfield bit="4" rwmode="r">
+        <sname>PllLock</sname>
+        <name>PLL locked</name>
+        <description>Set in FS, Rx or Tx mode when PLL is locked. Cleared when not locked.</description>
+    </bitfield>
+    <bitfield bit="3" rwmode="rwc">
+        <sname>Rssi</sname>
+        <name>RSSI exceeds threshold</name>
+        <description>Set in Rx mode when RssiValue exceeds RssiThreshold. Cleared when leaving Rx mode.</description>
+    </bitfield>
+    <bitfield bit="2" rwmode="r">
+        <sname>Timeout</sname>
+        <name>Timeout</name>
+        <description>Set when a timeout ocurs (see TimeoutRxStart and TimeoutRssiThresh). Cleared when leaving Rx mode or when FIFO is emptied.</description>
+    </bitfield>
+    <bitfield bit="1" rwmode="r">
+        <sname>AutoMode</sname>
+        <name>In intermediate mode state</name>
+		<description>Set when in intermediate state (while switching modes)</description>
+    </bitfield>   
+     <bitfield bit="0" rwmode="r">
+        <sname>SyncAddressMatch</sname>
+        <name>Sync and Address match</name>
+		<description>Set when Sync and Address (if enabled) are detected. Cleared when leaving Rx mode or FIFO emptied. This bit is read-only in Packet mode, rwc in Continuous mode</description>
+    </bitfield>    
+</register>
+
+<register>
+    <sname>IrqFlags2</sname>
+    <name>IRQ Flags 2</name>
+    <address>0x28</address>
+    <bitfield bit="7" rwmode="r">
+        <sname>FifoFull</sname>
+        <name>Set when FIFO is full (ie contains 66 bytes)</name>
+    </bitfield>
+    <bitfield bit="6" rwmode="r">
+        <sname>FifoNotEmpty</sname>
+        <name>Set when FIFO contains at least one byte</name>
+    </bitfield>
+    <bitfield bit="5" rwmode="r">
+        <sname>FifoLevel</sname>
+        <name>Set when the number of bytes in the FIFO exceeds FifoThreshold</name>
+    </bitfield>
+    <bitfield bit="4" rwmode="rwc">
+        <sname>FifoOverrun</sname>
+        <name>Set when FIFO overrun occurs. Flags and FIFO are cleared when this bit is set.</name>
+        <description>Set in FS, Rx or Tx mode when PLL is locked. Cleared when not locked.</description>
+    </bitfield>
+    <bitfield bit="3" rwmode="r">
+        <sname>PacketSent</sname>
+        <name>Set when packet has been sent when in Tx mode.</name>
+    </bitfield>
+    <bitfield bit="2" rwmode="r">
+        <sname>PayloadReady</sname>
+        <name>Set when packet read to read in Rx mode.</name>
+    </bitfield>
+    <bitfield bit="1" rwmode="r">
+        <sname>CrcOk</sname>
+        <name>Set when CRC has passed in Rx mode.</name>
+    </bitfield>
+</register>
+
+<register>
+    <sname>RssiThresh</sname>
+    <name>RSSI trigger level for Rssi interrupt</name>
+    <address>0x29</address>
+    <description>level (dBm) = RssiThreshold / 2</description>
+    <bitfield bit="7:0" rwmode="rw">
+        <sname>RssiThreshold</sname>
+    	<defaultvalue>0xE4</defaultvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>RxTimeout1</sname>
+    <name></name>
+    <address>0x2A</address>
+    <bitfield bit="7:0" rwmode="rw">
+        <sname>TimeoutRxStart</sname>
+    	<defaultvalue>0</defaultvalue>
+    </bitfield>
+</register>
+
+
+<register>
+    <sname>RxTimeout2</sname>
+    <name></name>
+    <address>0x2B</address>
+    <bitfield bit="7:0" rwmode="rw">
+        <sname>TimeoutRssiThresh</sname>
+    	<defaultvalue>0</defaultvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>SyncConfig</sname>
+    <address>0x2e</address>
+    <bitfield bit="7" rwmode="rw">
+        <sname>SyncOn</sname>
+        <name>Enables Sync word generation and detection</name>
+        <defaultvalue>1</defaultvalue>
+    </bitfield>
+    <bitfield bit="6" rwmode="rw">
+        <sname>FifoFillCondition</sname>
+        <name>If 0 fills only if SyncAddress interrupt occurs</name>
+        <defaultvalue>0</defaultvalue>
+    </bitfield>
+    <bitfield bit="5:3" rwmode="rw">
+        <sname>SyncSize</sname>
+        <name>Size of the Sync word (SyncSize+1 bytes)</name>
+        <defaultvalue>3</defaultvalue>
+    </bitfield>
+    <bitfield bit="2:0" rwmode="rw">
+        <sname>SyncTol</sname>
+        <name>Number of tolerated bit errors in Sync word</name>
+        <defaultvalue>0</defaultvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>SyncValue1</sname>
+    <address>0x2f</address>
+</register>
+<register>
+    <sname>SyncValue2</sname>
+    <address>0x30</address>
+</register>
+<register>
+    <sname>SyncValue3</sname>
+    <address>0x31</address>
+</register>
+<register>
+    <sname>SyncValue4</sname>
+    <address>0x32</address>
+</register>
+<register>
+    <sname>SyncValue5</sname>
+    <address>0x33</address>
+</register>
+<register>
+    <sname>SyncValue6</sname>
+    <address>0x34</address>
+</register>
+<register>
+    <sname>SyncValue7</sname>
+    <address>0x35</address>
+</register>
+<register>
+    <sname>SyncValue8</sname>
+    <address>0x36</address>
+</register>
+
+<register>
+    <sname>PacketConfig1</sname>
+    <address>0x37</address>
+    <name>Packet Configuration 1</name>
+    <bitfield bit="7" rwmode="rw">
+        <sname>PacketFormat</sname>
+        <name>Defines the packet format used 0:fixed length; 1:variable length</name>
+        <defaultvalue>0</defaultvalue>
+        <fieldvalue><value>0</value><sname>Fixed</sname><name>Fixed length packets</name></fieldvalue>
+        <fieldvalue><value>1</value><sname>Variable</sname><name>Variable length packets</name></fieldvalue>
+    </bitfield>
+    <bitfield bit="6:5" rwmode="rw">
+        <sname>DcFree</sname>
+        <name>Defines DC-free encoding/decoding performed</name>
+        <defaultvalue>0</defaultvalue>
+        <fieldvalue><value>0</value><sname>none</sname></fieldvalue>
+        <fieldvalue><value>1</value><sname>Manchester</sname></fieldvalue>
+        <fieldvalue><value>2</value><sname>Whitening</sname></fieldvalue>
+    </bitfield>
+    <bitfield bit="4" rwmode="rw">
+        <sname>CrcOn</sname>
+        <defaultvalue>1</defaultvalue>
+    </bitfield>
+    <bitfield bit="3" rwmode="rw">
+        <sname>CrcAutoClearOff</sname>
+    </bitfield>
+    <bitfield bit="2:1" rwmode="rw">
+        <sname>AddressFiltering</sname>
+        <defaultvalue>0</defaultvalue>
+        <fieldvalue><value>0</value><sname>none</sname></fieldvalue>
+        <fieldvalue><value>1</value><sname>NodeOnly</sname><name>Address must match NodeAddress</name></fieldvalue>
+        <fieldvalue><value>2</value><sname>NodeOrBroadcast</sname><name>Address must match NodeAddress OR BroadcastAddress</name></fieldvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>PayloadLength</sname>
+    <address>0x38</address>
+    <bitfield bit="7:0">
+        <sname>PayloadLength</sname>
+        <name></name>
+    </bitfield>
+</register>
+
+<register>
+    <sname>NodeAdrs</sname>
+    <address>0x39</address>
+    <name>Node address</name>
+</register>
+
+<register>
+    <sname>BroadcastAdrs</sname>
+    <address>0x3a</address>
+</register>
+
+<register>
+    <sname>FifoThresh</sname>
+    <address>0x3C</address>
+    <bitfield bit="7" rwmode="rw">
+        <sname>TxStartCondition</sname>
+        <defaultvalue>1</defaultvalue>
+    </bitfield>
+    <bitfield bit="6:0" rwmode="rw">
+        <sname>FifoThreshold</sname>
+        <defaultvalue>15</defaultvalue>
+    </bitfield>
+</register>
+
+<register>
+    <sname>PacketConfig2</sname>
+    <address>0x3d</address>
+    <name>Packet Configuration 2</name>
+    
+    <bitfield bit="7:4" rwmode="rw">
+        <sname>InterPacketRxDelay</sname>
+        <description>
+            After PayloadReady, defines the delay between FIFO empty and start of new RSSI phase for next packet. Must match TX PA ramp-down time. Tdelay=0 if InterPacketRxDelay>=12.
+            Tdelay = (2^InterPacketRxDelay) / BitRate otherwise.
+        </description>
+    </bitfield>
+    <bitfield bit="2" rwmode="w">
+        <sname>RestartRx</sname>
+        <description>Force receiver in WAIT mode while in continuous RX mode. Always reads as 0.</description>
+    </bitfield>
+    <bitfield bit="1" rwmode="rw">
+        <sname>AutoRxRestartOn</sname>
+        <name>Enable automatic Rx restart after Payloadready and FIFO read.</name>
+    </bitfield>
+    <bitfield bit="0" rwmode="rw">
+        <sname>AesOn</sname>
+        <name>Enable AES encryption</name>
+    </bitfield>
+</register>
+
+<register>
+    <sname>RegTemp1</sname>
+    <address>0xe4</address>
+    <name>Temperature Register 1</name>
+    <bitfield bit="3" rwmode="w">
+        <sname>TempMeasStart</sname>
+        <description>
+            Write 1 to start temperature measurement.
+        </description>
+    </bitfield>
+    <bitfield bit="2" rwmode="r">
+        <sname>TempMeasRunning</sname>
+        <description>
+        Set to 1 when temperature measurement is running.
+        </description>
+    </bitfield>
+</register>
+
+<register>
+    <sname>RegTemp2</sname>
+    <address>0xef</address>
+    <name>Temperature Register 2</name>
+    <bitfield bit="7:0" rwmode="r">
+        <sname>TempValue</sname>
+        <description>
+            Temperature (units C?).
+        </description>
+    </bitfield>
+</register>
+
+<register>
+    <sname>TestDagc</sname>
+    <name>Fading Margin Improvement, ref §3.4.4</name>
+    <address>0x6f</address>
+    <bitfield bit="7:0" rwmode="rw">
+        <sname>ContinuousDagc</sname>
+        <defaultvalue>0x30</defaultvalue>
+        <fieldvalue><value>0</value><sname>Normal</sname></fieldvalue>
+        <fieldvalue><value>0x20</value><sname>LowBetaOn</sname><name>Use if AfcLowBetaOn=1</name></fieldvalue>
+		<fieldvalue><value>0x30</value><sname>LowBetaOff</sname><name>Use if AfcLowBetaOn=0</name></fieldvalue>
+    </bitfield>
+</register>
+</device>
