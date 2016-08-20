@@ -27,6 +27,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.5.4, 20 Aug 2016
+
+ * Better RSSI measurement of received packet.
+
 ## 0.5.3, 22 Mar 2015
 
  * DS18B20 temperature sensor optional feature on PIO0_14.

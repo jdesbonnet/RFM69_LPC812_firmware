@@ -536,6 +536,8 @@ int main(void) {
 	NVIC_EnableIRQ((IRQn_Type)(PININT3_IRQn));
 #endif
 
+	// Absolute value of the RSSI in dBm, 0.5dB steps.
+	// RSSI_dBm = -rssi/2
 	uint8_t rssi;
 
 	//uint8_t *cmdbuf;
@@ -810,15 +812,16 @@ int main(void) {
 		// Check for received packet on RFM69
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
-		if ( IS_PAYLOAD_READY()  ) {
+		// if ( IS_PAYLOAD_READY()  ) {
+		if (rfm69_payload_ready(&rssi)) {
 
 			// Yes, frame ready to be read from FIFO
 #ifdef FEATURE_LED
 			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
-			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
+			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
 			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
 #else
-			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66,&rssi);
+			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
 #endif
 
 			last_frame_time = systick_counter;
@@ -835,9 +838,7 @@ int main(void) {
 
 
 			// 0xff is the broadcast address
-			//if ( (flags&FLAG_PROMISCUOUS_MODE)
-			if (
-					 rx_buffer.header.to_addr == 0xff
+			if ( rx_buffer.header.to_addr == 0xff
 					|| rx_buffer.header.to_addr == tx_buffer.header.from_addr) {
 
 				// This frame is for us! Examine messageType field for appropriate action.
@@ -855,7 +856,7 @@ int main(void) {
 				}
 #endif
 
-
+				// Remote command execute
 				case 'D' : {
 					// If there is an uncompleted UART command in buffer then
 					// remote command takes priority and whatever is in the
@@ -884,7 +885,7 @@ int main(void) {
 					break;
 				}
 
-				// Ping pong test
+				// Start ping-pong test
 				case 'P' :
 				{
 					MyUARTSendStringZ ("; received ping from ");
@@ -900,7 +901,7 @@ int main(void) {
 					break;
 				}
 
-				// Ping
+				// Position query request.
 				// Message requesting position report. This will return the string
 				// set by the GPS or the 'G' command
 #ifdef FEATURE_GPS_ON_USART1
@@ -915,9 +916,19 @@ int main(void) {
 				}
 #endif
 
+				// Node status request
+				case 'S' :
+				{
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
+					tx_buffer.header.msg_type = 's'; // node status response
+					tx_buffer.payload[0] = readBattery()/100;
+					tx_buffer.payload[1] = rssi;
+					rfm69_frame_tx(tx_buffer.buffer, 5);
+					break;
+				}
 
 
-				// Remote LED blink
+				// Remote request to LED blink
 				case 'U' : {
 					//tx_buffer.header.to_addr = from_addr;
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
@@ -927,7 +938,7 @@ int main(void) {
 					break;
 				}
 
-				// Remote register read
+				// Remote RFM69 register read (0x58)
 				case 'X' : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t read_len = rx_buffer.payload[1];
@@ -943,7 +954,7 @@ int main(void) {
 					break;
 				}
 
-				// Remote register write
+				// Remote RFM69 register write
 				case 'Y' : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t write_len = frame_len - 4;
@@ -959,7 +970,7 @@ int main(void) {
 				}
 
 
-				// Experimental write to memory
+				// Experimental write to MCU memory (0x3E)
 				case '>' : {
 					// At 32bit memory address at payload+0 write 32bit value at payload+4
 					// Note: must be 32bit word aligned.
@@ -976,7 +987,7 @@ int main(void) {
 					*/
 					break;
 				}
-				// Experimental read from memory
+				// Experimental read from MCU memory (0x3C)
 				case '<' : {
 					// Return 32bit value from memory at payload+0
 					// Note address and result is LSB first (little endian)
@@ -999,7 +1010,8 @@ int main(void) {
 				}
 				// Experimental execute from memory (!?!)
 				case 'E' : {
-					// Execute function at memory loadion payload+0 (note LSB=1 for Thumb)
+					// Execute function at memory location payload+0
+					// Note on ARM Cortex M devices LSB always 1 for Thumb instruction set.
 					uint32_t **mem_addr;
 					mem_addr = rx_buffer.payload;
 					typedef void (*E)(void);

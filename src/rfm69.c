@@ -84,7 +84,7 @@ int rfm69_mode(uint8_t mode) {
 }
 
 /**
- * Get RSSI
+ * Get RSSI (Received Signal Strength Indicator)
  */
 uint8_t rfm69_rssi () {
 
@@ -97,10 +97,17 @@ uint8_t rfm69_rssi () {
 }
 
 /**
- * Check if packet has been received and is ready to read from FIFO.
+ * Check if packet has been received and is ready to read from FIFO. Also read RSSI
+ * while waiting.
+ *
  * @return zero if no packet available, non-zero if packet available.
  */
-uint8_t rfm69_payload_ready() {
+uint8_t rfm69_payload_ready(uint8_t *rssi) {
+
+    if (rssi != 0) {
+    	*rssi = rfm69_rssi();
+    }
+
 	return rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK;
 }
 
@@ -136,13 +143,12 @@ uint8_t rfm69_temperature () {
  * Error codes:
  * -2 : frame too long
  */
-int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
+int rfm69_frame_rx(uint8_t *buf, int maxlen) {
 
 	int i;
 
 	// TODO: this shouldn't be necessary
 	//rfm69_mode(RFM69_OPMODE_Mode_RX);
-
 
 	// Wait for IRQFLAGS2[2] PayloadReady
 	// TODO: implement timeout
@@ -174,11 +180,6 @@ int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi) {
     	buf[i] = spi_transfer_byte(0);
     }
     rfm69_nss_deassert();
-
-    // If pointer to rssi given, fetch it
-    if (rssi != 0) {
-    	*rssi = rfm69_rssi();
-    }
 
     return frame_length;
 }

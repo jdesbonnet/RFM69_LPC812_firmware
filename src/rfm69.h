@@ -10,13 +10,13 @@ int rfm69_test(void);
 
 int rfm69_mode(uint8_t mode);
 
-int rfm69_frame_rx(uint8_t *buf, int maxlen, uint8_t *rssi);
+int rfm69_frame_rx(uint8_t *buf, int maxlen);
 void rfm69_frame_tx(uint8_t *buf, int len);
 
 uint8_t rfm69_register_read (uint8_t reg_addr);
 void rfm69_register_write (uint8_t reg_addr, uint8_t reg_value);
 
-uint8_t rfm69_payload_ready(void);
+uint8_t rfm69_payload_ready(uint8_t *rssi);
 uint8_t rfm69_temperature(void);
 
 // Interface with SPI bus
