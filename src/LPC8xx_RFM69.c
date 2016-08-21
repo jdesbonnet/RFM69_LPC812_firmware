@@ -115,21 +115,23 @@ void report_error (uint8_t cmd, int32_t code) {
  * Show system settings etc to UART
  */
 void displayStatus () {
-	// List optional features enabled
-#ifdef FEATURE_EVENT_COUNTER
-	MyUARTSendStringZ ("; feature EVENT_COUNTER\r\n");
-#endif
-#ifdef FEATURE_DS18B20
-	MyUARTSendStringZ ("; feature DS18B20\r\n");
-#endif
-#ifdef FEATURE_WS2812B
-	MyUARTSendStringZ ("; feature WS2812B\r\n");
-#endif
-#ifdef FEATURE_GPS_ON_USART1
-	MyUARTSendStringZ ("; feature GNSS\r\n");
-#endif
 
 	tfp_printf ("; firmware=%s\r\n", VERSION);
+
+	// List optional features enabled
+#ifdef FEATURE_EVENT_COUNTER
+	tfp_printf ("; feature EVENT_COUNTER\r\n");
+#endif
+#ifdef FEATURE_DS18B20
+	tfp_printf ("; feature DS18B20\r\n");
+#endif
+#ifdef FEATURE_WS2812B
+	tfp_printf ("; feature WS2812B\r\n");
+#endif
+#ifdef FEATURE_GPS_ON_USART1
+	tfp_printf ("; feature GNSS\r\n");
+#endif
+
 	tfp_printf ("; mode=%x\r\n",params_union.params.operating_mode);
 	tfp_printf ("; node_addr=%x\r\n",params_union.params.node_addr);
 	tfp_printf ("; poll_interval=%x\r\n",params_union.params.poll_interval);
@@ -399,8 +401,6 @@ int main(void) {
 
 #ifdef FEATURE_DS18B20
 	// Pullup resistor on DS18B20 data pin PIO0_14
-	//LPC_IOCON->PIO0_14=(0x2<<3);
-	//GPIOSetDir(0,DS18B20_PIN,1);
 	ow_init(0,DS18B20_PIN);
 #endif
 
@@ -444,10 +444,7 @@ int main(void) {
 	} else {
 		ledBlink(2+test_result);
 	}
-	MyUARTSendStringZ("k ");
-	MyUARTPrintHex(test_result);
-	MyUARTSendCRLF();
-
+	tfp_printf("k %x\r\n",test_result);
 
 	rfm69_config();
 
@@ -455,25 +452,6 @@ int main(void) {
 	// Main program loop
 	//
 	while (1) {
-
-
-#ifdef FEATURE_RFM69_TEMPERATURE
-		if (params_union.params.operating_mode==MODE_LOW_POWER_POLL) {
-			// Must read temperature from STDBY or FS mode
-			rfm69_mode(RFM69_OPMODE_Mode_STDBY);
-
-			// Start temperature conversion
-			rfm69_register_write(0x4E,0x8);
-
-			// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
-			// space efficient (down to last few bytes of flash!)
-			loopDelay(10000);
-
-			// Hack: put temperature into unused register (AESKey1) for remote reading
-			rfm69_register_write(0x3E,rfm69_register_read(0x4F));
-		}
-#endif
-
 
 #ifdef FEATURE_EVENT_COUNTER
 		if ( (event_time != 0) && (systick_counter - event_time > 10) ) {
@@ -557,37 +535,27 @@ int main(void) {
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
-#ifdef FEATURE_EVENT_COUNTER
 			tx_buffer.payload[1] = event_counter;
-#else
-			tx_buffer.payload[1] = 0xFF;
-#endif
 			tx_buffer.payload[2] = readBattery()/100;
 
 #ifdef FEATURE_DS18B20
-
 			// Pullup resistor on DS18B20 data pin PIO0_14
 			LPC_IOCON->PIO0_14=(0x2<<3);
-
 			ow_init(0,DS18B20_PIN);
+			delayMilliseconds(20);
 			int32_t temperature = ds18b20_temperature_read();
-			MyUARTSendStringZ("; temperature=");
-			MyUARTPrintHex(temperature);
-			MyUARTSendCRLF();
+			tfp_printf("; ds18b20_temperature_mC=%d\r\n", (temperature*1000)/16);
 			tx_buffer.payload[3] = temperature>>8;
 			tx_buffer.payload[4] = temperature&0xff;
 #endif
 
 #ifdef FEATURE_LED
-			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+			ledOn();
 			rfm69_frame_tx(tx_buffer.buffer,8);
-			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+			ledOff();
 #else
 			rfm69_frame_tx(tx_buffer.buffer,8);
 #endif
-
-
-
 
 
 			// Allow time for response (120ms)
@@ -724,21 +692,27 @@ int main(void) {
 #ifdef FEATURE_GPS_ON_USART1
 				case PKT_LOCATION_REPORT :
 				{
-
-					MyUARTSendStringZ ("; received node query request from ");
-					MyUARTPrintHex(rx_buffer.header.from_addr);
-					MyUARTSendCRLF();
+					tfp_printf("; received node query request from %x\r\n",rx_buffer.header.from_addr);
 					gps_send_status(rx_buffer.header.from_addr);
 					break;
 				}
 #endif
 				case PKT_STATUS_REPORT :
 				{
+					tfp_printf("; received status request from %x\r\n",rx_buffer.header.from_addr);
+
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
-					tx_buffer.header.msg_type = 's'; // node status response
+					tx_buffer.header.msg_type = PKT_STATUS_RESPONSE; // node status response
 					tx_buffer.payload[0] = readBattery()/100;
 					tx_buffer.payload[1] = rssi;
-					rfm69_frame_tx(tx_buffer.buffer, 5);
+					tx_buffer.payload[2] = ((event_counter>>8)&0xff);
+					tx_buffer.payload[3] = (event_counter&0xff);
+
+					int32_t temperature = ds18b20_temperature_read();
+					tx_buffer.payload[4] = temperature>>8;
+					tx_buffer.payload[5] = temperature&0xff;
+
+					rfm69_frame_tx(tx_buffer.buffer, 3+6);
 					break;
 				}
 
@@ -1010,15 +984,13 @@ int main(void) {
 			// M <mode> S : set mode and save in EEPROM (and RESET)
 			case 'M' : {
 				if (argc == 1) {
-					MyUARTSendStringZ("m ");
-					MyUARTPrintHex(params_union.params.operating_mode);
-					MyUARTSendCRLF();
+					tfp_printf("m %x\r\n",params_union.params.operating_mode);
 					break;
 				}
 				params_union.params.operating_mode = parse_hex(args[1]);
 				if (argc == 3) {
 					if (args[2][0]=='S') {
-						MyUARTSendStringZ("; ModeSaveAndReset\r\n");
+						tfp_printf("; ModeSaveAndReset\r\n");
 						eeprom_write(params_union.params_buffer);
 						MyUARTSendDrain();
 						NVIC_SystemReset();
@@ -1049,15 +1021,32 @@ int main(void) {
 			}
 
 			// Set parameter <byte-index> <value>
-			/*
 			case 'P' : {
+
+				/*
 				int status = cmd_param (argc, args);
 				if ( status ) {
 					report_error('P', status);
 				}
 				break;
+				*/
+
+				if (argc == 2) {
+					uint32_t param_index = parse_hex(args[1]);
+					MyUARTPrintHex(params_union.params_buffer[param_index]);
+					MyUARTSendCRLF();
+					break;
+				}
+
+				if (argc != 3) {
+					return E_WRONG_ARGC;
+				}
+
+				uint32_t param_index = parse_hex(args[1]);
+				uint32_t param_value = parse_hex(args[2]);
+				params_union.params_buffer[param_index] = param_value;
+				break;
 			}
-			*/
 
 			case 'Q' : {
 				// Report reset for reason=1 (explicit reset command)
@@ -1253,7 +1242,7 @@ void PININT1_IRQHandler (void) {
 	LPC_PIN_INT->IST = 1<<1;
 
 
-	// Printing event_counter in here results in very strange behavior.  Probably due to
+	// Printing event_counter in here results in very strange behaviour.  Probably due to
 	// using MyUART inside ISR.
 
 	if (event_time == 0) {
