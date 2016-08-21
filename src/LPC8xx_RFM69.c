@@ -32,6 +32,8 @@ For v0.2.0:
 #include <string.h>
 
 #include "config.h"
+#include "battery.h"
+#include "switchmatrix.h"
 #include "myuart.h"
 #include "sleep.h"
 #include "print_util.h"
@@ -40,6 +42,7 @@ For v0.2.0:
 #include "cmd.h"
 #include "err.h"
 #include "spi.h"
+#include "led.h"
 #include "flags.h"
 #include "params.h"
 #include "delay.h"
@@ -57,20 +60,10 @@ For v0.2.0:
 // Current location string specified by boat firmware. Format TBD.
 uint8_t current_loc[32];
 
-// Various radio controller flags (done as one 32 bit register so as to
-// reduce code size and SRAM requirements).
-// TODO: now that we've moved to LPC812, this sort of extreme optimization
-// detracts from code readability. Consider a struct of params instead.
-
-
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
 uint32_t last_frame_time;
 
 params_union_type params_union;
-//params_struct *rptr;
-//uint32_t rptr = &params_union;
-//params_struct *p;
-//p = (params_struct *)rptr;
 
 // When in deepsleep or power down this lets us know which wake event occurred
 typedef enum {
@@ -83,11 +76,9 @@ typedef enum {
 } interrupt_source_type;
 volatile interrupt_source_type interrupt_source;
 
+// Radio packet frame buffers
 frame_buffer_type tx_buffer;
 frame_buffer_type rx_buffer;
-
-//frame_send_buffer.header.from_addr = node_addr;
-
 
 #ifdef FEATURE_TIP_BUCKET_COUNTER
 	volatile uint32_t event_counter = 0;
@@ -103,101 +94,6 @@ frame_buffer_type rx_buffer;
 	}
 #endif
 
-
-void loopDelay(uint32_t i) {
-	while (--i!=0) {
-		__NOP();
-	}
-}
-void wktDelay(uint32_t i) {
-	LPC_WKT->COUNT = i;
-	__WFI();
-}
-
-
-/**
- * UART RXD on SOIC package pin 19
- * UART TXD on SOIC package pin 5
- */
-void SwitchMatrix_Init()
-{
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
-    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-
-    /* Pin Assign 1 bit Configuration */
-    /* SWCLK */
-    /* SWDIO */
-    /* RESET */
-    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
-
-}
-
-#ifdef FEATURE_GPS_ON_USART1
-/**
- * In addition to assigning UART0 on the same pins as ISP TXD, RXD, also assign
- * UART1 to pins 8,9 to accommodate GPS receiver.
- *
- * UART0.RXD -> pin 19 (aka PIO0_0, ISP RXD)
- * UART0.TXD -> pin 5 (aka PIO0_4, ISP TXD)
- * UART1.RXD -> pin 8 (aka PIO0_11)
- * UART1.TXD -> pin 9 (aka PIO0_10)
- *
- * all other pins at default.
- */
-void SwitchMatrix_GPS_UART1_Init()
-{
-       /* Enable the clock to the Switch Matrix */
-       LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-       /* Pin Assign 8 bit Configuration */
-       /* U0_TXD */
-       /* U0_RXD */
-       LPC_SWM->PINASSIGN0 = 0xffff0004UL;
-       /* U1_TXD */
-       /* U1_RXD */
-       LPC_SWM->PINASSIGN1 = 0xff0b0affUL;
-
-       /* Pin Assign 1 bit Configuration */
-       /* SWCLK */
-       /* SWDIO */
-       /* RESET */
-       LPC_SWM->PINENABLE0 = 0xffffffb3UL;
-
-}
-#endif
-
-#ifdef BOARD_V1B_HACK
-/**
- * Hack to facilitate PCB v1 bug where via on RXD at PIO0_0 (package pin 19)
- * line touches Vdd rendering it useless (always high). There is an easy work around using
- * a knife to separate the via from Vdd, but in one case the was not done before
- * the LPC812 package was soldered in pace. The via contact is under the LPC812, so
- * making the cut was no longer possible. Rather
- * than scrap the board, the RXD line from the board UART connecter was routed to
- * PIO0_11 instead (package pin 8). So in this case want to route LPC812 UART RXD
- * to there. AFAIK, it is not possible to program this board using ISP mode. SWD
- * must be used. I'm going to call this v1b of the board. JD 20141117.
- */
-void SwitchMatrix_LPC812_PCB1b_Init()
-{
-	// UART0 TXD to PIO0_4 (pin package 5). This is location for ISP programming
-	// UART0 RXD rerouted to PIO0_11 (pin package 11).
-    LPC_SWM->PINASSIGN0 = 0xffff0b04UL;
-
-    /* Pin Assign 1 bit Configuration */
-    /* SWCLK */
-    /* SWDIO */
-    /* RESET */
-    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
-}
-#endif
-
-
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
  * @param cmd  Command that generated the error
@@ -210,66 +106,6 @@ void report_error (uint8_t cmd, int32_t code) {
 	MyUARTSendByte(' ');
 	MyUARTPrintHex(code);
 	MyUARTSendCRLF();
-}
-
-// TODO: move this somewhere else
-/**
- * Use analog comparator with internal reference to find approx battery voltage
- *
- * @return Battery voltage in mV
- */
-int readBattery () {
-
-	//
-	// Analog comparator configure
-	//
-
-	// Power to comparator. Use of comparator requires BOD. [Why?]
-	LPC_SYSCON->PDRUNCFG &= ~( (0x1 << 15) | (0x1 << 3) );
-
-	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<19); // Analog comparator
-
-	// Analog comparator reset
-	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
-	LPC_SYSCON->PRESETCTRL |= (0x1 << 12);
-
-
-	// Measure Vdd relative to 900mV bandgap reference
-	LPC_CMP->CTRL =  (0x1 << 3) // rising edge
-			| (0x6 << 8)  // + of cmp to 900mV bandgap reference
-			| (0x0 << 11) // - of cmp to voltage ladder powered by Vdd
-			;
-
-	// Find k, voltage latter setting that causes comparator output to go low
-	// At this point Vdd * k / 31 = 900mV
-	// so Vdd (mV) = 900mV * 31 / k  =  27900mV / k;
-	int k;
-	for (k = 0; k <32; k++) {
-		LPC_CMP->LAD = 1 | (k<<1);
-		// allow time to settle (15us on change, 30us on powerup) by
-		// waiting for next SYSTICK interrupt
-		__WFI();
-		if ( ! (LPC_CMP->CTRL & (1<<21))) {
-			return 27900/k; // 900mV*31/k
-		}
-	}
-
-	return 27900/32;
-}
-
-/**
- * Blink diagnostic LED. Optional feature (edit config.h to define hardware configuration).
- */
-void ledBlink (int nblink) {
-	int i;
-	for (i = 0; i < nblink; i++)	{
-			GPIOSetBitValue(0,LED_PIN,1);
-			//loopDelay(200000);
-			delayMilliseconds(200);
-			GPIOSetBitValue(0,LED_PIN,0);
-			//loopDelay(200000);
-			delayMilliseconds(200);
-	}
 }
 
 
@@ -300,7 +136,7 @@ void displayStatus () {
 	//MyUARTSendStringZ ("; node_addr=");
 	//MyUARTPrintHex(params_union.params.node_addr);
 	//MyUARTSendCRLF();
-	tfp_printf ("; mode_addr=%x\r\n",params_union.params.node_addr);
+	tfp_printf ("; node_addr=%x\r\n",params_union.params.node_addr);
 
 	//MyUARTSendStringZ ("; poll_interval=");
 	//MyUARTPrintHex(params_union.params.poll_interval);
@@ -518,7 +354,7 @@ int main(void) {
 	LPC_GPIO_PORT->DIR0 = regVal;
 	// Force reset on boot
 	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
-	loopDelay(20000);
+	delay(20000);
 	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
 #endif
 
@@ -595,7 +431,7 @@ int main(void) {
 
 	// Configure RFM69 registers for this application. I found that it was necessary
 	// to delay a short period after powerup before configuring registers.
-	loopDelay(300000);
+	delay(300000);
 
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
@@ -713,7 +549,7 @@ int main(void) {
 
 			// Allow time for clocks to stabilise after wake
 			// TODO: can we use WKT and WFI?
-			loopDelay(20000);
+			delay(20000);
 
 			if (interrupt_source == UART_INTERRUPT) {
 				//setOpMode(MODE_AWAKE);
@@ -833,7 +669,7 @@ int main(void) {
 			//if (frame_len>0) {
 
 #ifdef FEATURE_WATCHDOG_TIMER
-			// Feed watchdog
+			// Feed watchdog whenever a packet is successfully received.
 			LPC_WWDT->FEED = 0xAA;
 			LPC_WWDT->FEED = 0x55;
 #endif
@@ -851,7 +687,7 @@ int main(void) {
 				// Experimental remote packet transmit / relay
 				case 'B' : {
 					int payload_len = frame_len - 3;
-					uint8_t payload[payload_len];
+					//uint8_t payload[payload_len];
 					memcpy(tx_buffer.payload,rx_buffer.payload,payload_len);
 					rfm69_frame_tx(tx_buffer.buffer, payload_len+3);
 					break;
@@ -1277,8 +1113,7 @@ int main(void) {
 
 			// Turn LED on/off
 			case 'U' : {
-				int i = parse_hex(args[1]);
-				GPIOSetBitValue(0,LED_PIN,i);
+				parse_hex(args[1]) == 0 ? ledOff() : ledOn();
 				break;
 			}
 

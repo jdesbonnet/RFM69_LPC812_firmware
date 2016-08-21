@@ -53,3 +53,15 @@ void delayMicroseconds(uint32_t t_us) {
 	uint32_t niter = t_us*15/10; // manual calibration
 	delay(niter);
 }
+
+
+
+void loopDelay(uint32_t i) {
+	while (--i!=0) {
+		__NOP();
+	}
+}
+void wktDelay(uint32_t i) {
+	LPC_WKT->COUNT = i;
+	__WFI();
+}
