@@ -129,7 +129,7 @@ void displayStatus () {
 	MyUARTSendStringZ ("; feature GNSS\r\n");
 #endif
 
-
+	tfp_printf ("; firmware=%s\r\n", VERSION);
 	tfp_printf ("; mode=%x\r\n",params_union.params.operating_mode);
 	tfp_printf ("; node_addr=%x\r\n",params_union.params.node_addr);
 	tfp_printf ("; poll_interval=%x\r\n",params_union.params.poll_interval);
@@ -155,6 +155,17 @@ void displayStatus () {
 #endif
 
 	tfp_printf("; supply_voltage_mV=%d\r\n",readBattery());
+
+
+	int32_t t;
+
+	t = rfm69_temperature();
+	tfp_printf("; rfm69_temperature=%d\r\n", t);
+
+	t = (1000*ds18b20_temperature_read())/16;
+	tfp_printf("; ds18b20_temperature_mC=%d\r\n", t);
+
+	tfp_printf("; END\r\n");
 }
 
 // TODO: is volatile necessary?

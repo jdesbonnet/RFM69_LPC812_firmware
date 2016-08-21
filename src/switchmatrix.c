@@ -1,4 +1,5 @@
 #include "LPC8xx.h"
+#include "config.h"
 
 /**
  * Initialize SwitchMatrix.
