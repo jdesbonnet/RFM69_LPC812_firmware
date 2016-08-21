@@ -97,16 +97,10 @@ uint8_t rfm69_rssi () {
 }
 
 /**
- * Check if packet has been received and is ready to read from FIFO. Also read RSSI
- * while waiting.
- *
+ * Check if packet has been received and is ready to read from FIFO.
  * @return zero if no packet available, non-zero if packet available.
  */
-uint8_t rfm69_payload_ready(uint8_t *rssi) {
-
-    if (rssi != 0) {
-    	*rssi = rfm69_rssi();
-    }
+uint8_t rfm69_payload_ready() {
 
 	return rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK;
 }

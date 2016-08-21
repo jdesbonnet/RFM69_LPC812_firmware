@@ -813,7 +813,9 @@ int main(void) {
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
 		// if ( IS_PAYLOAD_READY()  ) {
-		if (rfm69_payload_ready(&rssi)) {
+		if (rfm69_payload_ready()) {
+
+			rssi = rfm69_register_read(RFM69_RSSIVALUE);
 
 			// Yes, frame ready to be read from FIFO
 #ifdef FEATURE_LED
