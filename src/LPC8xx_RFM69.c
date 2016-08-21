@@ -158,6 +158,7 @@ void displayStatus () {
 	//MyUARTPrintHex((uint32_t)eeprom_get_addr());
 	//MyUARTSendCRLF();
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
+	tfp_printf ("; systick_counter=%x\r\n", systick_counter);
 
 #ifdef FEATURE_GPS_ON_USART1
 	gps_report_status();
@@ -183,7 +184,7 @@ void displayStatus () {
 	MyUARTSendCRLF();
 #endif
 #ifdef FEATURE_TIP_BUCKET_COUNTER
-	MyUARTSendStringZ("; TipBucketCounter=");
+	MyUARTSendStringZ("; EventCounter=");
 	MyUARTPrintHex(event_counter);
 	MyUARTSendCRLF();
 #endif
@@ -813,22 +814,16 @@ int main(void) {
 				// Experimental write to MCU memory (0x3E)
 				case PKT_MEM_WRITE : {
 
-					// At 32bit memory address at payload+0 write 32bit value at payload+4
-					// Note: must be 32bit word aligned.
-					uint32_t **mem_addr;
-					mem_addr = (uint32_t **)rx_buffer.payload;
+					// Return 32bit value from memory at payload+0
+					// Note address and result is LSB first (little endian)
+					uint32_t *mem_addr;
+					mem_addr = (uint32_t *)&rx_buffer.payload[0];
 
-					tfp_printf("; memory write request at %x\n", mem_addr);
+					int len = (frame_len - 3 - 4)/4;
+					tfp_printf("; memory write request at %x, len=%d\r\n", *mem_addr,len);
 
-					uint32_t *mem_val;
-					mem_val = (uint32_t *)(rx_buffer.payload+4);
-					**mem_addr = *mem_val;
-					/*
-					int i;
-					for (i = 0; i < (frame_len-sizeof(frame_header_type)-4)/4; i++) {
-						**mem_addr = rx_buffer.payload[i+4];
-					}
-					*/
+					memcpy(*mem_addr, tx_buffer.payload+4, len*4);
+
 					break;
 				}
 
