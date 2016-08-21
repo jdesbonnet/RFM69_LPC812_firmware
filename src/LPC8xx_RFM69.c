@@ -48,6 +48,7 @@ For v0.2.0:
 #include "delay.h"
 #include "eeprom.h"
 #include "frame_buffer.h"
+#include "mac.h"
 
 #include "lpc8xx_pmu.h"
 #include "onewire.h"
@@ -283,7 +284,6 @@ int main(void) {
 
 	// Display firmware version on boot
 	cmd_version(1,NULL);
-
 
 #ifdef BOARD_V1B_HACK
 	if (mcu_unique_id[0] == BOARD_V1B_HACK_MCU_ID) {
@@ -655,18 +655,14 @@ int main(void) {
 
 			// Yes, frame ready to be read from FIFO
 #ifdef FEATURE_LED
-			LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+			ledOn();
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
-			LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+			ledOff();
 #else
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
 #endif
 
 			last_frame_time = systick_counter;
-
-			// TODO: tidy this
-			// SPI error
-			//if (frame_len>0) {
 
 #ifdef FEATURE_WATCHDOG_TIMER
 			// Feed watchdog whenever a packet is successfully received.
@@ -679,13 +675,21 @@ int main(void) {
 			if ( rx_buffer.header.to_addr == 0xff
 					|| rx_buffer.header.to_addr == tx_buffer.header.from_addr) {
 
+				// bit 7: ack request
+				if (rx_buffer.header.msg_type & 0x80) {
+					tx_buffer.header.msg_type = PKT_ACK;
+					tx_buffer.payload[0] = rssi;
+					rfm69_frame_tx(tx_buffer.buffer, 4);
+				}
+
+
 				// This frame is for us! Examine messageType field for appropriate action.
 
-				switch (rx_buffer.header.msg_type) {
+				switch (rx_buffer.header.msg_type & 0x7F) {
 
 #ifdef FEATURE_REMOTE_PKT_TX
 				// Experimental remote packet transmit / relay
-				case 'B' : {
+				case PKT_RELAY : {
 					int payload_len = frame_len - 3;
 					//uint8_t payload[payload_len];
 					memcpy(tx_buffer.payload,rx_buffer.payload,payload_len);
@@ -695,7 +699,7 @@ int main(void) {
 #endif
 
 				// Remote command execute
-				case 'D' : {
+				case PKT_REMOTE_CMD : {
 					// If there is an uncompleted UART command in buffer then
 					// remote command takes priority and whatever is in the
 					// command buffer is dropped. Output an error to indicate
@@ -724,7 +728,7 @@ int main(void) {
 				}
 
 				// Start ping-pong test
-				case 'P' :
+				case PKT_START_PINGPONG :
 				{
 					MyUARTSendStringZ ("; received ping from ");
 					MyUARTPrintHex(rx_buffer.header.from_addr);
@@ -743,19 +747,17 @@ int main(void) {
 				// Message requesting position report. This will return the string
 				// set by the GPS or the 'G' command
 #ifdef FEATURE_GPS_ON_USART1
-				case 'R' :
+				case PKT_LOCATION_REPORT :
 				{
 
 					MyUARTSendStringZ ("; received node query request from ");
-					MyUARTPrintHex(tx_buffer.header.from_addr);
+					MyUARTPrintHex(rx_buffer.header.from_addr);
 					MyUARTSendCRLF();
 					gps_send_status(rx_buffer.header.from_addr);
 					break;
 				}
 #endif
-
-				// Node status request
-				case 'S' :
+				case PKT_STATUS_REPORT :
 				{
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 's'; // node status response
@@ -767,7 +769,7 @@ int main(void) {
 
 
 				// Remote request to LED blink
-				case 'U' : {
+				case PKT_LED_BLINK : {
 					//tx_buffer.header.to_addr = from_addr;
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'u';
@@ -777,7 +779,7 @@ int main(void) {
 				}
 
 				// Remote RFM69 register read (0x58)
-				case 'X' : {
+				case PKT_RADIO_REG_READ : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t read_len = rx_buffer.payload[1];
 					if (read_len>16) read_len = 16;
@@ -793,7 +795,7 @@ int main(void) {
 				}
 
 				// Remote RFM69 register write
-				case 'Y' : {
+				case PKT_RADIO_REG_WRITE : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t write_len = frame_len - 4;
 					if (write_len > 16) write_len = 16;
@@ -809,11 +811,15 @@ int main(void) {
 
 
 				// Experimental write to MCU memory (0x3E)
-				case '>' : {
+				case PKT_MEM_WRITE : {
+
 					// At 32bit memory address at payload+0 write 32bit value at payload+4
 					// Note: must be 32bit word aligned.
 					uint32_t **mem_addr;
 					mem_addr = (uint32_t **)rx_buffer.payload;
+
+					tfp_printf("; memory write request at %x\n", mem_addr);
+
 					uint32_t *mem_val;
 					mem_val = (uint32_t *)(rx_buffer.payload+4);
 					**mem_addr = *mem_val;
@@ -825,29 +831,37 @@ int main(void) {
 					*/
 					break;
 				}
+
 				// Experimental read from MCU memory (0x3C)
-				case '<' : {
+				case PKT_MEM_READ_REQUEST : {
 					// Return 32bit value from memory at payload+0
 					// Note address and result is LSB first (little endian)
 					uint32_t **mem_addr;
-					mem_addr = (uint32_t **)rx_buffer.payload;
-					//uint8_t len = rx_buffer.payload[4];
+					mem_addr = (uint32_t *)&rx_buffer.payload[0];
+					tfp_printf("; memory read request at %x\r\n", *mem_addr);
+
+					tfp_printf("; value of location %x = %x\r\n", *mem_addr, **mem_addr);
 					// First 4 bytes of return is base address
 					*(uint32_t *)tx_buffer.payload = *mem_addr;
-					*(uint32_t *)(tx_buffer.payload+4) = **mem_addr;
-					/*
-					int i;
-					for (i = 0; i < len; i++) {
-						tx_buffer.payload[i+4] = **mem_addr;
+
+					//*(uint32_t *)(tx_buffer.payload+4) = **mem_addr;
+
+					int len = 1;
+					if (frame_len == 8) {
+						len = rx_buffer.payload[4];
+						if (len > 8) len = 8;
 					}
-					*/
+
+					memcpy(tx_buffer.payload+4, *mem_addr, len*4);
+
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
-					tx_buffer.header.msg_type = '<'-32;
-					rfm69_frame_tx(tx_buffer.buffer, sizeof(frame_header_type)+8);
+					tx_buffer.header.msg_type = PKT_MEM_READ_RESPONSE;
+					rfm69_frame_tx(tx_buffer.buffer, sizeof(frame_header_type)+4+4*len);
 					break;
 				}
+
 				// Experimental execute from memory (!?!)
-				case 'E' : {
+				case PKT_EXEC_MEM : {
 					// Execute function at memory location payload+0
 					// Note on ARM Cortex M devices LSB always 1 for Thumb instruction set.
 					uint32_t **mem_addr;
