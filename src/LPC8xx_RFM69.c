@@ -816,13 +816,13 @@ int main(void) {
 
 					// Return 32bit value from memory at payload+0
 					// Note address and result is LSB first (little endian)
-					uint32_t *mem_addr;
-					mem_addr = (uint32_t *)&rx_buffer.payload[0];
+					uint32_t **mem_addr;
+					mem_addr = (uint32_t **)&rx_buffer.payload[0];
 
 					int len = (frame_len - 3 - 4)/4;
 					tfp_printf("; memory write request at %x, len=%d\r\n", *mem_addr,len);
 
-					memcpy(*mem_addr, tx_buffer.payload+4, len*4);
+					memcpy(*mem_addr, rx_buffer.payload+4, len*4);
 
 					break;
 				}
