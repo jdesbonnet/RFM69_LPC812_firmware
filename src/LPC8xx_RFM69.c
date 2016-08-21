@@ -38,6 +38,7 @@ For v0.2.0:
 #include "sleep.h"
 #include "print_util.h"
 #include "parse_util.h"
+#include "printf.h"
 #include "rfm69.h"
 #include "cmd.h"
 #include "err.h"
@@ -71,7 +72,7 @@ typedef enum {
 	NO_INTERRUPT = 0,
 	WKT_INTERRUPT = 1,
 	UART_INTERRUPT = 2,
-	TIP_BUCKET_INTERRUPT = 3,
+	EVENT_COUNTER_INTERRUPT = 3,
 	PIEZO_SENSOR_INTERRUPT = 4,
 	DIO0_INTERRUPT = 5
 } interrupt_source_type;
@@ -81,7 +82,7 @@ volatile interrupt_source_type interrupt_source;
 frame_buffer_type tx_buffer;
 frame_buffer_type rx_buffer;
 
-#ifdef FEATURE_TIP_BUCKET_COUNTER
+#ifdef FEATURE_EVENT_COUNTER
 	volatile uint32_t event_counter = 0;
 	volatile uint32_t event_time = 0;
 #endif
@@ -115,50 +116,29 @@ void report_error (uint8_t cmd, int32_t code) {
  */
 void displayStatus () {
 	// List optional features enabled
-#ifdef FEATURE_TIP_BUCKET_COUNTER
-	MyUARTSendStringZ ("; feature TIP_BUCKET_COUNTER\r\n");
+#ifdef FEATURE_EVENT_COUNTER
+	MyUARTSendStringZ ("; feature EVENT_COUNTER\r\n");
 #endif
 #ifdef FEATURE_DS18B20
-	MyUARTSendStringZ ("; feature DS18B20_TEMPERATURE\r\n");
+	MyUARTSendStringZ ("; feature DS18B20\r\n");
 #endif
 #ifdef FEATURE_WS2812B
-	MyUARTSendStringZ ("; feature WS2812B_LED\r\n");
+	MyUARTSendStringZ ("; feature WS2812B\r\n");
 #endif
 #ifdef FEATURE_GPS_ON_USART1
-	MyUARTSendStringZ ("; feature GPS\r\n");
+	MyUARTSendStringZ ("; feature GNSS\r\n");
 #endif
 
-	// Display parameters to UART
-	//MyUARTSendStringZ ("; mode=");
-	//MyUARTPrintHex(params_union.params.operating_mode);
-	//MyUARTSendCRLF();
+
 	tfp_printf ("; mode=%x\r\n",params_union.params.operating_mode);
-
-	//MyUARTSendStringZ ("; node_addr=");
-	//MyUARTPrintHex(params_union.params.node_addr);
-	//MyUARTSendCRLF();
 	tfp_printf ("; node_addr=%x\r\n",params_union.params.node_addr);
-
-	//MyUARTSendStringZ ("; poll_interval=");
-	//MyUARTPrintHex(params_union.params.poll_interval);
-	//MyUARTSendCRLF();
 	tfp_printf ("; poll_interval=%x\r\n",params_union.params.poll_interval);
-
-	//MyUARTSendStringZ ("; listen_period_cs=");
-	//MyUARTPrintHex(params_union.params.listen_period_cs);
-	//MyUARTSendCRLF();
 	tfp_printf ("; listen_period=%x\r\n",params_union.params.listen_period_cs);
-
-	//MyUARTSendStringZ ("; link_loss_timeout_s=");
-	//MyUARTPrintHex(params_union.params.link_loss_timeout_s);
-	//MyUARTSendCRLF();
 	tfp_printf ("; link_loss_timeout=%x\r\n",params_union.params.link_loss_timeout_s);
-
-	//MyUARTSendStringZ ("; eeprom_addr=");
-	//MyUARTPrintHex((uint32_t)eeprom_get_addr());
-	//MyUARTSendCRLF();
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 	tfp_printf ("; systick_counter=%x\r\n", systick_counter);
+	tfp_printf ("; event_counter=%x\r\n", event_counter);
+
 
 #ifdef FEATURE_GPS_ON_USART1
 	gps_report_status();
@@ -167,31 +147,14 @@ void displayStatus () {
 
 	uint32_t unique_id[4];
 	iap_read_unique_id(unique_id);
-	MyUARTSendStringZ("; mcu_unique_id= ");
-	MyUARTPrintHex(unique_id[0]);
-	MyUARTSendByte(' ');
-	MyUARTPrintHex(unique_id[1]);
-	MyUARTSendByte(' ');
-	MyUARTPrintHex(unique_id[2]);
-	MyUARTSendByte(' ');
-	MyUARTPrintHex(unique_id[3]);
-	MyUARTSendCRLF();
-
+	tfp_printf ("; mcu_unique_id=%x %x %x %x\r\n", unique_id[0], unique_id[1],
+			unique_id[2], unique_id[3] );
 
 #ifdef FEATURE_WATCHDOG_TIMER
-	MyUARTSendStringZ("; WatchDogTimer=");
-	MyUARTPrintHex(LPC_WWDT->TV);
-	MyUARTSendCRLF();
-#endif
-#ifdef FEATURE_TIP_BUCKET_COUNTER
-	MyUARTSendStringZ("; EventCounter=");
-	MyUARTPrintHex(event_counter);
-	MyUARTSendCRLF();
+	tfp_printf("; watchdog_timer=%x\r\n", LPC_WWDT->TV);
 #endif
 
-	MyUARTSendStringZ ("; supply_voltage_mV=");
-	MyUARTPrintDecimal(readBattery());
-	MyUARTSendCRLF();
+	tfp_printf("; supply_voltage_mV=%d\r\n",readBattery());
 }
 
 // TODO: is volatile necessary?
@@ -400,15 +363,15 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_TIP_BUCKET_COUNTER
+#ifdef FEATURE_EVENT_COUNTER
 	// Set TIPBUCKET_PIN as input
-	LPC_GPIO_PORT->DIR0 &= ~(1<<TIPBUCKET_PIN);
+	LPC_GPIO_PORT->DIR0 &= ~(1<<EVENT_COUNTER_PIN);
 
 	// Pulldown resistor on PIO0_16 (tip bucket)
 	LPC_IOCON->PIO0_16=(0x1<<3);
 
 	// Set interrupt on this pin.
-	LPC_SYSCON->PINTSEL[1] = TIPBUCKET_PIN;
+	LPC_SYSCON->PINTSEL[1] = EVENT_COUNTER_PIN;
 	LPC_PIN_INT->ISEL &= ~(0x1<<1);	/* Edge trigger */
 	LPC_PIN_INT->IENR |= (0x1<<1);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT1_IRQn));
@@ -501,7 +464,7 @@ int main(void) {
 #endif
 
 
-#ifdef FEATURE_TIP_BUCKET_COUNTER
+#ifdef FEATURE_EVENT_COUNTER
 		if ( (event_time != 0) && (systick_counter - event_time > 10) ) {
 			MyUARTSendStringZ("a ");
 			MyUARTPrintHex(event_counter);
@@ -583,7 +546,7 @@ int main(void) {
 			tx_buffer.header.to_addr = 0xff; // broadcast
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
-#ifdef FEATURE_TIP_BUCKET_COUNTER
+#ifdef FEATURE_EVENT_COUNTER
 			tx_buffer.payload[1] = event_counter;
 #else
 			tx_buffer.payload[1] = 0xFF;
@@ -1268,7 +1231,7 @@ void WDT_IRQHandler (void) {
 	//loopDelay(20000);
 }
 
-#ifdef FEATURE_TIP_BUCKET_COUNTER
+#ifdef FEATURE_EVENT_COUNTER
 
 /**
  * Interrupt generated by tip bucket
@@ -1288,7 +1251,7 @@ void PININT1_IRQHandler (void) {
 		//LPC_USART0->TXDATA='B';
 	}
 
-	interrupt_source = TIP_BUCKET_INTERRUPT;
+	interrupt_source = EVENT_COUNTER_INTERRUPT;
 }
 
 /**

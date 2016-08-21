@@ -49,7 +49,7 @@
 #define FEATURE_SYSTICK
 
 // Experimental application to count rain tip bucket
-#define FEATURE_TIP_BUCKET_COUNTER
+#define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
 #define FEATURE_DS18B20
@@ -86,7 +86,7 @@
 #define SS_PIN 9
 #define MOSI_PIN 8
 #define MISO_PIN 7
-#define TIPBUCKET_PIN 17
+#define EVENT_COUNTER_PIN 17
 #endif
 
 #ifdef BOARD_LPC812_V1
@@ -97,7 +97,7 @@
 #define MISO_PIN 8
 #define RESET_PIN 15
 //#define DIO0_PIN 6
-#define TIPBUCKET_PIN 16
+#define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0
 #define DS18B20_PIN 14
