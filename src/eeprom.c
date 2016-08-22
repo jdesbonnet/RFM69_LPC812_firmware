@@ -25,17 +25,18 @@ const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.params = {
 		.node_addr = 0xff,
 		//.operating_mode = MODE_LOW_POWER_POLL,
-		.operating_mode = MODE_AWAKE,
+		.operating_mode = DEFAULT_MODE,
 
-		.poll_interval = 5,
+		.poll_interval = DEFAULT_POLL_INTERVAL,
 		.listen_period_cs = 80,
-		.link_loss_timeout_s = 3600*2
+		.link_loss_timeout_s = DEFAULT_LINK_LOSS_TIMEOUT
 		}
 };
 
 
 /**
- * Write 64 byte page to flash.
+ * Write 64 byte page to flash. NB: this is currently not working if project compiled
+ * with 'Release' settings. Why?
  *
  * @param data Pointer to 64 byte block of memory to write to flash. This must be in SRAM
  * area of memory.
@@ -54,7 +55,7 @@ int32_t eeprom_write (uint8_t *data) {
 	// Example code checks MCU part ID, bootcode revision number and serial number. There are some
 	// differences in behavior across silicon revisions (in particular to do with ability
 	// to erase multiple sectors at the same time). In this case we require to be able to program
-	// just one sector, so this does not conern us.
+	// just one sector, so this does not concern us.
 
 	/* Prepare the page for erase */
 	iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);

@@ -3,16 +3,37 @@
 
 #define VERSION "RFM69 0.5.4"
 
+
+// Radio and MCU in sleep state
+#define MODE_ALL_OFF (0)
+
+// MCU on, radio in SLEEP (currently not supported)
+#define MODE_RADIO_OFF (1)
+
+// Radio and MCU in sleep state with period ping and listen
+#define MODE_LOW_POWER_POLL (2)
+
+// Radio in RX, MCU polling radio.
+#define MODE_AWAKE (3)
+
+
+
 //#define DEFAULT_NODE_ADDR 0x42 // Garden
 //#define DEFAULT_NODE_ADDR 0x43 // Master RX
 //#define DEFAULT_NODE_ADDR 0x44 // 3rd
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
 #define DEFAULT_NODE_ADDR 0x46 // 5th
 
+#define DEFAULT_MODE MODE_LOW_POWER_POLL
+//#define DEFAULT_MODE MODE_AWAKE
+
+#define DEFAULT_POLL_INTERVAL 60
+
+// Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
 
-// When in low power polling mode, timeout in 10ms units to trigger reset
-#define DEFAULT_LINK_LOSS_TIMEOUT 0
+// When in low power polling mode, timeout in seconds units to trigger reset
+#define DEFAULT_LINK_LOSS_TIMEOUT 7200
 
 // MCU used (only LPC812 supported, LPC824 later. LPC810 dropped due to lack of flash)
 #define LPC812
