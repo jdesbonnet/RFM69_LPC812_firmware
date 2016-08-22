@@ -15,7 +15,8 @@ int readBattery () {
 	// Power to comparator. Use of comparator requires BOD. [Why?]
 	LPC_SYSCON->PDRUNCFG &= ~( (0x1 << 15) | (0x1 << 3) );
 
-	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<19); // Analog comparator
+	// Enable clock to analog comparator
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<19);
 
 	// Analog comparator reset
 	LPC_SYSCON->PRESETCTRL &= ~(0x1 << 12);
@@ -38,9 +39,16 @@ int readBattery () {
 		// waiting for next SYSTICK interrupt
 		__WFI();
 		if ( ! (LPC_CMP->CTRL & (1<<21))) {
-			return 27900/k; // 900mV*31/k
+			break;
 		}
 	}
 
-	return 27900/32;
+	// Disable clock to analog comparator
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<19);
+
+	// Power off comparator and BOD
+	LPC_SYSCON->PDRUNCFG != ( (0x1 << 15) | (0x1 << 3) );
+
+	// 900mV*31/k
+	return 27900/k;
 }
