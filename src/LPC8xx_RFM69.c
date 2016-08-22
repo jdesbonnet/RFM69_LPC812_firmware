@@ -488,7 +488,7 @@ int main(void) {
 			// Writing into WKT counter automatically starts wakeup timer. WKT timer
 			// is driven by 10kHz low power oscillator. However this is +/- 40%.
 			// Finding 7.5kHz closer to the mark.
-			uint32_t wakeup_time = 7500  * params_union.params.poll_interval;
+			uint32_t wakeup_time = 9000  * params_union.params.poll_interval;
 			LPC_WKT->COUNT = wakeup_time ;
 
 			// DeepSleep until WKT interrupt (or PIN interrupt)
