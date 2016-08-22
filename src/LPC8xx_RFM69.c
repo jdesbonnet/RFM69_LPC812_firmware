@@ -287,6 +287,9 @@ int main(void) {
 		case 0x1902E033:
 			params_union.params.node_addr = 0x46;
 			break;
+		case 0x5046049:
+			params_union.params.node_addr = 0x47;
+			break;
 		}
 	}
 
