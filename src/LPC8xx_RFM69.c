@@ -180,6 +180,12 @@ void myputc (void *p, char c) {
 	MyUARTSendByte(c);
 }
 
+void eeprom_params_save (void) {
+    uint8_t tmpbuf[64];
+    memcpy(tmpbuf,params_union.params_buffer,64);
+    eeprom_write(tmpbuf);
+}
+
 int main(void) {
 
 	// Enable MCU subsystems needed in this application in one step. Saves bytes.
@@ -275,20 +281,20 @@ int main(void) {
 	// structure and initalize in config.h
 	if (params_union.params.node_addr == 0xFF) {
 		switch (mcu_unique_id[0]) {
+		case 0x18044043:
+			params_union.params.node_addr = 0x40;
+			break;
+		case 0x1902E033:
+			params_union.params.node_addr = 0x41;
+			break;
 		case 0x5034039:
 			params_union.params.node_addr = 0x42;
 			break;
-		case 0x18044043:
+		case 0x05034043:
 			params_union.params.node_addr = 0x43;
 			break;
-		case 0x05034043:
-			params_union.params.node_addr = 0x44;
-			break;
-		case 0x1902E033:
-			params_union.params.node_addr = 0x46;
-			break;
 		case 0x5046049:
-			params_union.params.node_addr = 0x47;
+			params_union.params.node_addr = 0x44;
 			break;
 		}
 	}
@@ -303,8 +309,11 @@ int main(void) {
 	LPC_SYSCON->PDRUNCFG &= ~(0x1<<6);
 
 	// Setup watchdog oscillator frequency
-    /* Freq = 0.5Mhz, div_sel is 0x1F, divided by 64. WDT_OSC should be 7.8125khz */
-    LPC_SYSCON->WDTOSCCTRL = (0x1<<5)|0x1F;
+	// FREQSEL (bits 8:5) = 0x1 : 0.6MHz  +/- 40%
+	// DIVSEL (bits 4:0) = 0x1F : divide by 64
+	// Watchdog timer: ~ 10kHz
+    LPC_SYSCON->WDTOSCCTRL = (0x1<<5)
+    						|0x1F;
     LPC_WWDT->TC = params_union.params.link_loss_timeout_s * 2000;
     LPC_WWDT->MOD = (1<<0) // WDEN enable watchdog
     			| (1<<1); // WDRESET : enable watchdog to reset on timeout
@@ -458,9 +467,7 @@ int main(void) {
 
 #ifdef FEATURE_EVENT_COUNTER
 		if ( (event_time != 0) && (systick_counter - event_time > 10) ) {
-			MyUARTSendStringZ("a ");
-			MyUARTPrintHex(event_counter);
-			MyUARTSendCRLF();
+			tfp_printf("a %x\r\n",event_counter);
 			MyUARTSendDrain();
 			//event_counter = 0;
 			event_time= 0;
@@ -633,16 +640,16 @@ int main(void) {
 
 				switch (rx_buffer.header.msg_type & 0x7F) {
 
-#ifdef FEATURE_REMOTE_PKT_TX
+				case PKT_NOP:
+					break;
+
 				// Experimental remote packet transmit / relay
 				case PKT_RELAY : {
 					int payload_len = frame_len - 3;
-					//uint8_t payload[payload_len];
 					memcpy(tx_buffer.payload,rx_buffer.payload,payload_len);
 					rfm69_frame_tx(tx_buffer.buffer, payload_len+3);
 					break;
 				}
-#endif
 
 				// Remote command execute
 				case PKT_REMOTE_CMD : {
@@ -658,17 +665,18 @@ int main(void) {
 						report_error('D',E_CMD_DROPPED);
 					}
 
-					tfp_printf ("; received remote cmd from %x\r\n",tx_buffer.header.from_addr);
+					tfp_printf ("; remote cmd from %x\r\n",tx_buffer.header.from_addr);
 
 					// Echo remote command to UART, copy remote command to UART buffer and
 					// trigger UART command parsing.
-					MyUARTSendStringZ("d ");
+					//MyUARTSendStringZ("d ");
 					int payload_len = frame_len - 3;
 					uint8_t *uart_buf = MyUARTGetBuf();
 					memcpy(uart_buf,rx_buffer.payload,payload_len);
 					uart_buf[payload_len] = 0; // zero terminate buffer
-					MyUARTSendStringZ((char *)uart_buf);
-					MyUARTSendCRLF();
+					//MyUARTSendStringZ((char *)uart_buf);
+					//MyUARTSendCRLF();
+					tfp_printf ("d %s\r\n",uart_buf);
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
 					break;
 				}
@@ -676,9 +684,9 @@ int main(void) {
 				// Start ping-pong test
 				case PKT_START_PINGPONG :
 				{
-					MyUARTSendStringZ ("; received ping from ");
-					MyUARTPrintHex(rx_buffer.header.from_addr);
-					MyUARTSendCRLF();
+					tfp_printf("; received ping from %x\r\n",rx_buffer.header.from_addr);
+					//MyUARTPrintHex(rx_buffer.header.from_addr);
+					//MyUARTSendCRLF();
 					// Return ping-pong request to source
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'P'; // ping-pong message
@@ -935,24 +943,16 @@ int main(void) {
 
 			// Display MCU unique ID
 			case 'I' : {
-				MyUARTSendStringZ("i ");
-				//uint32_t part_id;
-				//iap_read_part_id(&part_id);
-				MyUARTPrintHex(mcu_unique_id[0]);
-				MyUARTSendCRLF();
+				tfp_printf("i %x %x %x %x\r\n",mcu_unique_id[0],mcu_unique_id[1],
+						mcu_unique_id[2], mcu_unique_id[3]);
 				break;
 			}
 
 			// Set link loss reset timeout
 			case 'J' : {
 				if (argc == 1) {
-					MyUARTSendStringZ("j ");
-					MyUARTPrintHex(params_union.params.link_loss_timeout_s);
-					MyUARTSendByte(' ');
-					MyUARTPrintHex(LPC_WWDT->TV);
-					MyUARTSendByte(' ');
-					MyUARTPrintHex(LPC_WWDT->TC);
-					MyUARTSendCRLF();
+					tfp_printf("j %x %x %x\r\n", params_union.params.link_loss_timeout_s,
+							LPC_WWDT->TV, LPC_WWDT->TC);
 					break;
 				}
 				params_union.params.link_loss_timeout_s = parse_hex(args[1]);
@@ -994,7 +994,8 @@ int main(void) {
 				if (argc == 3) {
 					if (args[2][0]=='S') {
 						tfp_printf("; ModeSaveAndReset\r\n");
-						eeprom_write(params_union.params_buffer);
+						//eeprom_write(params_union.params_buffer);
+						eeprom_params_save();
 						MyUARTSendDrain();
 						NVIC_SystemReset();
 					}
@@ -1073,7 +1074,10 @@ int main(void) {
 
 			case 'S' :
 			{
-				eeprom_write(params_union.params_buffer);
+				//uint8_t tmpbuf[64];
+				//memcpy(tmpbuf,params_union.params_buffer,64);
+				//eeprom_write(tmpbuf);
+				eeprom_params_save();
 				break;
 			}
 
@@ -1237,7 +1241,7 @@ void WDT_IRQHandler (void) {
 #ifdef FEATURE_EVENT_COUNTER
 
 /**
- * Interrupt generated by tip bucket
+ * Interrupt generated by event / tip bucket pin
  */
 void PININT1_IRQHandler (void) {
 
@@ -1251,7 +1255,6 @@ void PININT1_IRQHandler (void) {
 	if (event_time == 0) {
 		event_counter++;
 		event_time = systick_counter;
-		//LPC_USART0->TXDATA='B';
 	}
 
 	interrupt_source = EVENT_COUNTER_INTERRUPT;
