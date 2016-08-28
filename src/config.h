@@ -77,7 +77,7 @@
 #define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
+#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT

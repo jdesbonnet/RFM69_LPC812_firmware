@@ -140,7 +140,7 @@ void displayStatus () {
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 	tfp_printf ("; systick_counter=%x\r\n", systick_counter);
 	tfp_printf ("; event_counter=%x\r\n", event_counter);
-
+	tfp_printf ("; ds18b20_mode=%x\r\n",params_union.params.ds18b20_mode);
 
 #ifdef FEATURE_GPS_ON_USART1
 	gps_report_status();
@@ -545,14 +545,16 @@ int main(void) {
 			tx_buffer.payload[2] = readBattery()/100;
 
 #ifdef FEATURE_DS18B20
-			// Pullup resistor on DS18B20 data pin PIO0_14
-			LPC_IOCON->PIO0_14=(0x2<<3);
-			ow_init(0,DS18B20_PIN);
-			delayMilliseconds(20);
-			int32_t temperature = ds18b20_temperature_read();
-			tfp_printf("; ds18b20_temperature_mC=%d\r\n", (temperature*1000)/16);
-			tx_buffer.payload[3] = temperature>>8;
-			tx_buffer.payload[4] = temperature&0xff;
+			if (params_union.params.ds18b20_mode != 0) {
+				// Pullup resistor on DS18B20 data pin PIO0_14
+				LPC_IOCON->PIO0_14=(0x2<<3);
+				ow_init(0,DS18B20_PIN);
+				delayMilliseconds(20);
+				int32_t temperature = ds18b20_temperature_read();
+				tfp_printf("; ds18b20_temperature_mC=%d\r\n", (temperature*1000)/16);
+				tx_buffer.payload[3] = temperature>>8;
+				tx_buffer.payload[4] = temperature&0xff;
+			}
 #endif
 
 			// Transmit 'z' periodic wake packet
@@ -696,6 +698,35 @@ int main(void) {
 					//MyUARTSendCRLF();
 					tfp_printf ("d %s\r\n",uart_buf);
 					MyUARTSetBufFlags(UART_BUF_FLAG_EOL);
+					break;
+				}
+
+				case PKT_VERSION_REQUEST :
+				{
+					tfp_printf("; received version request from %x\r\n",rx_buffer.header.from_addr);
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
+					tx_buffer.header.msg_type = PKT_VERSION_RESPONSE;
+					char *s = VERSION;
+					int i=0;
+					while (*s != 0) {
+						tx_buffer.payload[i++] = *s++;
+					}
+					rfm69_frame_tx(tx_buffer.buffer, 3+i);
+					break;
+				}
+
+				case PKT_MCU_ID_REQUEST:
+				{
+					tfp_printf("; received MCUID request from %x\r\n",rx_buffer.header.from_addr);
+					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
+					tx_buffer.header.msg_type = PKT_MCU_ID_RESPONSE;
+					int i;
+					uint32_t *p;
+					for (i = 0; i < 4; i++) {
+						p = &tx_buffer.payload[i*4];
+						*p = mcu_unique_id[i];
+					}
+					rfm69_frame_tx(tx_buffer.buffer, 3+16);
 					break;
 				}
 

@@ -27,9 +27,22 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.5.6, 28 Aug 2016
+ * Much improved algorithm for detecting for replys after transmitting a packet. Listen period (and consequently power consuption) has been
+greatly reduced.
+ * Parameter mode to enable/disable DS19B20 temperature sampling.
+ * New remote firmware version query
+ * New remote MCU ID query
+
+## 0.5.5, 27 Aug 2016
+ * Fix parameter block save when code compiled with optimization. 
+
 ## 0.5.4, 20 Aug 2016
 
- * Better RSSI measurement of received packet.
+ * Better RSSI measurement of received packet (measured before transferring frame to MCU)
+ * Implement ACK mechanism (MSB of packet type is a ACK request field).
+ * MCU memory read working
+ * Minor fixes.
 
 ## 0.5.3, 22 Mar 2015
 

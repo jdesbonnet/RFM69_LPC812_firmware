@@ -13,7 +13,7 @@ typedef struct __attribute__((packed)) {
 	uint8_t listen_period_cs;
 	uint8_t poll_interval;      // poll interval in seconds
 	uint8_t gps_echo;
-	uint8_t stuffing;
+	uint8_t ds18b20_mode;
 	uint16_t link_loss_timeout_s;
 
 	// To facilitate experimenting with the optimum low power state of pins

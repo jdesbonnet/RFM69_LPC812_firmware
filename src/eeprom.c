@@ -24,10 +24,9 @@
 const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.params = {
 		.node_addr = 0xff,
-		//.operating_mode = MODE_LOW_POWER_POLL,
 		.operating_mode = DEFAULT_MODE,
-
 		.poll_interval = DEFAULT_POLL_INTERVAL,
+		.ds18b20_mode = 0,
 		.listen_period_cs = DEFAULT_LISTEN_TIME_CS,
 		.link_loss_timeout_s = DEFAULT_LINK_LOSS_TIMEOUT
 		}

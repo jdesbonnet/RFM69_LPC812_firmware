@@ -41,6 +41,7 @@ int32_t ds18b20_temperature_read () {
 	// Issue Convert command
 	ow_byte_write (0x44);
 
+	// TODO: this is a very long delay, MCU could go into a deep sleep for this.
 	//delayMicroseconds(800);
 	delayMilliseconds(900);
 
