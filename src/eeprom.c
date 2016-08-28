@@ -28,7 +28,7 @@ const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.operating_mode = DEFAULT_MODE,
 
 		.poll_interval = DEFAULT_POLL_INTERVAL,
-		.listen_period_cs = 80,
+		.listen_period_cs = DEFAULT_LISTEN_TIME_CS,
 		.link_loss_timeout_s = DEFAULT_LINK_LOSS_TIMEOUT
 		}
 };

@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.5.4"
+#define VERSION "RFM69 0.5.6"
 
 
 // Radio and MCU in sleep state
@@ -22,18 +22,22 @@
 //#define DEFAULT_NODE_ADDR 0x43 // Master RX
 //#define DEFAULT_NODE_ADDR 0x44 // 3rd
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
-#define DEFAULT_NODE_ADDR 0x46 // 5th
+//#define DEFAULT_NODE_ADDR 0x46 // 5th
 
 #define DEFAULT_MODE MODE_LOW_POWER_POLL
 //#define DEFAULT_MODE MODE_AWAKE
 
-#define DEFAULT_POLL_INTERVAL 60
+#define DEFAULT_POLL_INTERVAL 1
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
 
 // When in low power polling mode, timeout in seconds units to trigger reset
 #define DEFAULT_LINK_LOSS_TIMEOUT 7200
+
+#define DEFAULT_LISTEN_TIME_CS 50
+
+#define WWDT_CLOCK_SPEED_HZ (2000)
 
 // MCU used (only LPC812 supported, LPC824 later. LPC810 dropped due to lack of flash)
 #define LPC812
@@ -63,7 +67,7 @@
 // MCU memory read/write/exec from UART API
 #define FEATURE_UART_MEM_RWX
 
-// Diagnostic LED (only available on LPC812)
+// Diagnostic LED
 #define FEATURE_LED
 
 // Enable ARM Cortex M SysTick timer
@@ -73,7 +77,7 @@
 #define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-#define FEATURE_DS18B20
+//#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT

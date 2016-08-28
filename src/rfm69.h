@@ -17,6 +17,7 @@ uint8_t rfm69_register_read (uint8_t reg_addr);
 void rfm69_register_write (uint8_t reg_addr, uint8_t reg_value);
 
 uint8_t rfm69_payload_ready();
+uint8_t rfm69_is_pll_lock();
 uint8_t rfm69_temperature(void);
 
 // Interface with SPI bus

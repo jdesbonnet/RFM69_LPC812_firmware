@@ -42,7 +42,7 @@ const uint8_t RFM69_CONFIG[][2] = {
 	{ RFM69_BITRATEMSB, 0x68},
 	{ RFM69_BITRATELSB, 0x2B},
 
-	// Carrier frequency (x3 registers for MSB 0x7, MID 0x8, LSB 0x9)
+	// Carrier frequency (x3 registers)
 	// 433MHz operation
 	{ RFM69_FRFMSB, 0x6C},
 	{ RFM69_FRFMID, 0x40},
@@ -50,7 +50,7 @@ const uint8_t RFM69_CONFIG[][2] = {
 
 	// Power Amplifier
 	{ RFM69_PALEVEL,
-    	RFM69_PALEVEL_Pa1On
+		RFM69_PALEVEL_Pa1On
     	| RFM69_PALEVEL_OutputPower_VALUE(31)
 	},
 

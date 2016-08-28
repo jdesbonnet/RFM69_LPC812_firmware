@@ -105,6 +105,10 @@ uint8_t rfm69_payload_ready() {
 	return rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK;
 }
 
+uint8_t rfm69_is_pll_lock() {
+	return rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_PllLock_MASK;
+}
+
 /**
  * Read temperature. Ref datasheet §3.4.17.
  */

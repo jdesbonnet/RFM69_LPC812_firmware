@@ -1,7 +1,8 @@
 #ifndef MAC_H_
 #define MAC_H_
 typedef enum {
-	PKT_ACK= 1,
+	PKT_NOP = 0,
+	PKT_ACK = 1,
 	PKT_APP_DATA = 2,
 	PKT_RELAY = 0x42,
 	PKT_REMOTE_CMD = 0x44,

@@ -42,9 +42,10 @@ int32_t ds18b20_temperature_read () {
 	ow_byte_write (0x44);
 
 	//delayMicroseconds(800);
-	delayMilliseconds(800);
+	delayMilliseconds(900);
 
 	if ( ! ow_reset() ) {
+		tfp_printf("; error !ow_reset\r\n");
 		return -9999;
 	}
 	// Skip ROM command

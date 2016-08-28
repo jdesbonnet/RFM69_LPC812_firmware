@@ -314,7 +314,7 @@ int main(void) {
 	// Watchdog timer: ~ 10kHz
     LPC_SYSCON->WDTOSCCTRL = (0x1<<5)
     						|0x1F;
-    LPC_WWDT->TC = params_union.params.link_loss_timeout_s * 2000;
+    LPC_WWDT->TC = params_union.params.link_loss_timeout_s * WWDT_CLOCK_SPEED_HZ;
     LPC_WWDT->MOD = (1<<0) // WDEN enable watchdog
     			| (1<<1); // WDRESET : enable watchdog to reset on timeout
     // Watchdog feed sequence
@@ -515,18 +515,14 @@ int main(void) {
 			delay(20000);
 
 			if (interrupt_source == UART_INTERRUPT) {
-				//setOpMode(MODE_AWAKE);
-
-				MyUARTSendStringZ("; UART interrupt, awake\r\n");
+				tfp_printf("; UART interrupt, awake\r\n");
 				params_union.params.operating_mode = MODE_AWAKE;
-
-				// Probably crud in buffer : clear it.
+				// Probably crud in UART rx buffer : clear it.
 				MyUARTBufReset();
 			}
 
 			// Indicator to host there is a short time window to issue command
-			MyUARTSendStringZ("z\r\n");
-			//MyUARTPrintDecimal(LPC_WWDT->TV);
+			tfp_printf("z\r\n");
 
 			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
@@ -542,7 +538,7 @@ int main(void) {
 		// If in MODE_LOW_POWER_POLL send status packet
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
-			tx_buffer.header.to_addr = 0xff; // broadcast
+			tx_buffer.header.to_addr = 0;
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
 			tx_buffer.payload[1] = event_counter;
@@ -559,34 +555,60 @@ int main(void) {
 			tx_buffer.payload[4] = temperature&0xff;
 #endif
 
-#ifdef FEATURE_LED
+			// Transmit 'z' periodic wake packet
 			ledOn();
 			rfm69_frame_tx(tx_buffer.buffer,8);
 			ledOff();
-#else
-			rfm69_frame_tx(tx_buffer.buffer,8);
-#endif
 
 
-			// Allow time for response (120ms)
-			// TODO: this is only long enough for a 4 or 5 bytes of payload.
-			// Need to check for incoming signal and delay longer if transmission
-			// in progress (or just delay longer.. which will affect battery drain).
+			// Listen for a short period for a response
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
 
-			// Delay in SLEEP for 200ms to allow for reply radio frame
-			// TODO: bug: we need to start this counter after the previous frame
-			// has finished TX. For the moment, extend from 200ms to 800ms to
-			// compensate for longer frame TX
+			//delayMilliseconds(params_union.params.listen_period_cs*10);
+
+
+			// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
+			// and if detected wait a further 500 ticks for the packet to arrive.
+			int i;
+			int start_time = LPC_WWDT->TV;
+			int end_time = start_time - 16;
+			while (LPC_WWDT->TV > end_time) {
+				if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
+					start_time = LPC_WWDT->TV;
+					end_time = start_time - 500;
+					while (LPC_WWDT->TV > end_time) {
+						if (rfm69_payload_ready()) {
+							break;
+						}
+					}
+					break;
+				}
+			}
+
 			/*
-			LPC_WKT->COUNT = 8000;
-			interrupt_source = 0;
-			do {
-				__WFI();
-			} while (interrupt_source != WKT_INTERRUPT);
+			int i;
+			int rssi_time = LPC_WWDT->TV;
+			for (i = 0; i < 10000; i++) {
+				if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
+					rssi_time -= LPC_WWDT->TV;
+					break;
+				}
+			}
+
+			int payload_time = LPC_WWDT->TV;
+			for (i = 0; i < 10000; i++) {
+				if (rfm69_payload_ready()) {
+					payload_time -= LPC_WWDT->TV;
+					break;
+				}
+			}
+
+
+			tfp_printf("; WWDT=%d\r\n", LPC_WWDT->TV);
+			tfp_printf("; RSSI %d ticks\r\n",rssi_time);
+			tfp_printf("; payload_ready %d ticks\r\n",payload_time);
 			*/
 
-			delayMilliseconds(params_union.params.listen_period_cs*10);
 		}
 
 
@@ -607,13 +629,9 @@ int main(void) {
 			rssi = rfm69_register_read(RFM69_RSSIVALUE);
 
 			// Yes, frame ready to be read from FIFO
-#ifdef FEATURE_LED
 			ledOn();
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
 			ledOff();
-#else
-			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
-#endif
 
 			last_frame_time = systick_counter;
 
@@ -1194,13 +1212,12 @@ int main(void) {
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 			uint32_t last_frame_age = systick_counter - last_frame_time;
-			MyUARTSendStringZ ("; last_frame_age=");
-			MyUARTPrintHex(last_frame_age);
-			MyUARTSendStringZ ("\r\n");
+			tfp_printf("; last_frame_age=%d\r\n",last_frame_age);
+			MyUARTSendDrain();
 			if (params_union.params.link_loss_timeout_s != 0
 					&& (last_frame_age > params_union.params.link_loss_timeout_s*100)) {
 				// Report MCU reset (reason=2 link loss timeout)
-				MyUARTSendStringZ("q 2\r\n");
+				tfp_printf("q 2\r\n");
 				MyUARTSendDrain();
 				// Reset
 				NVIC_SystemReset();
