@@ -16,27 +16,19 @@ void ws2812b_init () {
  * @param color 0x00bbrrgg
  *
  */
-void ws2812b_bitbang (uint32_t color) {
+//#define NO_OPTIMIZE __attribute__((optimize("O0")))
+//#define NO_OPTIMIZE
+void __attribute__((optimize("O2"))) ws2812b_bitbang (uint32_t color) {
 	int i;
 	for (i = 0; i < 24; i++) {
-		//Chip_GPIO_SetPinState(LPC_GPIO_PORT, 0, PIN_WS2812B, 1);
-		GPIOSetBitValue(0, WS2812B_PIN, 1);
-		if (color & 1) {
+		if ((color & 1) == 0) {
+			LPC_GPIO_PORT->SET0 = 1<<WS2812B_PIN;
+			LPC_GPIO_PORT->CLR0 = 1<<WS2812B_PIN;
 			__NOP();
-			__NOP();
-			__NOP();
-			__NOP();
-			__NOP();
-			__NOP();
-					//Chip_GPIO_SetPinState(LPC_GPIO_PORT, 0, PIN_WS2812B, 0);
-			GPIOSetBitValue(0, WS2812B_PIN, 0);
 		} else {
+			LPC_GPIO_PORT->SET0 = 1<<WS2812B_PIN;
 			__NOP();
-			__NOP();
-			//Chip_GPIO_SetPinState(LPC_GPIO_PORT, 0, PIN_WS2812B, 0);
-			GPIOSetBitValue(0, WS2812B_PIN, 0);
-			__NOP();
-			__NOP();
+			LPC_GPIO_PORT->CLR0 = 1<<WS2812B_PIN;
 		}
 		color >>= 1;
 	}

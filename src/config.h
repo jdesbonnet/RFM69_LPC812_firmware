@@ -24,10 +24,10 @@
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
-#define DEFAULT_MODE MODE_LOW_POWER_POLL
-//#define DEFAULT_MODE MODE_AWAKE
+//#define DEFAULT_MODE MODE_LOW_POWER_POLL
+#define DEFAULT_MODE MODE_AWAKE
 
-#define DEFAULT_POLL_INTERVAL 1
+#define DEFAULT_POLL_INTERVAL 6
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
@@ -70,9 +70,6 @@
 // Diagnostic LED
 #define FEATURE_LED
 
-// Enable ARM Cortex M SysTick timer
-#define FEATURE_SYSTICK
-
 // Experimental application to count rain tip bucket
 #define FEATURE_EVENT_COUNTER
 
@@ -98,7 +95,7 @@
 #define FEATURE_GPS_ON_USART1
 
 // WS2812B RGB LED driver
-#define FEATURE_WS2812B
+//#define FEATURE_WS2812B
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)

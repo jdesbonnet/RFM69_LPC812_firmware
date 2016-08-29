@@ -54,6 +54,7 @@ For v0.2.0:
 #include "lpc8xx_pmu.h"
 #include "onewire.h"
 #include "ds18b20.h"
+#include "ws2812b.h"
 #include "gps.h"
 #include "iap_driver.h"
 
@@ -88,13 +89,10 @@ frame_buffer_type rx_buffer;
 #endif
 
 
-#ifdef FEATURE_SYSTICK
 	volatile uint32_t systick_counter = 0;
 	void SysTick_Handler(void) {
 		systick_counter++; // every 10ms
-		//coarse_clock++;
 	}
-#endif
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
@@ -103,11 +101,7 @@ frame_buffer_type rx_buffer;
  */
 void report_error (uint8_t cmd, int32_t code) {
 	if (code<0) code = -code;
-	MyUARTSendStringZ("e ");
-	MyUARTSendByte(cmd);
-	MyUARTSendByte(' ');
-	MyUARTPrintHex(code);
-	MyUARTSendCRLF();
+	tfp_printf("e %c %x\r\n",cmd,code);
 }
 
 
@@ -207,9 +201,7 @@ int main(void) {
 	eeprom_read(params_union.params_buffer);
 
 
-#ifdef FEATURE_SYSTICK
     SysTick_Config( SYSTICK_DELAY );
-#endif
 
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
@@ -486,6 +478,9 @@ int main(void) {
 				|| params_union.params.operating_mode == MODE_RADIO_OFF
 				) {
 
+			tfp_printf("; z\r\n");
+			MyUARTSendDrain();
+
 			// Set radio in SLEEP mode
 			rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
 
@@ -566,20 +561,34 @@ int main(void) {
 			// Listen for a short period for a response
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
 
-			//delayMilliseconds(params_union.params.listen_period_cs*10);
-
-
 			// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
 			// and if detected wait a further 500 ticks for the packet to arrive.
 			int i;
 			int start_time = LPC_WWDT->TV;
 			int end_time = start_time - 16;
+			//uint8_t rssiscan1[120];memset(rssiscan1,0,120);
+			//uint8_t rssiscan2[120];memset(rssiscan2,0,120);
 			while (LPC_WWDT->TV > end_time) {
+				//i = 0;
+				//if (i < 120) {
+					//rssiscan1[i++] = rfm69_register_read(RFM69_RSSIVALUE);
+				//}
 				if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
 					start_time = LPC_WWDT->TV;
 					end_time = start_time - 500;
+					//rssi = rfm69_register_read(RFM69_RSSIVALUE);
+					//tfp_printf("; rssi1=%x\r\n",rssi);
+					//i = 0;
 					while (LPC_WWDT->TV > end_time) {
+						//if (i < 120) {
+						//	rssiscan2[i++] = rfm69_register_read(RFM69_RSSIVALUE);
+						//}
+						//rssi = rfm69_register_read(RFM69_RSSIVALUE);
 						if (rfm69_payload_ready()) {
+							//tfp_printf("; rssi2=%x\r\n",rssi);
+							//for (i = 0; i < 120; i++) {
+							//	tfp_printf("%d %d %d\r\n", i,rssiscan1[i],rssiscan2[i]);
+							//}
 							break;
 						}
 					}
@@ -628,8 +637,8 @@ int main(void) {
 		// if ( IS_PAYLOAD_READY()  ) {
 		if (rfm69_payload_ready()) {
 
-			rssi = rfm69_register_read(RFM69_RSSIVALUE);
-
+			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
+			tfp_printf("; rssi_after_payload_ready=%x\r\n",rfm69_register_read(RFM69_RSSIVALUE));
 			// Yes, frame ready to be read from FIFO
 			ledOn();
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
@@ -1056,12 +1065,8 @@ int main(void) {
 			// Set or report node address
 			case 'N' :
 			{
-				//cmd_set_node_addr(argc, args);
-
 				if (argc == 1) {
-					MyUARTSendStringZ("n ");
-					MyUARTPrintHex(params_union.params.node_addr);
-					MyUARTSendCRLF();
+					tfp_printf("n %x\r\n", params_union.params.node_addr);
 					break;
 				}
 				if (argc != 2) {
@@ -1167,24 +1172,20 @@ int main(void) {
 			// Read battery. Return in both x response message and also
 			// human friendly value in decimal in info message
 			case 'X' :  {
-				int battery_vm = readBattery();
-				MyUARTSendStringZ("; power_mV=");
-				MyUARTPrintDecimal(battery_vm);
-				MyUARTSendStringZ("\r\nx ");
-				MyUARTPrintHex(battery_vm);
-				MyUARTSendCRLF();
+				tfp_printf("; battery_mV=%d\r\n",readBattery());
 				break;
 			}
 
 			case 'Y' : {
-				//uint64_t rom_addr = ds18b20_rom_read();
-				//MyUARTPrintHex(rom_addr>>32);
-				//MyUARTPrintHex(rom_addr);
-				//MyUARTSendCRLF();
+				tfp_printf("y %x\r\n", ds18b20_temperature_read());
+				break;
+			}
 
-				MyUARTSendStringZ("y ");
-				MyUARTPrintHex(ds18b20_temperature_read());
-				MyUARTSendCRLF();
+			case 'Z' : {
+				int rgb = parse_hex(args[1]);
+				ws2812b_init();
+				ws2812b_reset();
+				ws2812b_bitbang(rgb);
 				break;
 			}
 
