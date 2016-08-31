@@ -1,8 +1,11 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.5.6"
+#define VERSION "RFM69 0.5.7"
 
+// Experimental directive to load function in RAM to facilitate OTA update
+#define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
+#define ALWAYS_INLINE __attribute__((always_inline))
 
 // Radio and MCU in sleep state
 #define MODE_ALL_OFF (0)
@@ -24,10 +27,10 @@
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
-//#define DEFAULT_MODE MODE_LOW_POWER_POLL
-#define DEFAULT_MODE MODE_AWAKE
+#define DEFAULT_MODE MODE_LOW_POWER_POLL
+//#define DEFAULT_MODE MODE_AWAKE
 
-#define DEFAULT_POLL_INTERVAL 6
+#define DEFAULT_POLL_INTERVAL 10
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000

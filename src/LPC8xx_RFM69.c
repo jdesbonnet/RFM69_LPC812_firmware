@@ -163,8 +163,6 @@ void displayStatus () {
 
 	tfp_printf("; END\r\n");
 
-	exec_from_ram_test();
-	exec_from_ram_test_end();
 }
 
 // TODO: is volatile necessary?
@@ -1181,6 +1179,10 @@ int main(void) {
 
 			case 'Y' : {
 				tfp_printf("y %x\r\n", ds18b20_temperature_read());
+
+				exec_from_ram_test();
+				exec_from_ram_test_end();
+
 				break;
 			}
 
@@ -1358,13 +1360,23 @@ void WKT_IRQHandler(void)
 	interrupt_source = WKT_INTERRUPT;
 }
 
-// Experimental exec from RAM function
-__attribute__( ( long_call, section(".data.ramfunc") ) )
-void exec_from_ram_test (void) {
-	tfp_printf("running from RAM!\r\n");
+// Experimental exec from RAM functions
+RAM_FUNC
+void exec_from_ram_test (uint8_t myaddr) {
+	tfp_printf("RAM resident bootloader\r\n");
+	int i = 0;
+	do {
+		if (rfm69_payload_ready()) {
+			ledOn();
+			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
+			ledOff();
+			i++;
+		}
+	} while (i < 10);
 }
 
-__attribute__( ( long_call, section(".data.ramfunc") ) )
+RAM_FUNC
 void exec_from_ram_test_end (void) {
 	tfp_printf("end!\r\n");
 }
+

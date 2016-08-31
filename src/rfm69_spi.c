@@ -9,7 +9,7 @@
 #include "LPC8xx.h"
 #endif
 
-#include <cr_section_macros.h>
+#include "config.h"
 
 //#include "lpc8xx_spi.h"
 #include "spi.h"
@@ -40,6 +40,7 @@ void rfm69_init() {
 /**
  * Assert NSS line (bring low)
  */
+RAM_FUNC
 void rfm69_nss_assert() {
 	spi_assert_ss();
 }
@@ -48,10 +49,12 @@ void rfm69_nss_assert() {
  * Deassert NSS (slave select) line. Must be careful to ensure that SPI FIFO
  * has drained before doing this.
  */
+RAM_FUNC
 void rfm69_nss_deassert() {
 	spi_deassert_ss();
 }
 
+RAM_FUNC
 uint8_t rfm69_spi_transfer_byte(uint8_t b) {
 
 #ifdef USE_SSP0

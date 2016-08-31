@@ -6,6 +6,8 @@
  * Joe Desbonnet, jdesbonnet@gmail.com
  */
 
+#include "config.h"
+
 #include <stdint.h>
 #include "rfm69.h"
 #include "spi.h"
@@ -100,8 +102,8 @@ uint8_t rfm69_rssi () {
  * Check if packet has been received and is ready to read from FIFO.
  * @return zero if no packet available, non-zero if packet available.
  */
+RAM_FUNC
 uint8_t rfm69_payload_ready() {
-
 	return rfm69_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PayloadReady_MASK;
 }
 
@@ -221,6 +223,7 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 
 }
 
+RAM_FUNC
 uint8_t rfm69_register_read (uint8_t reg_addr) {
 	rfm69_nss_assert();
 	rfm69_spi_transfer_byte(reg_addr);

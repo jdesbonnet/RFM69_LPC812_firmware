@@ -81,15 +81,17 @@ static void spi_delay(void) {
 	//__NOP();
 }
 
+__attribute__((always_inline))
 void spi_assert_ss () {
 		SS_LOW();
 }
 
+__attribute__((always_inline))
 void spi_deassert_ss () {
 		SS_HIGH();
 }
 
-
+__attribute__((always_inline))
 uint8_t spi_transfer_byte (uint8_t out) {
 
 	int j=0x80;
