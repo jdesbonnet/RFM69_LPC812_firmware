@@ -162,6 +162,9 @@ void displayStatus () {
 	tfp_printf("; ds18b20_temperature_mC=%d\r\n", t);
 
 	tfp_printf("; END\r\n");
+
+	exec_from_ram_test();
+	exec_from_ram_test_end();
 }
 
 // TODO: is volatile necessary?
@@ -1353,4 +1356,15 @@ void WKT_IRQHandler(void)
 {
 	LPC_WKT->CTRL |= 0x02;			/* clear interrupt flag */
 	interrupt_source = WKT_INTERRUPT;
+}
+
+// Experimental exec from RAM function
+__attribute__( ( long_call, section(".data.ramfunc") ) )
+void exec_from_ram_test (void) {
+	tfp_printf("running from RAM!\r\n");
+}
+
+__attribute__( ( long_call, section(".data.ramfunc") ) )
+void exec_from_ram_test_end (void) {
+	tfp_printf("end!\r\n");
 }
