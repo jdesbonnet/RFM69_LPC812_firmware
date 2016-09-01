@@ -18,9 +18,13 @@ void ledBlink (int nblink) {
 			delayMilliseconds(200);
 	}
 }
+
+__attribute__((always_inline))
 void ledOn() {
 	GPIOSetBitValue(0,LED_PIN,1);
 }
+
+__attribute__((always_inline))
 void ledOff() {
 	GPIOSetBitValue(0,LED_PIN,0);
 }

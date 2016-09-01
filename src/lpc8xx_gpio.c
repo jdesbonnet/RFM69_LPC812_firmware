@@ -554,6 +554,7 @@ uint32_t GPIOGetPinValue( uint32_t portNum, uint32_t bitPosi )
 ** Returned value:		None
 **
 *****************************************************************************/
+__attribute__((always_inline))
 void GPIOSetBitValue( uint32_t portNum, uint32_t bitPosi, uint32_t bitVal )
 {
   if ( bitVal )

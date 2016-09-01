@@ -884,6 +884,13 @@ int main(void) {
 					e_entry();
 					break;
 				}
+
+				case PKG_OTA_ENTER_BOOTLOADER : {
+					// Can never exit from here: only reset when complete
+					ram_bootloader(params_union.params.node_addr);
+					break;
+				}
+
 				}
 
 
@@ -953,6 +960,11 @@ int main(void) {
 			// switch statement.
 
 			switch (*args[0]) {
+
+			case 'A' : {
+				ram_bootloader();
+				break;
+			}
 
 			case 'B' : {
 				cmd_set_uart_speed (argc, args);
@@ -1179,10 +1191,6 @@ int main(void) {
 
 			case 'Y' : {
 				tfp_printf("y %x\r\n", ds18b20_temperature_read());
-
-				exec_from_ram_test();
-				exec_from_ram_test_end();
-
 				break;
 			}
 
@@ -1360,23 +1368,113 @@ void WKT_IRQHandler(void)
 	interrupt_source = WKT_INTERRUPT;
 }
 
-// Experimental exec from RAM functions
+/**
+ * Experimental bootloader that runs entirely in RAM so that any page of
+ * flash memory can be reprogrammed from here. Implements a very bare
+ * minimum set of radio commands that allow for flash reprogramming and
+ * verification.
+ */
 RAM_FUNC
-void exec_from_ram_test (uint8_t myaddr) {
+void ram_bootloader (uint8_t myaddr) {
 	tfp_printf("RAM resident bootloader\r\n");
+	ledOn();
+
 	int i = 0;
 	do {
 		if (rfm69_payload_ready()) {
-			ledOn();
+
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
-			ledOff();
+
+			// 0xff is the broadcast address
+			if (rx_buffer.header.to_addr == myaddr) {
+
+				// bit 7: ack request
+				if (rx_buffer.header.msg_type & 0x80) {
+					tx_buffer.header.msg_type = PKT_ACK;
+					tx_buffer.payload[0] = 0;
+					rfm69_frame_tx(tx_buffer.buffer, 4);
+				}
+
+				switch (rx_buffer.header.msg_type & 0x7f) {
+				case PKT_OTA_FLASH_WRITE:
+				{
+					// Flash starts at 0x0 and will never exceed 64k, so 16 bit addr ok.
+					// Radio frames are not large enough to accommodate the 64 byte page
+					// so need to write in 32 byte chunks. It means each flash page must
+					// be written twice. But FW upgrades are not expected to happen very
+					// often.
+					void *addr = (void *)(rx_buffer.payload[0]<<8 | rx_buffer.payload[1]);
+					void *page_base_addr = (void *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
+
+					uint8_t buf[64];
+					memcpy(buf,page_base_addr,64);
+
+					// Upper or lower part of flash page?
+					if ((uint32_t)addr & 0x0020) {
+						memcpy(buf+32, &rx_buffer.payload[2], 32);
+					} else {
+						memcpy(buf, &rx_buffer.payload[2], 32);
+					}
+
+					iap_init();
+
+					uint32_t flash_page = (uint32_t)page_base_addr >> 6;
+					uint32_t flash_sector = flash_page >> 4;
+
+					int iap_status;
+					/* Prepare the page for erase */
+					iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
+					//if (iap_status != CMD_SUCCESS) return -4;
+
+					/* Erase the page */
+					iap_status = (__e_iap_status) iap_erase_page(flash_page, flash_page);
+					//if (iap_status != CMD_SUCCESS) return -5;
+
+					/* Prepare the page for writing */
+					iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
+					//if (iap_status != CMD_SUCCESS) return -6;
+
+					/* Write data to page */
+					iap_status = (__e_iap_status) iap_copy_ram_to_flash(buf,
+							page_base_addr, 64);
+					//if (iap_status != CMD_SUCCESS) return -7;
+
+					break;
+				}
+				case PKT_OTA_FLASH_CRC_REQUEST:
+				{
+					// Flash starts at 0x0 and will never exceed 64k, so 16 bit addr ok
+					// Frames are not large enough to accommodate the 64byte page so
+					// need to write in 32byte chunks.
+					uint32_t *addr = (uint32_t *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
+					int i;
+					LPC_CRC->MODE = 0x00000036;
+					LPC_CRC->SEED = 0xFFFFFFFF;
+					for (i = 0; i < 16; i++) {
+						LPC_CRC->WR_DATA_DWORD = addr[i];
+					}
+					tx_buffer.header.msg_type = PKT_OTA_FLASH_CRC_RESPONSE;
+					tx_buffer.payload[0] = rx_buffer.payload[0];
+					tx_buffer.payload[1] = rx_buffer.payload[1];
+					uint32_t *crc32 = (uint32_t *)&tx_buffer.payload[2];
+					*crc32 = LPC_CRC->SUM;
+					rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
+					break;
+				}
+				case PKT_OTA_EXIT_BOOTLOADER:
+				{
+					return;
+				}
+				case PKT_OTA_REBOOT:
+				{
+					NVIC_SystemReset();
+				}
+				}
+			}
+
 			i++;
 		}
-	} while (i < 10);
+	} while (i < 10000);
 }
 
-RAM_FUNC
-void exec_from_ram_test_end (void) {
-	tfp_printf("end!\r\n");
-}
 
