@@ -175,6 +175,10 @@ void myputc (void *p, char c) {
 	MyUARTSendByte(c);
 }
 
+/**
+ * Save parameter/settings block to flash. Copy to RAM
+ * before writing to flash.
+ */
 void eeprom_params_save (void) {
     uint8_t tmpbuf[64];
     memcpy(tmpbuf,params_union.params_buffer,64);
@@ -639,7 +643,7 @@ int main(void) {
 		if (rfm69_payload_ready()) {
 
 			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
-			tfp_printf("; rssi_after_payload_ready=%x\r\n",rfm69_register_read(RFM69_RSSIVALUE));
+			//tfp_printf("; rssi_after_payload_ready=%x\r\n",rfm69_register_read(RFM69_RSSIVALUE));
 			// Yes, frame ready to be read from FIFO
 			ledOn();
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
@@ -1375,18 +1379,62 @@ void WKT_IRQHandler(void)
  * verification.
  */
 RAM_FUNC
+int flash_write_page (void *page_base_addr, void *buf) {
+
+	iap_init();
+
+	uint32_t flash_page = (uint32_t)page_base_addr >> 6;
+	uint32_t flash_sector = flash_page >> 4;
+
+	int iap_status;
+	/* Prepare the page for erase */
+	iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
+	if (iap_status != CMD_SUCCESS) return -4;
+
+	/* Erase the page */
+	iap_status = (__e_iap_status) iap_erase_page(flash_page, flash_page);
+	if (iap_status != CMD_SUCCESS) return -5;
+
+	/* Prepare the page for writing */
+	iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
+	if (iap_status != CMD_SUCCESS) return -6;
+
+	/* Write data to page */
+	iap_status = (__e_iap_status) iap_copy_ram_to_flash(buf,
+			page_base_addr, 64);
+	if (iap_status != CMD_SUCCESS) return -7;
+
+	return 0;
+}
+
+RAM_FUNC
 void ram_bootloader (uint8_t myaddr) {
+
 	tfp_printf("RAM resident bootloader\r\n");
 	ledOn();
+
+	// Disable all interrupts: can't have entry into ISR while ISR is being rewritten
+	NVIC_DisableIRQ(SysTick_IRQn);
+	NVIC_DisableIRQ(WDT_IRQn);
+	NVIC_DisableIRQ(WKT_IRQn);
+	NVIC_DisableIRQ(CMP_IRQn);
+	NVIC_DisableIRQ(UART0_IRQn);
+	NVIC_DisableIRQ(UART1_IRQn);
+	NVIC_DisableIRQ(PININT0_IRQn);
+	NVIC_DisableIRQ(PININT1_IRQn);
+	NVIC_DisableIRQ(PININT2_IRQn);
+	NVIC_DisableIRQ(PININT3_IRQn);
 
 	int i = 0;
 	do {
 		if (rfm69_payload_ready()) {
 
+			ledOff();
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
+			ledOn();
 
 			// 0xff is the broadcast address
-			if (rx_buffer.header.to_addr == myaddr) {
+			if (rx_buffer.header.to_addr == params_union.params.node_addr) {
 
 				// bit 7: ack request
 				if (rx_buffer.header.msg_type & 0x80) {
@@ -1394,6 +1442,14 @@ void ram_bootloader (uint8_t myaddr) {
 					tx_buffer.payload[0] = 0;
 					rfm69_frame_tx(tx_buffer.buffer, 4);
 				}
+
+				MyUARTSendStringZ("packet: ");
+				int j;
+				for (j = 0; j < frame_len; j++) {
+					MyUARTPrintHex8(rx_buffer.buffer[j]);
+					MyUARTSendByte(' ');
+				}
+				MyUARTSendCRLF();
 
 				switch (rx_buffer.header.msg_type & 0x7f) {
 				case PKT_OTA_FLASH_WRITE:
@@ -1416,28 +1472,7 @@ void ram_bootloader (uint8_t myaddr) {
 						memcpy(buf, &rx_buffer.payload[2], 32);
 					}
 
-					iap_init();
-
-					uint32_t flash_page = (uint32_t)page_base_addr >> 6;
-					uint32_t flash_sector = flash_page >> 4;
-
-					int iap_status;
-					/* Prepare the page for erase */
-					iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
-					//if (iap_status != CMD_SUCCESS) return -4;
-
-					/* Erase the page */
-					iap_status = (__e_iap_status) iap_erase_page(flash_page, flash_page);
-					//if (iap_status != CMD_SUCCESS) return -5;
-
-					/* Prepare the page for writing */
-					iap_status = (__e_iap_status) iap_prepare_sector(flash_sector, flash_sector);
-					//if (iap_status != CMD_SUCCESS) return -6;
-
-					/* Write data to page */
-					iap_status = (__e_iap_status) iap_copy_ram_to_flash(buf,
-							page_base_addr, 64);
-					//if (iap_status != CMD_SUCCESS) return -7;
+					flash_write_page(page_base_addr,buf);
 
 					break;
 				}
@@ -1446,6 +1481,10 @@ void ram_bootloader (uint8_t myaddr) {
 					// Flash starts at 0x0 and will never exceed 64k, so 16 bit addr ok
 					// Frames are not large enough to accommodate the 64byte page so
 					// need to write in 32byte chunks.
+
+					// Enable click to CRC block
+					LPC_SYSCON->SYSAHBCLKCTRL |= (1<<13);
+
 					uint32_t *addr = (uint32_t *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
 					int i;
 					LPC_CRC->MODE = 0x00000036;
@@ -1458,7 +1497,27 @@ void ram_bootloader (uint8_t myaddr) {
 					tx_buffer.payload[1] = rx_buffer.payload[1];
 					uint32_t *crc32 = (uint32_t *)&tx_buffer.payload[2];
 					*crc32 = LPC_CRC->SUM;
-					rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
+					MyUARTSendStringZ("CRC ");
+					MyUARTPrintHex(LPC_CRC->SUM);
+					MyUARTSendCRLF();
+					//rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
+
+					// Disable clock to CRC block.
+					LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<13);
+
+					break;
+				}
+				case PKT_OTA_FLASH_REQUEST:
+				{
+					// Flash starts at 0x0 and will never exceed 64k, so 16 bit addr ok
+					// Frames are not large enough to accommodate the 64byte page so
+					// need to write in 32byte chunks.
+					uint32_t *addr = (uint32_t *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
+					tx_buffer.header.msg_type = PKT_OTA_FLASH_RESPONSE;
+					tx_buffer.payload[0] = rx_buffer.payload[0];
+					tx_buffer.payload[1] = rx_buffer.payload[1];
+					memcpy(&tx_buffer.payload[2], addr, 32);
+					rfm69_frame_tx(tx_buffer.buffer, 3+2+32);
 					break;
 				}
 				case PKT_OTA_EXIT_BOOTLOADER:
@@ -1468,6 +1527,22 @@ void ram_bootloader (uint8_t myaddr) {
 				case PKT_OTA_REBOOT:
 				{
 					NVIC_SystemReset();
+				}
+
+				case PKT_OTA_REPROG_TEST:
+				{
+
+					void *p = rx_buffer.payload[0]<<8 | rx_buffer.payload[1];
+					uint8_t buf[64];
+					// Read page
+					memcpy(buf, p, 64);
+					// Write back
+					MyUARTSendStringZ("Writing to flash at ");
+					MyUARTPrintHex(p);
+					MyUARTSendStringZ(": ");
+					flash_write_page(p,buf);
+					MyUARTSendStringZ(" ... ok\r\n");
+
 				}
 				}
 			}

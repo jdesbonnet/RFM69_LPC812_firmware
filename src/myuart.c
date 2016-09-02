@@ -104,7 +104,7 @@ void MyUARTInit(uint32_t baudrate)
 }
 */
 
-
+RAM_FUNC
 void MyUARTSendByte (uint8_t v) {
 	  // wait until data can be written to TXDATA
 	  while ( ! (LPC_USART0->STAT & (1<<2)) );
@@ -126,6 +126,7 @@ void MyUARTSendString (uint8_t *buf, uint32_t len) {
 /**
  * Send zero-terminated string.
  */
+RAM_FUNC
 void MyUARTSendStringZ (char *buf) {
 	while (*buf != 0) {
 		MyUARTSendByte(*buf);
@@ -133,7 +134,7 @@ void MyUARTSendStringZ (char *buf) {
 	}
 }
 
-
+RAM_FUNC
 void MyUARTSendCRLF(void) {
 	//MyUARTSendStringZ((uint8_t *)"\r\n");
 	MyUARTSendByte('\r');
@@ -241,11 +242,23 @@ void MyUARTPrintDecimal (int32_t i) {
 	}
 }
 
-
 void MyUARTPrintHex (uint32_t v) {
 	// 36 bytes long
 	int i,h;
 	for (i = 28; i >=0 ; i-=4) {
+		h = (v>>i) & 0x0f;
+		if (h<10) {
+			MyUARTSendByte('0'+h);
+		} else{
+			MyUARTSendByte('A'+h-10);
+		}
+	}
+}
+
+RAM_FUNC
+void MyUARTPrintHex8 (uint8_t v) {
+	int i,h;
+	for (i = 4; i >=0 ; i-=4) {
 		h = (v>>i) & 0x0f;
 		if (h<10) {
 			MyUARTSendByte('0'+h);

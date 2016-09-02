@@ -64,6 +64,7 @@ uint32_t MyUARTBufCopy(uint8_t *buf);
 
 void MyUARTPrintDecimal(int32_t i);
 void MyUARTPrintHex(uint32_t i);
+void MyUARTPrintHex8(uint8_t i);
 int MyUARTGetStrLen(uint8_t *);
 
 
