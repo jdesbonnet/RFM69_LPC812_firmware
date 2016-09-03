@@ -891,7 +891,7 @@ int main(void) {
 
 				case PKG_OTA_ENTER_BOOTLOADER : {
 					// Can never exit from here: only reset when complete
-					ram_bootloader(params_union.params.node_addr);
+					ota_bootloader(params_union.params.node_addr);
 					break;
 				}
 
@@ -966,7 +966,7 @@ int main(void) {
 			switch (*args[0]) {
 
 			case 'A' : {
-				ram_bootloader();
+				ota_bootloader();
 				break;
 			}
 
@@ -1408,11 +1408,7 @@ int flash_write_page (void *page_base_addr, void *buf) {
 }
 
 RAM_FUNC
-void ram_bootloader (uint8_t myaddr) {
-
-	tfp_printf("RAM resident bootloader\r\n");
-	ledOn();
-
+static void ota_irq_disable () {
 	// Disable all interrupts: can't have entry into ISR while ISR is being rewritten
 	NVIC_DisableIRQ(SysTick_IRQn);
 	NVIC_DisableIRQ(WDT_IRQn);
@@ -1424,6 +1420,30 @@ void ram_bootloader (uint8_t myaddr) {
 	NVIC_DisableIRQ(PININT1_IRQn);
 	NVIC_DisableIRQ(PININT2_IRQn);
 	NVIC_DisableIRQ(PININT3_IRQn);
+}
+
+RAM_FUNC
+static void ota_irq_enable () {
+	// Disable all interrupts: can't have entry into ISR while ISR is being rewritten
+	NVIC_EnableIRQ(SysTick_IRQn);
+	NVIC_EnableIRQ(WDT_IRQn);
+	NVIC_EnableIRQ(WKT_IRQn);
+	NVIC_EnableIRQ(CMP_IRQn);
+	NVIC_EnableIRQ(UART0_IRQn);
+	NVIC_EnableIRQ(UART1_IRQn);
+	NVIC_EnableIRQ(PININT0_IRQn);
+	NVIC_EnableIRQ(PININT1_IRQn);
+	NVIC_EnableIRQ(PININT2_IRQn);
+	NVIC_EnableIRQ(PININT3_IRQn);
+}
+
+RAM_FUNC
+void ota_bootloader (uint8_t myaddr) {
+
+	tfp_printf("RAM resident bootloader\r\n");
+	ledOn();
+
+	//ota_irq_disable();
 
 	int i = 0;
 	do {
@@ -1472,8 +1492,12 @@ void ram_bootloader (uint8_t myaddr) {
 						memcpy(buf, &rx_buffer.payload[2], 32);
 					}
 
+					MyUARTSendStringZ("Flash write to ");
+					MyUARTPrintHex(page_base_addr);
+
 					flash_write_page(page_base_addr,buf);
 
+					MyUARTSendStringZ(" done.\r\n");
 					break;
 				}
 				case PKT_OTA_FLASH_CRC_REQUEST:
@@ -1485,12 +1509,15 @@ void ram_bootloader (uint8_t myaddr) {
 					// Enable click to CRC block
 					LPC_SYSCON->SYSAHBCLKCTRL |= (1<<13);
 
-					uint32_t *addr = (uint32_t *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
+					uint8_t *addr = (uint8_t *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
 					int i;
+
+					// UM10601 §19.7.3, page 264 CRC-32 set-up
 					LPC_CRC->MODE = 0x00000036;
 					LPC_CRC->SEED = 0xFFFFFFFF;
-					for (i = 0; i < 16; i++) {
-						LPC_CRC->WR_DATA_DWORD = addr[i];
+					// Can do this byte by byte or by DWORD (latter more efficient)
+					for (i = 0; i < 64; i++) {
+						LPC_CRC->WR_DATA_BYTE = addr[i];
 					}
 					tx_buffer.header.msg_type = PKT_OTA_FLASH_CRC_RESPONSE;
 					tx_buffer.payload[0] = rx_buffer.payload[0];
@@ -1500,10 +1527,11 @@ void ram_bootloader (uint8_t myaddr) {
 					MyUARTSendStringZ("CRC ");
 					MyUARTPrintHex(LPC_CRC->SUM);
 					MyUARTSendCRLF();
-					//rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
 
 					// Disable clock to CRC block.
 					LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<13);
+
+					rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
 
 					break;
 				}
@@ -1517,7 +1545,7 @@ void ram_bootloader (uint8_t myaddr) {
 					tx_buffer.payload[0] = rx_buffer.payload[0];
 					tx_buffer.payload[1] = rx_buffer.payload[1];
 					memcpy(&tx_buffer.payload[2], addr, 32);
-					rfm69_frame_tx(tx_buffer.buffer, 3+2+32);
+					//rfm69_frame_tx(tx_buffer.buffer, 3+2+32);
 					break;
 				}
 				case PKT_OTA_EXIT_BOOTLOADER:
@@ -1546,6 +1574,8 @@ void ram_bootloader (uint8_t myaddr) {
 				}
 				}
 			}
+			// Listen for a short period for a response
+			rfm69_mode(RFM69_OPMODE_Mode_RX);
 
 			i++;
 		}
