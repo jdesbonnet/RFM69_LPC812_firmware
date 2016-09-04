@@ -28,6 +28,8 @@
 .indicator-on {color: red}
 .command-buttons BUTTON {margin:0.25em}
 .green {color:#00c000;}
+.red {color:#c00000;}
+
 .retry {background-color:yellow;}
 #crcTable {width:100%}
 #crcTable td {width:40px; border: 1px solid gray;}
@@ -242,6 +244,9 @@
 
 <div class="col-md-3">
 <button type="button" id="btn_ota_query_crc" class="btn btn-default">Query CRC</button>
+<button type="button" id="btn_ota_parse_fw" class="btn btn-default">Parse FW</button>
+<button type="button" id="btn_ota_program" class="btn btn-default">Program</button>
+
 </div>
 
 </div>
@@ -253,7 +258,8 @@
 	</div>
 	
 	<div class="col-md-4">
-		<textarea id="firmware" rows="24" cols="64"></textarea>
+		<textarea id="firmware" rows="24" cols="64">
+		</textarea>
 	</div>
 </div>
 
