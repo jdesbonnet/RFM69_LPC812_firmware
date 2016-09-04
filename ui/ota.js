@@ -1,9 +1,11 @@
 var ota = (function(){
 
 var pageCounter = 0;
-var pageCrc = [];
 var ota_retry_timeout;
 var retry_counter = 0;
+var curFwPageCrc = [];
+var newFwPageCrc = [];
+var newFwPageHex = [];
 
 return {
 	init: function() {
@@ -37,7 +39,15 @@ function ota_init() {
 	
 	$("#btn_ota_query_crc").click(function(){
 		var otaNode = parseInt($("#ota_node").val());
-		ota_query_crc(otaNode);
+		ota_query_flash_crc(otaNode);
+	});
+	
+	$("#btn_ota_parse_fw").click(function(){
+		ota_parse_fw($("#firmware").val());
+	});
+	$("#btn_ota_program").click(function(){
+	alert('b');
+		ota_program();
 	});
 	
 	addPacketListener(function(packet){
@@ -51,8 +61,18 @@ function ota_init() {
 			var crc32hex = payload.substring(6,14);
 			var flashPageAddr = parseInt(flashPageAddrHex,16);
 			var flashPage = flashPageAddr/64;
-			pageCrc[flashPage]=crc32hex;
-			$(".ota-flash-page-" + flashPage).html(crc32hex).addClass("green");
+			curFwPageCrc[flashPage]=crc32hex;
+			var cellEl = $(".ota-flash-page-" + flashPage);
+			cellEl.html(crc32hex);
+			if (newFwPageCrc[flashPage]) {
+				if (newFwPageCrc[flashPage] === curFwPageCrc[flashPage]) {
+					cellEl.addClass("green");
+				} else {
+					cellEl.addClass("red");
+				}
+			}
+			
+			
 			if (retry_counter>0) {
 				$(".ota-flash-page-" + flashPage).addClass("retry");
 			}
@@ -65,7 +85,7 @@ function ota_init() {
 			}
 			
 			// Get next page
-			if (pageCounter < 255) {
+			if (pageCounter < newFwPageCrc.length) {
 				pageCounter++;
 				var pageAddr = pageCounter*64;
 				ota_query_flash_page_crc  (0x40, pageAddr);
@@ -81,7 +101,7 @@ function ota_init() {
 
 
 
-function ota_query_crc (node) {
+function ota_query_flash_crc (node) {
 	pageCounter = 0;
 	ota_query_flash_page_crc(node, 0);
 }
@@ -91,6 +111,39 @@ function ota_query_flash_page_crc (node, pageAddr) {
 	var pageAddrHex = (0x10000 + pageAddr).toString(16).substr(-4);
 	var radioCmd = "T " + nodeHex + " 92" + pageAddrHex;
 	sendCommand(radioCmd);
+}
+
+function ota_parse_fw(fwHexDump) {
+	flashPages = fwHexDump.match(/[^\r\n]+/g);
+	flashPages.forEach(function(flashPage){
+		var p = flashPage.split(" ");
+		var pageAddr = parseInt(p[0],16);
+		var page = pageAddr/64;
+		newFwPageCrc[page] = p[2].toUpperCase();
+		newFwPageHex[page] = p[1];
+		console.log("newFwPageCrc[" + page + "]=" + newFwPageCrc[page]);
+	});
+}
+
+function ota_program () {
+alert('program');
+console.log("**PROGRAM");
+	var programCommands = [];
+	var i;
+	// ignore page 0
+	for (i = 1; i < newFwPageCrc.length; i++) {
+		if (newFwPageCrc[i] !== curFwPageCrc[i]) {
+			var cmd = "T 40 11" 
+			+ hex16(i*64)
+			+ newFwPageHex[i];
+			console.log("program: " + cmd);
+			programCommands.push(cmd);
+		}
+	}
+}
+
+function hex16 (n) {
+	return (0x10000 + n).toString(16).substr(-4);
 }
 
 }());
