@@ -966,7 +966,7 @@ int main(void) {
 			switch (*args[0]) {
 
 			case 'A' : {
-				ota_bootloader();
+				ota_bootloader(params_union.params.node_addr);
 				break;
 			}
 
@@ -1514,20 +1514,21 @@ void ota_bootloader (uint8_t myaddr) {
 					// Upper or lower part of flash page?
 					if ((uint32_t)addr & 0x0020) {
 						memcpy(buf+32, &rx_buffer.payload[2], 32);
-						MyUARTSendStringZ("Upper half page\r\n");
+						//MyUARTSendStringZ("Upper half page\r\n");
 					} else {
 						memcpy(buf, &rx_buffer.payload[2], 32);
-						MyUARTSendStringZ("Lower half page\r\n");
+						//MyUARTSendStringZ("Lower half page\r\n");
 					}
 
+					/*
 					MyUARTSendStringZ("Flash write to:");
 					MyUARTPrintHex(page_base_addr);
-
 					for (i = 0; i < 64; i++) {
 						MyUARTSendByte(' ');
 						MyUARTPrintHex8(buf[i]);
 					}
 					MyUARTSendStringZ("\r\n");
+					*/
 
 					flash_write_page(page_base_addr,buf);
 
@@ -1579,23 +1580,7 @@ void ota_bootloader (uint8_t myaddr) {
 					NVIC_SystemReset();
 				}
 
-				/*
-				case PKT_OTA_REPROG_TEST:
-				{
 
-					void *p = rx_buffer.payload[0]<<8 | rx_buffer.payload[1];
-					uint8_t buf[64];
-					// Read page
-					memcpy(buf, p, 64);
-					// Write back
-					MyUARTSendStringZ("Writing to flash at ");
-					MyUARTPrintHex(p);
-					MyUARTSendStringZ(": ");
-					flash_write_page(p,buf);
-					MyUARTSendStringZ(" ... ok\r\n");
-
-				}
-				*/
 				}
 			}
 			// Listen for a short period for a response
