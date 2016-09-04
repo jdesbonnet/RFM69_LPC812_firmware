@@ -126,20 +126,32 @@ function ota_parse_fw(fwHexDump) {
 }
 
 function ota_program () {
-alert('program');
-console.log("**PROGRAM");
 	var programCommands = [];
 	var i;
 	// ignore page 0
 	for (i = 1; i < newFwPageCrc.length; i++) {
 		if (newFwPageCrc[i] !== curFwPageCrc[i]) {
-			var cmd = "T 40 11" 
+			var cmd0 = "T 40 11" 
 			+ hex16(i*64)
-			+ newFwPageHex[i];
-			console.log("program: " + cmd);
-			programCommands.push(cmd);
+			+ newFwPageHex[i].substring(0,64);
+			var cmd1 = "T 40 11"
+			+ hex16(i*64 + 32)
+			+ newFwPageHex[i].substring(64,128);
+			console.log("program: " + cmd0);
+			console.log("program: " + cmd1);
+			programCommands.push(cmd0);
+			programCommands.push(cmd1);
 		}
 	}
+	
+	i = 1;
+	var ii = setInterval(function(){
+		sendCommand(programCommands[i++]);
+		if (i == programCommands.length) {
+			clearInterval(ii);
+		}
+	},1000);
+	
 }
 
 function hex16 (n) {

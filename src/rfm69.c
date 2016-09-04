@@ -232,6 +232,7 @@ uint8_t rfm69_register_read (uint8_t reg_addr) {
 	return reg_value;
 }
 
+RAM_FUNC
 void rfm69_register_write (uint8_t reg_addr, uint8_t reg_value) {
 	rfm69_nss_assert();
 	rfm69_spi_transfer_byte (reg_addr | 0x80); // Set bit 7 to indicate write op

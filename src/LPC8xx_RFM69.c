@@ -1514,12 +1514,20 @@ void ota_bootloader (uint8_t myaddr) {
 					// Upper or lower part of flash page?
 					if ((uint32_t)addr & 0x0020) {
 						memcpy(buf+32, &rx_buffer.payload[2], 32);
+						MyUARTSendStringZ("Upper half page\r\n");
 					} else {
 						memcpy(buf, &rx_buffer.payload[2], 32);
+						MyUARTSendStringZ("Lower half page\r\n");
 					}
 
-					MyUARTSendStringZ("Flash write to ");
+					MyUARTSendStringZ("Flash write to:");
 					MyUARTPrintHex(page_base_addr);
+
+					for (i = 0; i < 64; i++) {
+						MyUARTSendByte(' ');
+						MyUARTPrintHex8(buf[i]);
+					}
+					MyUARTSendStringZ("\r\n");
 
 					flash_write_page(page_base_addr,buf);
 
@@ -1542,6 +1550,8 @@ void ota_bootloader (uint8_t myaddr) {
 					MyUARTSendStringZ("CRC ");
 					MyUARTPrintHex(*crc32);
 					MyUARTSendCRLF();
+
+					*crc32 = __builtin_bswap32(*crc32);
 
 					rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
 
@@ -1569,6 +1579,7 @@ void ota_bootloader (uint8_t myaddr) {
 					NVIC_SystemReset();
 				}
 
+				/*
 				case PKT_OTA_REPROG_TEST:
 				{
 
@@ -1584,6 +1595,7 @@ void ota_bootloader (uint8_t myaddr) {
 					MyUARTSendStringZ(" ... ok\r\n");
 
 				}
+				*/
 				}
 			}
 			// Listen for a short period for a response
