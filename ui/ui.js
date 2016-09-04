@@ -353,5 +353,5 @@ jQuery(function() {
 
 	gpsEmulationInterval = setInterval (gpsEmulator,1000);
 	
-	ota_init();
+	ota.init();
 });

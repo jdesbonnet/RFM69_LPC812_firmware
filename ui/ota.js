@@ -1,7 +1,21 @@
+var ota = (function(){
+
 var pageCounter = 0;
-var ota_crc_query_interval;
 var pageCrc = [];
 var ota_retry_timeout;
+var retry_counter = 0;
+
+return {
+	init: function() {
+		ota_init();
+	},
+	query_flash_page_crc: function(node,pageAddr){
+		ota_query_flash_page_crc(node,pageAddr);
+	},
+	increment_retry_counter: function() {
+		retry_counter++;
+	}
+};
 
 function ota_init() {
 	var i,j;
@@ -16,13 +30,14 @@ function ota_init() {
 		rowEl.append("<th>" + rowBaseAddr.toString(16) + "</th>");
 		for (i = 0; i < numCols; i++) {
 			var pageAddr = (j*numCols+i)*pageSize;
-			rowEl.append("<td class='ota-flash-page-" + (j*numCols+i) + "'>" + (j*numCols+i) + "</td>");
+			rowEl.append("<td class='ota-flash-page-" + (j*numCols+i) + "'>" + pageAddr.toString(16) + "</td>");
 		}
 		$("#crcTable").append(rowEl);
 	}
 	
 	$("#btn_ota_query_crc").click(function(){
-		ota_query_crc(0x40);
+		var otaNode = parseInt($("#ota_node").val());
+		ota_query_crc(otaNode);
 	});
 	
 	addPacketListener(function(packet){
@@ -38,23 +53,27 @@ function ota_init() {
 			var flashPage = flashPageAddr/64;
 			pageCrc[flashPage]=crc32hex;
 			$(".ota-flash-page-" + flashPage).html(crc32hex).addClass("green");
+			if (retry_counter>0) {
+				$(".ota-flash-page-" + flashPage).addClass("retry");
+			}
 			console.log ("page=" + flashPageAddrHex  + " crc=" + crc32hex);
 			
 			// Kill retry timeout
 			if (ota_retry_timeout) {
 				clearInterval(ota_retry_timeout);
+				retry_counter = 0;
 			}
 			
 			// Get next page
-			if (pageCounter < 256) {
+			if (pageCounter < 255) {
+				pageCounter++;
 				var pageAddr = pageCounter*64;
 				ota_query_flash_page_crc  (0x40, pageAddr);
-				var retryCmd = "ota_query_flash_page_crc(0x40," + pageAddr +");"
+				var retryCmd = "ota.query_flash_page_crc(0x40," + pageAddr +");"
+					+ "ota.increment_retry_counter();"
 					+ "console.log(\"retry on "
-					+ pageAddr + "\");";
-				//console.log("retryCmd=" + retryCmd);
+					+ pageAddr.toString(16) + "\");";
 				ota_retry_timeout = setInterval(retryCmd,1000);
-				pageCounter++;
 			}
 		}
 	});
@@ -62,12 +81,16 @@ function ota_init() {
 
 
 
-function ota_query_crc (node) {	
-	ota_query_flash_page_crc(node, pageCounter*64);
+function ota_query_crc (node) {
+	pageCounter = 0;
+	ota_query_flash_page_crc(node, 0);
 }
 
 function ota_query_flash_page_crc (node, pageAddr) {
 	var nodeHex = node.toString(16);
-	var pageAddrHex = (0x10000 + pageAddr).toString(16).substr(-4); 
-	sendCommand("T " + nodeHex + " 92" + pageAddrHex);
+	var pageAddrHex = (0x10000 + pageAddr).toString(16).substr(-4);
+	var radioCmd = "T " + nodeHex + " 92" + pageAddrHex;
+	sendCommand(radioCmd);
 }
+
+}());

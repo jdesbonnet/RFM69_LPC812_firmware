@@ -28,9 +28,10 @@
 .indicator-on {color: red}
 .command-buttons BUTTON {margin:0.25em}
 .green {color:#00c000;}
+.retry {background-color:yellow;}
 #crcTable {width:100%}
-#crcTable td {width:40px; background-color:yellow; border: 1px solid gray;}
-#crcTable th {width:40px; background-color:yellow; border: 1px solid gray;}
+#crcTable td {width:40px; border: 1px solid gray;}
+#crcTable th {width:40px; border: 1px solid gray;}
 
 </style>
 
@@ -236,7 +237,7 @@
 
 <div class="col-md-3">
 <label>Node:</label>
-<input class="form-control" id="ota_node" />
+<input class="form-control" id="ota_node" value="0x40" />
 </div>
 
 <div class="col-md-3">
@@ -248,7 +249,6 @@
 <div class="row">
 	<div class="col-md-8">
 		<table id='crcTable'>
-		<tr><td>basdfa</td></tr>
 		</table>
 	</div>
 	
