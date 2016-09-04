@@ -27,6 +27,9 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.6.0, 5 Sep 2016
+ * Over-the-air firmware upgrade capability
+
 ## 0.5.6, 28 Aug 2016
  * Much improved algorithm for detecting for replys after transmitting a packet. Listen period (and consequently power consuption) has been
 greatly reduced.
