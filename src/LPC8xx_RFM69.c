@@ -1438,6 +1438,32 @@ static void ota_irq_enable () {
 }
 
 RAM_FUNC
+uint32_t ota_page_crc (uint8_t *addr) {
+
+	// Enable click to CRC block
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<13);
+
+	//uint8_t *addr = page * 64;
+	int i;
+
+	// UM10601 §19.7.3, page 264 CRC-32 set-up
+	LPC_CRC->MODE = 0x00000036;
+	LPC_CRC->SEED = 0xFFFFFFFF;
+
+	// Can do this byte by byte or by DWORD (latter more efficient)
+	for (i = 0; i < 64; i++) {
+		LPC_CRC->WR_DATA_BYTE = addr[i];
+	}
+
+	uint32_t crc32 = LPC_CRC->SUM;
+
+	// Disable clock to CRC block.
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<13);
+
+	return crc32;
+}
+
+RAM_FUNC
 void ota_bootloader (uint8_t myaddr) {
 
 	tfp_printf("RAM resident bootloader\r\n");
@@ -1506,30 +1532,16 @@ void ota_bootloader (uint8_t myaddr) {
 					// Frames are not large enough to accommodate the 64byte page so
 					// need to write in 32byte chunks.
 
-					// Enable click to CRC block
-					LPC_SYSCON->SYSAHBCLKCTRL |= (1<<13);
-
 					uint8_t *addr = (uint8_t *)(rx_buffer.payload[0]<<8 | (rx_buffer.payload[1]&0xc0));
-					int i;
 
-					// UM10601 §19.7.3, page 264 CRC-32 set-up
-					LPC_CRC->MODE = 0x00000036;
-					LPC_CRC->SEED = 0xFFFFFFFF;
-					// Can do this byte by byte or by DWORD (latter more efficient)
-					for (i = 0; i < 64; i++) {
-						LPC_CRC->WR_DATA_BYTE = addr[i];
-					}
 					tx_buffer.header.msg_type = PKT_OTA_FLASH_CRC_RESPONSE;
 					tx_buffer.payload[0] = rx_buffer.payload[0];
 					tx_buffer.payload[1] = rx_buffer.payload[1];
 					uint32_t *crc32 = (uint32_t *)&tx_buffer.payload[2];
-					*crc32 = LPC_CRC->SUM;
+					*crc32 = ota_page_crc(addr);
 					MyUARTSendStringZ("CRC ");
-					MyUARTPrintHex(LPC_CRC->SUM);
+					MyUARTPrintHex(*crc32);
 					MyUARTSendCRLF();
-
-					// Disable clock to CRC block.
-					LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<13);
 
 					rfm69_frame_tx(tx_buffer.buffer, 3+2+4);
 

@@ -28,6 +28,10 @@
 .indicator-on {color: red}
 .command-buttons BUTTON {margin:0.25em}
 .green {color:#00c000;}
+#crcTable {width:100%}
+#crcTable td {width:40px; background-color:yellow; border: 1px solid gray;}
+#crcTable th {width:40px; background-color:yellow; border: 1px solid gray;}
+
 </style>
 
 </head>
@@ -242,7 +246,15 @@
 </div>
 
 <div class="row">
-<div id="flashPageCrcTable"></div>
+	<div class="col-md-8">
+		<table id='crcTable'>
+		<tr><td>basdfa</td></tr>
+		</table>
+	</div>
+	
+	<div class="col-md-4">
+		<textarea id="firmware" rows="24" cols="64"></textarea>
+	</div>
 </div>
 
 </div><!--  end div.container-fluid -->
