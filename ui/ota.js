@@ -1,3 +1,8 @@
+var pageCounter = 0;
+var ota_crc_query_interval;
+var pageCrc = [];
+var ota_retry_timeout;
+
 function ota_init() {
 	var i,j;
 	var pageSize = 64;
@@ -17,7 +22,6 @@ function ota_init() {
 	}
 	
 	$("#btn_ota_query_crc").click(function(){
-		pageCounter = 1;
 		ota_query_crc(0x40);
 	});
 	
@@ -35,25 +39,33 @@ function ota_init() {
 			pageCrc[flashPage]=crc32hex;
 			$(".ota-flash-page-" + flashPage).html(crc32hex).addClass("green");
 			console.log ("page=" + flashPageAddrHex  + " crc=" + crc32hex);
+			
+			// Kill retry timeout
+			if (ota_retry_timeout) {
+				clearInterval(ota_retry_timeout);
+			}
+			
+			// Get next page
+			if (pageCounter < 256) {
+				var pageAddr = pageCounter*64;
+				ota_query_flash_page_crc  (0x40, pageAddr);
+				var retryCmd = "ota_query_flash_page_crc(0x40," + pageAddr +");"
+					+ "console.log(\"retry on "
+					+ pageAddr + "\");";
+				//console.log("retryCmd=" + retryCmd);
+				ota_retry_timeout = setInterval(retryCmd,1000);
+				pageCounter++;
+			}
 		}
 	});
 }
 
-var pageCounter = 0;
-var ota_crc_query_interval;
-var pageCrc = [];
 
-function ota_query_crc (node) {
-	var i=0;
-	ota_crc_query_interval = setInterval(function(){
-		if ( ! pageCrc[pageCounter] ) {
-			ota_query_flash_page_crc(0x40, (pageCounter++)*64);
-		}
-		if (pageCounter===256) {
-			clearInterval(ota_crc_query_interval);
-		}
-	},400);
+
+function ota_query_crc (node) {	
+	ota_query_flash_page_crc(node, pageCounter*64);
 }
+
 function ota_query_flash_page_crc (node, pageAddr) {
 	var nodeHex = node.toString(16);
 	var pageAddrHex = (0x10000 + pageAddr).toString(16).substr(-4); 
