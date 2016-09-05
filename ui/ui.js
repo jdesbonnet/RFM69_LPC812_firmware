@@ -350,6 +350,23 @@ jQuery(function() {
 	$(".cmd_btn").click(function(){
 		sendCommand($(this).data("cmd"));
 	});
+	
+	$("#btn_wake").click(function(){
+		packetListeners.push(function(packet){
+			var p = packet.split(" ");
+			if (p.length < 3) {
+				return;
+			}
+			var wakeNode = $("#wake_node").val();
+			
+			var from = p[2];
+			
+			if (from == wakeNode) {
+				// Send remote command "M 3"
+				sendCommand("T " + wakeNode + " 444D2033");
+			}
+		});
+	});
 
 	gpsEmulationInterval = setInterval (gpsEmulator,1000);
 	

@@ -88,8 +88,8 @@ function ota_init() {
 			if (pageCounter < newFwPageCrc.length) {
 				pageCounter++;
 				var pageAddr = pageCounter*64;
-				ota_query_flash_page_crc  (0x40, pageAddr);
-				var retryCmd = "ota.query_flash_page_crc(0x40," + pageAddr +");"
+				ota_query_flash_page_crc  (0x44, pageAddr);
+				var retryCmd = "ota.query_flash_page_crc(0x44," + pageAddr +");"
 					+ "ota.increment_retry_counter();"
 					+ "console.log(\"retry on "
 					+ pageAddr.toString(16) + "\");";
@@ -131,10 +131,10 @@ function ota_program () {
 	// ignore page 0
 	for (i = 1; i < newFwPageCrc.length; i++) {
 		if (newFwPageCrc[i] !== curFwPageCrc[i]) {
-			var cmd0 = "T 40 11" 
+			var cmd0 = "T 44 11" 
 			+ hex16(i*64)
 			+ newFwPageHex[i].substring(0,64);
-			var cmd1 = "T 40 11"
+			var cmd1 = "T 44 11"
 			+ hex16(i*64 + 32)
 			+ newFwPageHex[i].substring(64,128);
 			console.log("program: " + cmd0);
