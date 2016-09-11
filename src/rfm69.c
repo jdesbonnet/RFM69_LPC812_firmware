@@ -75,13 +75,6 @@ int rfm69_mode(uint8_t mode) {
 	// Wait until mode change is complete
 	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
 
-	//int niter=500;
-	//while ( (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_ModeReady) == 0) {
-	//	if (--niter == 0) {
-	//		return -1;
-	//	}
-	//}
-	//return E_OK;
 	return rfm69_wait_for_bit_high(RFM69_IRQFLAGS1, RFM69_IRQFLAGS1_ModeReady);
 }
 

@@ -19,6 +19,7 @@
 
 #include <LPC8xx.h>
 #include "iap_driver.h"
+#include "config.h"
 
 /*
  * The IAP funtion address in LPC11xx ROM
@@ -84,6 +85,7 @@ int iap_init(void) {
  * @return CMD_SUCCESS, BUSY, SECTOR_NOT_PREPARED_FOR_WRITE_OPERATION,
  *         or INVALID_SECTOR
  */
+RAM_FUNC
 int iap_erase_sector(unsigned int sector_start, unsigned int sector_end) {
 	cmd_table.cmd_code = ERASE_SECTOR;
 	cmd_table.param[0] = sector_start;
@@ -106,6 +108,7 @@ int iap_erase_sector(unsigned int sector_start, unsigned int sector_end) {
  * @return CMD_SUCCESS, BUSY, SECTOR_NOT_PREPARED_FOR_WRITE_OPERATION,
  *         or INVALID_SECTOR
  */
+RAM_FUNC
 int iap_erase_page(unsigned int page_start, unsigned int page_end) {
 	cmd_table.cmd_code = ERASE_PAGE;
 	cmd_table.param[0] = page_start;
@@ -127,6 +130,7 @@ int iap_erase_page(unsigned int page_start, unsigned int page_end) {
  *
  * @return CMD_SUCCESS, BUSY, or INVALID_SECTOR
  */
+RAM_FUNC
 int iap_prepare_sector(unsigned int sector_start, unsigned int sector_end) {
 	cmd_table.cmd_code = PREPARE_SECTOR;
 	cmd_table.param[0] = sector_start;
@@ -151,6 +155,7 @@ int iap_prepare_sector(unsigned int sector_start, unsigned int sector_end) {
  *
  * @return CMD_SUCCESS, BUSY, or INVALID_SECTOR
  */
+RAM_FUNC
 int iap_copy_ram_to_flash(void* ram_address, void* flash_address,
 		unsigned int count) {
 	cmd_table.cmd_code = COPY_RAM_TO_FLASH;
@@ -211,6 +216,7 @@ int iap_read_bootcode_rev(uint32_t *bootcode_rev) {
  *
  * @return CMD_SUCCESS
  */
+RAM_FUNC
 int iap_read_unique_id(uint32_t *unique_id) {
 	cmd_table.cmd_code = READ_UID;
 
