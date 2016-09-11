@@ -28,7 +28,9 @@ const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.poll_interval = DEFAULT_POLL_INTERVAL,
 		.ds18b20_mode = 0,
 		.listen_period_cs = DEFAULT_LISTEN_TIME_CS,
-		.link_loss_timeout_s = DEFAULT_LINK_LOSS_TIMEOUT
+		.link_loss_timeout_s = DEFAULT_LINK_LOSS_TIMEOUT,
+		.low_battery_v = DEFAULT_LOW_BATTERY_V,
+		.min_battery_v = DEFAULT_MIN_BATTERY_V
 		}
 };
 

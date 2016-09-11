@@ -38,7 +38,16 @@
 // When in low power polling mode, timeout in seconds units to trigger reset
 #define DEFAULT_LINK_LOSS_TIMEOUT 7200
 
+// Time to listen for response after transmitting a packet (in 10ms units)
 #define DEFAULT_LISTEN_TIME_CS 50
+
+// Enter low battery mode under this voltage (0.1V units)
+#define DEFAULT_LOW_BATTERY_V (25)
+
+// Minimum voltage require to operate radio (0.1V units)
+#define DEFAULT_MIN_BATTERY_V (22)
+
+
 
 #define WWDT_CLOCK_SPEED_HZ (2000)
 
@@ -96,6 +105,7 @@
 
 // GPS on second UART port.
 #define FEATURE_GPS_ON_USART1
+
 
 // WS2812B RGB LED driver
 //#define FEATURE_WS2812B

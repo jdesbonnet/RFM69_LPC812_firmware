@@ -538,6 +538,10 @@ int main(void) {
 		// If in MODE_LOW_POWER_POLL send status packet
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
+			// Battery in 0.1V units
+			uint8_t battery_v = readBattery()/100;
+
+			if (battery_v >= params_union.params.min_battery_v) {
 			tx_buffer.header.to_addr = 0;
 			tx_buffer.header.msg_type = 'z';
 			tx_buffer.payload[0] = sleep_counter++;
@@ -561,7 +565,9 @@ int main(void) {
 			ledOn();
 			rfm69_frame_tx(tx_buffer.buffer,8);
 			ledOff();
-
+			} else {
+				tfp_printf("; bat too low to tx");
+			}
 
 			// Listen for a short period for a response
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
