@@ -64,9 +64,12 @@ For v0.2.0:
 uint8_t current_loc[32];
 
 // Coarse clock to keep track of time (for link loss etc) 1/100s intervals.
-uint32_t last_frame_time;
+static uint32_t last_frame_time;
 
 params_union_type params_union;
+
+// Use to ID each sleep update packet. No need to init (saves 4 bytes).
+static uint32_t sleep_counter = 0;
 
 // When in deepsleep or power down this lets us know which wake event occurred
 typedef enum {
@@ -135,6 +138,8 @@ void displayStatus () {
 	tfp_printf ("; systick_counter=%x\r\n", systick_counter);
 	tfp_printf ("; event_counter=%x\r\n", event_counter);
 	tfp_printf ("; ds18b20_mode=%x\r\n",params_union.params.ds18b20_mode);
+	tfp_printf ("; low_battery_v=%d\r\n",params_union.params.low_battery_v);
+	tfp_printf ("; min_battery_v=%d\r\n",params_union.params.min_battery_v);
 
 #ifdef FEATURE_GPS_ON_USART1
 	gps_report_status();
@@ -184,6 +189,109 @@ void eeprom_params_save (void) {
     memcpy(tmpbuf,params_union.params_buffer,64);
     eeprom_write(tmpbuf);
 }
+
+
+void transmit_sleep_update_packet() {
+
+	// Battery in 0.1V units
+	uint8_t battery_v = readBattery() / 100;
+
+	if (battery_v >= params_union.params.min_battery_v) {
+		tx_buffer.header.to_addr = 0;
+		tx_buffer.header.msg_type = 'z';
+		tx_buffer.payload[0] = sleep_counter++;
+		tx_buffer.payload[1] = event_counter;
+		tx_buffer.payload[2] = readBattery() / 100;
+
+#ifdef FEATURE_DS18B20
+		if (params_union.params.ds18b20_mode != 0) {
+			// Pullup resistor on DS18B20 data pin PIO0_14
+			LPC_IOCON->PIO0_14 = (0x2 << 3);
+			ow_init(0, DS18B20_PIN);
+			delayMilliseconds(20);
+			int32_t temperature = ds18b20_temperature_read();
+			tfp_printf("; ds18b20_temperature_mC=%d\r\n",
+					(temperature * 1000) / 16);
+			tx_buffer.payload[3] = temperature >> 8;
+			tx_buffer.payload[4] = temperature & 0xff;
+		}
+#endif
+
+		// Transmit 'z' periodic wake packet
+		ledOn();
+		rfm69_frame_tx(tx_buffer.buffer, 8);
+		ledOff();
+	} else {
+		tfp_printf("; bat too low to tx");
+	}
+}
+
+void listen_for_sleep_update_response () {
+
+	// Listen for a short period for a response
+	rfm69_mode(RFM69_OPMODE_Mode_RX);
+
+	// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
+	// and if detected wait a further 500 ticks for the packet to arrive.
+	int i;
+	int start_time = LPC_WWDT->TV;
+	int end_time = start_time - 16;
+	//uint8_t rssiscan1[120];memset(rssiscan1,0,120);
+	//uint8_t rssiscan2[120];memset(rssiscan2,0,120);
+	while (LPC_WWDT->TV > end_time) {
+		//i = 0;
+		//if (i < 120) {
+			//rssiscan1[i++] = rfm69_register_read(RFM69_RSSIVALUE);
+		//}
+		if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
+			start_time = LPC_WWDT->TV;
+			end_time = start_time - 500;
+			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
+			//tfp_printf("; rssi1=%x\r\n",rssi);
+			//i = 0;
+			while (LPC_WWDT->TV > end_time) {
+				//if (i < 120) {
+				//	rssiscan2[i++] = rfm69_register_read(RFM69_RSSIVALUE);
+				//}
+				//rssi = rfm69_register_read(RFM69_RSSIVALUE);
+				if (rfm69_payload_ready()) {
+					//tfp_printf("; rssi2=%x\r\n",rssi);
+					//for (i = 0; i < 120; i++) {
+					//	tfp_printf("%d %d %d\r\n", i,rssiscan1[i],rssiscan2[i]);
+					//}
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	/*
+	int i;
+	int rssi_time = LPC_WWDT->TV;
+	for (i = 0; i < 10000; i++) {
+		if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
+			rssi_time -= LPC_WWDT->TV;
+			break;
+		}
+	}
+
+	int payload_time = LPC_WWDT->TV;
+	for (i = 0; i < 10000; i++) {
+		if (rfm69_payload_ready()) {
+			payload_time -= LPC_WWDT->TV;
+			break;
+		}
+	}
+
+
+	tfp_printf("; WWDT=%d\r\n", LPC_WWDT->TV);
+	tfp_printf("; RSSI %d ticks\r\n",rssi_time);
+	tfp_printf("; payload_ready %d ticks\r\n",payload_time);
+	*/
+
+}
+
 
 int main(void) {
 
@@ -366,8 +474,7 @@ int main(void) {
 	uint8_t *args[8];
 
 
-	// Use to ID each sleep ping packet. No need to init (saves 4 bytes).
-	uint32_t sleep_counter = 0;
+
 
 	int argc;
 
@@ -537,110 +644,9 @@ int main(void) {
 
 		// If in MODE_LOW_POWER_POLL send status packet
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
-
-			// Battery in 0.1V units
-			uint8_t battery_v = readBattery()/100;
-
-			if (battery_v >= params_union.params.min_battery_v) {
-			tx_buffer.header.to_addr = 0;
-			tx_buffer.header.msg_type = 'z';
-			tx_buffer.payload[0] = sleep_counter++;
-			tx_buffer.payload[1] = event_counter;
-			tx_buffer.payload[2] = readBattery()/100;
-
-#ifdef FEATURE_DS18B20
-			if (params_union.params.ds18b20_mode != 0) {
-				// Pullup resistor on DS18B20 data pin PIO0_14
-				LPC_IOCON->PIO0_14=(0x2<<3);
-				ow_init(0,DS18B20_PIN);
-				delayMilliseconds(20);
-				int32_t temperature = ds18b20_temperature_read();
-				tfp_printf("; ds18b20_temperature_mC=%d\r\n", (temperature*1000)/16);
-				tx_buffer.payload[3] = temperature>>8;
-				tx_buffer.payload[4] = temperature&0xff;
-			}
-#endif
-
-			// Transmit 'z' periodic wake packet
-			ledOn();
-			rfm69_frame_tx(tx_buffer.buffer,8);
-			ledOff();
-			} else {
-				tfp_printf("; bat too low to tx");
-			}
-
-			// Listen for a short period for a response
-			rfm69_mode(RFM69_OPMODE_Mode_RX);
-
-			// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
-			// and if detected wait a further 500 ticks for the packet to arrive.
-			int i;
-			int start_time = LPC_WWDT->TV;
-			int end_time = start_time - 16;
-			//uint8_t rssiscan1[120];memset(rssiscan1,0,120);
-			//uint8_t rssiscan2[120];memset(rssiscan2,0,120);
-			while (LPC_WWDT->TV > end_time) {
-				//i = 0;
-				//if (i < 120) {
-					//rssiscan1[i++] = rfm69_register_read(RFM69_RSSIVALUE);
-				//}
-				if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
-					start_time = LPC_WWDT->TV;
-					end_time = start_time - 500;
-					//rssi = rfm69_register_read(RFM69_RSSIVALUE);
-					//tfp_printf("; rssi1=%x\r\n",rssi);
-					//i = 0;
-					while (LPC_WWDT->TV > end_time) {
-						//if (i < 120) {
-						//	rssiscan2[i++] = rfm69_register_read(RFM69_RSSIVALUE);
-						//}
-						//rssi = rfm69_register_read(RFM69_RSSIVALUE);
-						if (rfm69_payload_ready()) {
-							//tfp_printf("; rssi2=%x\r\n",rssi);
-							//for (i = 0; i < 120; i++) {
-							//	tfp_printf("%d %d %d\r\n", i,rssiscan1[i],rssiscan2[i]);
-							//}
-							break;
-						}
-					}
-					break;
-				}
-			}
-
-			/*
-			int i;
-			int rssi_time = LPC_WWDT->TV;
-			for (i = 0; i < 10000; i++) {
-				if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
-					rssi_time -= LPC_WWDT->TV;
-					break;
-				}
-			}
-
-			int payload_time = LPC_WWDT->TV;
-			for (i = 0; i < 10000; i++) {
-				if (rfm69_payload_ready()) {
-					payload_time -= LPC_WWDT->TV;
-					break;
-				}
-			}
-
-
-			tfp_printf("; WWDT=%d\r\n", LPC_WWDT->TV);
-			tfp_printf("; RSSI %d ticks\r\n",rssi_time);
-			tfp_printf("; payload_ready %d ticks\r\n",payload_time);
-			*/
-
+			transmit_sleep_update_packet();
+			listen_for_sleep_update_response();
 		}
-
-
-		// IF we have access to RFM69 DIO0 use that to determine if frame ready to read,
-		// else poll status register through SPI port.
-#ifdef DIO0_PIN
-#define IS_PAYLOAD_READY() (LPC_GPIO_PORT->PIN0&(1<<DIO0_PIN))
-#else
-#define IS_PAYLOAD_READY() rfm69_payload_ready()
-#endif
 
 		// Check for received packet on RFM69
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {

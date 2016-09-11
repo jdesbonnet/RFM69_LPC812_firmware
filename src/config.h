@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.6.0"
+#define VERSION "RFM69 0.6.1"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -163,5 +163,13 @@
 
 // Max size of NMEA sentence: standard specifies 79 + '$' + CRLF
 #define GPS_NMEA_SIZE 84
+
+// IF we have access to RFM69 DIO0 use that to determine if frame ready to read,
+// else poll status register through SPI port.
+#ifdef DIO0_PIN
+#define IS_PAYLOAD_READY() (LPC_GPIO_PORT->PIN0&(1<<DIO0_PIN))
+#else
+#define IS_PAYLOAD_READY() rfm69_payload_ready()
+#endif
 
 #endif
