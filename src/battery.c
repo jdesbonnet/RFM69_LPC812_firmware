@@ -52,3 +52,10 @@ int readBattery () {
 	// 900mV*31/k
 	return 27900/k;
 }
+
+/**
+ * Return battery V in 0.1V units.
+ */
+uint8_t readBattery_dV() {
+	return (uint8_t)(readBattery()/100);
+}

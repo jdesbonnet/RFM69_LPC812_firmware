@@ -194,14 +194,14 @@ void eeprom_params_save (void) {
 void transmit_sleep_update_packet() {
 
 	// Battery in 0.1V units
-	uint8_t battery_v = readBattery() / 100;
+	uint8_t battery_v = readBattery_dV();
 
 	if (battery_v >= params_union.params.min_battery_v) {
 		tx_buffer.header.to_addr = 0;
 		tx_buffer.header.msg_type = 'z';
 		tx_buffer.payload[0] = sleep_counter++;
 		tx_buffer.payload[1] = event_counter;
-		tx_buffer.payload[2] = readBattery() / 100;
+		tx_buffer.payload[2] = battery_v;
 
 #ifdef FEATURE_DS18B20
 		if (params_union.params.ds18b20_mode != 0) {
@@ -591,10 +591,15 @@ int main(void) {
 				) {
 
 			tfp_printf("; z\r\n");
-			MyUARTSendDrain();
+
+			uint8_t battery_v = readBattery_dV();
 
 			// Set radio in SLEEP mode
 			rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+
+			// Make sure 'z' message fully transmitted before sleeping
+			MyUARTSendDrain();
+
 
 			// Reset source of wake event
 			interrupt_source = 0;
@@ -606,6 +611,11 @@ int main(void) {
 			// is driven by 10kHz low power oscillator. However this is +/- 40%.
 			// Finding 7.5kHz closer to the mark.
 			uint32_t wakeup_time = 9000  * params_union.params.poll_interval;
+
+			// If battery low then sleep for extended period
+			if (battery_v <= params_union.params.low_battery_v) {;
+				wakeup_time *= 8;
+			}
 			LPC_WKT->COUNT = wakeup_time ;
 
 			// DeepSleep until WKT interrupt (or PIN interrupt)
@@ -644,8 +654,14 @@ int main(void) {
 
 		// If in MODE_LOW_POWER_POLL send status packet
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
-			transmit_sleep_update_packet();
-			listen_for_sleep_update_response();
+			uint8_t battery_v = readBattery_dV();
+			if (battery_v >= params_union.params.min_battery_v) {
+				transmit_sleep_update_packet();
+				listen_for_sleep_update_response();
+			} else {
+				tfp_printf("; battery too low to tx/rx\r\n");
+				report_error((uint8_t)'z', E_BATTERY_V_TOO_LOW);
+			}
 		}
 
 		// Check for received packet on RFM69
@@ -789,7 +805,7 @@ int main(void) {
 
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = PKT_STATUS_RESPONSE; // node status response
-					tx_buffer.payload[0] = readBattery()/100;
+					tx_buffer.payload[0] = readBattery_dV();
 					tx_buffer.payload[1] = rssi;
 					tx_buffer.payload[2] = ((event_counter>>8)&0xff);
 					tx_buffer.payload[3] = (event_counter&0xff);
