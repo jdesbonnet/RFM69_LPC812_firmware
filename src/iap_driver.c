@@ -109,6 +109,7 @@ int iap_erase_sector(unsigned int sector_start, unsigned int sector_end) {
  *         or INVALID_SECTOR
  */
 RAM_FUNC
+__attribute__((optimize("O0")))
 int iap_erase_page(unsigned int page_start, unsigned int page_end) {
 	cmd_table.cmd_code = ERASE_PAGE;
 	cmd_table.param[0] = page_start;

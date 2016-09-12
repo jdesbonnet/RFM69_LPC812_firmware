@@ -6,6 +6,7 @@ var retry_counter = 0;
 var curFwPageCrc = [];
 var newFwPageCrc = [];
 var newFwPageHex = [];
+var otaNode;
 
 return {
 	init: function() {
@@ -38,7 +39,7 @@ function ota_init() {
 	}
 	
 	$("#btn_ota_query_crc").click(function(){
-		var otaNode = parseInt($("#ota_node").val());
+		otaNode = parseInt($("#ota_node").val());
 		ota_query_flash_crc(otaNode);
 	});
 	
@@ -46,8 +47,8 @@ function ota_init() {
 		ota_parse_fw($("#firmware").val());
 	});
 	$("#btn_ota_program").click(function(){
-	alert('b');
-		ota_program();
+		otaNode = parseInt($("#ota_node").val());
+		ota_program(otaNode);
 	});
 	
 	addPacketListener(function(packet){
@@ -88,8 +89,8 @@ function ota_init() {
 			if (pageCounter < newFwPageCrc.length) {
 				pageCounter++;
 				var pageAddr = pageCounter*64;
-				ota_query_flash_page_crc  (0x44, pageAddr);
-				var retryCmd = "ota.query_flash_page_crc(0x44," + pageAddr +");"
+				ota_query_flash_page_crc  (otaNode, pageAddr);
+				var retryCmd = "ota.query_flash_page_crc(" + otaNode + "," + pageAddr +");"
 					+ "ota.increment_retry_counter();"
 					+ "console.log(\"retry on "
 					+ pageAddr.toString(16) + "\");";
@@ -125,16 +126,17 @@ function ota_parse_fw(fwHexDump) {
 	});
 }
 
-function ota_program () {
+function ota_program (node) {
+	var nodeHex = node.toString(16);
 	var programCommands = [];
 	var i;
 	// ignore page 0
 	for (i = 1; i < newFwPageCrc.length; i++) {
 		if (newFwPageCrc[i] !== curFwPageCrc[i]) {
-			var cmd0 = "T 44 11" 
+			var cmd0 = "T " + nodeHex + " 11" 
 			+ hex16(i*64)
 			+ newFwPageHex[i].substring(0,64);
-			var cmd1 = "T 44 11"
+			var cmd1 = "T " + nodeHex + " 11"
 			+ hex16(i*64 + 32)
 			+ newFwPageHex[i].substring(64,128);
 			console.log("program: " + cmd0);

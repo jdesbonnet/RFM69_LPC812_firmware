@@ -27,6 +27,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.6.1, 11 Sep 2016
+ * Low battery modes (low and minimum).
+ * Fixes to OTA firmware code.
+
 ## 0.6.0, 5 Sep 2016
  * Over-the-air firmware upgrade capability
 
