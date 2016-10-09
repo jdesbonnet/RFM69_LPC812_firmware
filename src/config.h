@@ -1,7 +1,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69 0.6.1"
+//#define VERSION "RFM69 0.6.1"
+#define VERSION "RFM98 0.6.1"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -27,10 +28,10 @@
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
-#define DEFAULT_MODE MODE_LOW_POWER_POLL
-//#define DEFAULT_MODE MODE_AWAKE
+//#define DEFAULT_MODE MODE_LOW_POWER_POLL
+#define DEFAULT_MODE MODE_AWAKE
 
-#define DEFAULT_POLL_INTERVAL 10
+#define DEFAULT_POLL_INTERVAL 30
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
@@ -56,7 +57,8 @@
 
 // What PCB board or pin layout?
 //#define BOARD_LPC812_V0 // Deadbug LPC812 made back in Sep 2014.
-#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
+//#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
+#define BOARD_LPC812_RFM98_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
 
 // One board was populated without the trace cut: reroute RXD. Enable this in addition
 // to BOARD_LPC812_V1
@@ -86,7 +88,7 @@
 #define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-#define FEATURE_DS18B20
+//#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
@@ -138,6 +140,22 @@
 #define DS18B20_PIN 14
 #define WS2812B_PIN 14
 #endif
+
+#ifdef BOARD_LPC812_RFM98_V1
+// PCB v1
+#define SCK_PIN 9
+#define SS_PIN 1
+#define MOSI_PIN 8
+#define MISO_PIN 7
+#define RESET_PIN 15
+//#define DIO0_PIN 6
+#define EVENT_COUNTER_PIN 16
+#define LED_PIN 17
+#define UART_RXD_PIN 0
+#define DS18B20_PIN 14
+#define WS2812B_PIN 14
+#endif
+
 
 // Enable reroute of RXD to alternative pin due to failure to fix via bug.
 #ifdef BOARD_V1B_HACK
