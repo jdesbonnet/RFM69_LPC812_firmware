@@ -392,7 +392,7 @@ int main(void) {
 		case 0x1902E033:
 			params_union.params.node_addr = 0x41;
 			break;
-		case 0x5034039:
+		case 0x5034039: // V1B hack required
 			params_union.params.node_addr = 0x42;
 			break;
 		case 0x05034043:
@@ -400,6 +400,9 @@ int main(void) {
 			break;
 		case 0x5046049:
 			params_union.params.node_addr = 0x44;
+			break;
+		case 0x5046043:
+			params_union.params.node_addr = 0x45;
 			break;
 		}
 	}
@@ -1289,7 +1292,7 @@ int main(void) {
 #ifdef FEATURE_LINK_LOSS_RESET
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 			uint32_t last_frame_age = systick_counter - last_frame_time;
-			tfp_printf("; last_frame_age=%d\r\n",last_frame_age);
+			//tfp_printf("; last_frame_age=%d\r\n",last_frame_age);
 			MyUARTSendDrain();
 			if (params_union.params.link_loss_timeout_s != 0
 					&& (last_frame_age > params_union.params.link_loss_timeout_s*100)) {
