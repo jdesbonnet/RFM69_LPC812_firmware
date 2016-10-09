@@ -438,6 +438,13 @@ int main(void) {
 
 	spi_init();
 
+#ifdef BOARD_LPC812_RFM98_V1
+	int ii;
+	for (ii = 0; ii < 20; ii++) {
+		tfp_printf("reg[%d]=%x\r\n", ii, rfm69_register_read(ii));
+	}
+#endif
+
 	// Configure hardware interface to radio module
 	rfm69_init();
 
