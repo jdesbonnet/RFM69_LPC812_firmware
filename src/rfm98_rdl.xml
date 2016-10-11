@@ -12,8 +12,9 @@ HopeRF RFM95/96/97/98 Radio Module
 
 <register>
     <sname>FIFO</sname>
-    <address>0</address>
+    <address>0x00</address>
 </register>
+
 
 <register>
 <sname>OPMODE</sname>
@@ -21,32 +22,33 @@ HopeRF RFM95/96/97/98 Radio Module
 <address>0x01</address>
 
 <bitfield bit="7" rwmode="rw">
-<sname>SequencerOff</sname>
-<description>Controls the automatic Sequencer (see section 4.2)</description>
-<!--  
-<fieldvalue default="true"><value>0</value><name>Operating mode as selected with 
-    <ref>OpMode.Mode</ref> is automatically reached with the Sequencer
-</name></fieldvalue>
-<fieldvalue><value>1</value><sname>Off</sname><name>Mode is forced by user</name></fieldvalue>
--->
+<sname>LoRaMode</sname>
+<description>0 = FSK/OOK; 1= LoRA. This bit can be modified only in Sleep mode.</description>
 </bitfield>
 
-<bitfield bit="6" rwmode="rw">
-<sname>ListenOn</sname>
-<description>Enables Listen Mode, should be enabled whilst in Standby mode.</description>
-<fieldvalue><value>0</value><sname>OFF</sname></fieldvalue>
-<fieldvalue><value>1</value><sname>ON</sname></fieldvalue>
+<bitfield bit="6:5" rwmode="rw">
+<sname>ModulationType</sname>
+<description>Modulation scheme</description>
+<fieldvalue><value>0</value><sname>FSK</sname></fieldvalue>
+<fieldvalue><value>1</value><sname>OOK</sname></fieldvalue>
 </bitfield>
 
-<bitfield bit="4:2" rwmode="rw">
+<bitfield bit="3" rwmode="rw">
+<sname>LowFrequencyode</sname>
+<description>0 = High frequence mode (access to HF test registeres); 1 = low frequency mode (access to LF test registers)</description>
+</bitfield>
+
+<bitfield bit="2:0" rwmode="rw">
 <sname>Mode</sname>
 <description>Tranceiver's operating mode</description>
-<reference>section 6.2</reference>
+<reference></reference>
 <fieldvalue><value>0</value><sname>SLEEP</sname><name>Sleep mode</name></fieldvalue>
 <fieldvalue><value>1</value><sname>STDBY</sname><name>Standby mode</name></fieldvalue>
 <fieldvalue><value>2</value><sname>FS</sname><name>Frequency Synthesis mode</name></fieldvalue>
 <fieldvalue><value>3</value><sname>TX</sname><name>Transmitter mode</name></fieldvalue>
-<fieldvalue><value>4</value><sname>RX</sname><name>Receiver mode</name></fieldvalue>
+<fieldvalue><value>4</value><sname>FSRX</sname><name>Receiver mode</name></fieldvalue>
+<fieldvalue><value>5</value><sname>RX</sname><name>Receiver mode</name></fieldvalue>
+
 </bitfield>
 </register>
 
@@ -106,10 +108,10 @@ HopeRF RFM95/96/97/98 Radio Module
 </register>
 
 <!-- WIP -->
-
+		
 <register>
-<sname>PaLevel</sname>
-<address>0x11</address>
+<sname>PaConfig</sname>
+<address>0x09</address>
 <name>Power Amplifier (PA) power configuration</name>
 <bitfield bit="7" rwmode="rw">
     <sname>Pa0On</sname>
@@ -137,10 +139,11 @@ HopeRF RFM95/96/97/98 Radio Module
 
 </register>
 
+
 <register>
     <sname>PaRamp</sname>
-    <name>Rise/fall time of ramp up/down in FSK</name>
-    <address>0x12</address>
+    <name>Control of PA ramp time, low phase noise PLL</name>
+    <address>0x0a</address>
     <bitfield bit="3:0" rwmode="rw">
         <fieldvalue><value>0</value><sname>3400us</sname></fieldvalue>
         <fieldvalue><value>1</value><sname>2000us</sname></fieldvalue>
@@ -164,7 +167,7 @@ HopeRF RFM95/96/97/98 Radio Module
 <register>
     <sname>Ocp</sname>
     <name>Over current protection (OCP) for the PA configuration</name>
-    <address>0x13</address>
+    <address>0x0b</address>
     <bitfield bit="4" rwmode="rw">
         <sname>OcpOn</sname>
         <name>Enable OCP</name>
@@ -180,7 +183,7 @@ HopeRF RFM95/96/97/98 Radio Module
 <register>
     <sname>Lna</sname>
     <name>Low Noise Amplifier (LNA) configuration</name>
-    <address>0x18</address>
+    <address>0x0c</address>
     <bitfield bit="7" rwmode="rw">
         <sname>LnaZin</sname>
         <name>LNA input impedence 0=50ohms; 1=200ohms</name>
@@ -202,6 +205,7 @@ HopeRF RFM95/96/97/98 Radio Module
         <fieldvalue><value>6</value><sname>G6</sname><name>higest gain - 48dB</name></fieldvalue>
     </bitfield>
 </register>
+
 
 <register>
     <sname>RxBw</sname>

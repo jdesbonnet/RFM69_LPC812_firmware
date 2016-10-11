@@ -39,7 +39,9 @@ For v0.2.0:
 #include "print_util.h"
 #include "parse_util.h"
 #include "printf.h"
+#include "rfm.h"
 #include "rfm69.h"
+#include "rfm98.h"
 #include "cmd.h"
 #include "err.h"
 #include "spi.h"
@@ -243,7 +245,7 @@ void listen_for_status_response () {
 		//if (i < 120) {
 			//rssiscan1[i++] = rfm69_register_read(RFM69_RSSIVALUE);
 		//}
-		if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
+		if (rfm_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
 			start_time = LPC_WWDT->TV;
 			end_time = start_time - 500;
 			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
@@ -441,12 +443,12 @@ int main(void) {
 #ifdef BOARD_LPC812_RFM98_V1
 	int ii;
 	for (ii = 0; ii < 20; ii++) {
-		tfp_printf("reg[%d]=%x\r\n", ii, rfm69_register_read(ii));
+		tfp_printf("reg[%d]=%x\r\n", ii, rfm_register_read(ii));
 	}
 #endif
 
 	// Configure hardware interface to radio module
-	rfm69_init();
+	rfm_init();
 
 	uint32_t regVal;
 
@@ -597,7 +599,7 @@ int main(void) {
 #ifdef FEATURE_DEEPSLEEP
 		// Test for MODE_OFF or MODE_LOW_POWER_POLL (LSB==0 for those two modes)
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL
-				|| params_union.params.operating_mode == MODE_RADIO_OFF
+				// || params_union.params.operating_mode == MODE_RADIO_OFF
 				) {
 
 			tfp_printf("; z\r\n");
@@ -643,9 +645,11 @@ int main(void) {
 
 			if (interrupt_source == UART_INTERRUPT) {
 				tfp_printf("; UART interrupt, awake\r\n");
-				params_union.params.operating_mode = MODE_AWAKE;
 				// Probably crud in UART rx buffer : clear it.
 				MyUARTBufReset();
+				if (params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
+					params_union.params.operating_mode = MODE_AWAKE;
+				}
 			}
 
 			// Indicator to host there is a short time window to issue command
@@ -678,7 +682,7 @@ int main(void) {
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
 		//if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
 		// if ( IS_PAYLOAD_READY()  ) {
-		if (rfm69_payload_ready()) {
+		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && rfm69_payload_ready()) {
 
 			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
 			//tfp_printf("; rssi_after_payload_ready=%x\r\n",rfm69_register_read(RFM69_RSSIVALUE));
@@ -849,7 +853,7 @@ int main(void) {
 					tx_buffer.payload[0] = base_addr;
 					int i;
 					for (i = 0; i < read_len; i++) {
-						tx_buffer.payload[i+1] = rfm69_register_read(base_addr+i);
+						tx_buffer.payload[i+1] = rfm_register_read(base_addr+i);
 					}
 					rfm69_frame_tx(tx_buffer.buffer, read_len+4);
 					break;
@@ -862,7 +866,7 @@ int main(void) {
 					if (write_len > 16) write_len = 16;
 					int i;
 					for (i = 0; i < write_len; i++) {
-						rfm69_register_write(base_addr+i,rx_buffer.payload[i+1]);
+						rfm_register_write(base_addr+i,rx_buffer.payload[i+1]);
 					}
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'y';
@@ -977,7 +981,9 @@ int main(void) {
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
 			// TODO: will probably want to exclude remote commands
 			//setOpMode(MODE_AWAKE);
-			params_union.params.operating_mode = MODE_AWAKE;
+			if (params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
+				params_union.params.operating_mode = MODE_AWAKE;
+			}
 #endif
 
 			MyUARTSendCRLF();
@@ -1177,7 +1183,7 @@ int main(void) {
 				MyUARTSendStringZ("r ");
 				print_hex8 (regAddr);
 				MyUARTSendByte(' ');
-				print_hex8 (rfm69_register_read(regAddr));
+				print_hex8 (rfm_register_read(regAddr));
 				MyUARTSendCRLF();
 			}
 
@@ -1219,7 +1225,7 @@ int main(void) {
 				int i;
 				for (i = 2; i < argc; i++) {
 					regValue = parse_hex(args[i]);
-					rfm69_register_write(regAddr++,regValue);
+					rfm_register_write(regAddr++,regValue);
 				}
 				break;
 			}
