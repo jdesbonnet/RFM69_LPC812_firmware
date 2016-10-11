@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM98 0.6.1"
+#define VERSION "RFM69/98 0.7.0"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -28,8 +28,10 @@
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
+#define DEFAULT_MODE MODE_RADIO_OFF
 //#define DEFAULT_MODE MODE_LOW_POWER_POLL
-#define DEFAULT_MODE MODE_AWAKE
+//#define DEFAULT_MODE MODE_AWAKE
+
 
 #define DEFAULT_POLL_INTERVAL 30
 
@@ -106,8 +108,7 @@
 #define FEATURE_WATCHDOG_TIMER
 
 // GPS on second UART port.
-#define FEATURE_GPS_ON_USART1
-
+//#define FEATURE_GPS_ON_USART1
 
 // WS2812B RGB LED driver
 //#define FEATURE_WS2812B
@@ -147,7 +148,7 @@
 #define SS_PIN 1
 #define MOSI_PIN 8
 #define MISO_PIN 7
-#define RESET_PIN 15
+//#define RESET_PIN 15
 //#define DIO0_PIN 6
 #define EVENT_COUNTER_PIN 16
 #define LED_PIN 17

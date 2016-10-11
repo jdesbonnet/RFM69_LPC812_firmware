@@ -115,6 +115,19 @@ void report_error (uint8_t cmd, int32_t code) {
  */
 void displayStatus () {
 
+#ifdef BOARD_LPC812_RFM98_V1
+	tfp_printf("; radio RFM98\r\n");
+#else
+	tfp_printf("; radio RFM69\r\n");
+#endif
+
+#ifdef BOARD_LPC812_RFM98_V1
+	int ii;
+	for (ii = 0; ii < 20; ii++) {
+		tfp_printf("; reg[%d]=%x\r\n", ii, rfm_register_read(ii));
+	}
+#endif
+
 	tfp_printf ("; firmware=%s\r\n", VERSION);
 
 	// List optional features enabled
@@ -162,11 +175,13 @@ void displayStatus () {
 
 	int32_t t;
 
-	t = rfm69_temperature();
-	tfp_printf("; rfm69_temperature=%d\r\n", t);
+	//t = rfm69_temperature();
+	//tfp_printf("; rfm69_temperature=%d\r\n", t);
 
+#ifdef FEATURE_DS18B20
 	t = (1000*ds18b20_temperature_read())/16;
 	tfp_printf("; ds18b20_temperature_mC=%d\r\n", t);
+#endif
 
 	tfp_printf("; END\r\n");
 
@@ -440,16 +455,6 @@ int main(void) {
 
 	spi_init();
 
-#ifdef BOARD_LPC812_RFM98_V1
-	int ii;
-	for (ii = 0; ii < 20; ii++) {
-		tfp_printf("reg[%d]=%x\r\n", ii, rfm_register_read(ii));
-	}
-#endif
-
-	// Configure hardware interface to radio module
-	rfm_init();
-
 	uint32_t regVal;
 
 #ifdef RESET_PIN
@@ -553,12 +558,19 @@ int main(void) {
 	uint32_t test_result = 0;
 
 
-	// Test RFM69 radio module
+	//
+	// Test radio module
+	//
+#ifdef BOARD_LPC812_RFM98_V1
+
+#else
 	if (rfm69_test() != 0) {
 		// Error communicating with RFM69: 4 blinks
 		ledBlink(4);
 		test_result |= 1<<0;
 	}
+#endif
+
 
 #ifdef FEATURE_DS18B20
 	if (ow_reset() == 0) {
@@ -574,7 +586,11 @@ int main(void) {
 	}
 	tfp_printf("k %x\r\n",test_result);
 
+#ifdef BOARD_LPC812_RFM98_V1
+	rfm98_config();
+#else
 	rfm69_config();
+#endif
 
 	//
 	// Main program loop
@@ -598,9 +614,7 @@ int main(void) {
 
 #ifdef FEATURE_DEEPSLEEP
 		// Test for MODE_OFF or MODE_LOW_POWER_POLL (LSB==0 for those two modes)
-		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL
-				// || params_union.params.operating_mode == MODE_RADIO_OFF
-				) {
+		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
 			tfp_printf("; z\r\n");
 
