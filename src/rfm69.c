@@ -1,7 +1,5 @@
 /**
- * RFM69HW (HopeRF) radio module driver for WRSC2014.
- *
- * First (pre)release 4 Sep 2014. Please check back in a few days for an update.
+ * RFM69HW (HopeRF) radio modem driver.
  *
  * Joe Desbonnet, jdesbonnet@gmail.com
  */
@@ -17,19 +15,6 @@
 
 
 extern const uint8_t RFM69_CONFIG[][2];
-
-/**
- * Wait for a register bit to go high, with timeout.
- */
-int rfm69_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
-	int niter=50000;
-	while ( (rfm_register_read(reg_addr) & mask) == 0) {
-		if (--niter == 0) {
-			return E_TIMEOUT;
-		}
-	}
-	return E_OK;
-}
 
 /**
  * Test for presence of RFM69. Write test value into AES key registers
@@ -76,7 +61,7 @@ int rfm69_mode(uint8_t mode) {
 	// Wait until mode change is complete
 	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
 
-	return rfm69_wait_for_bit_high(RFM69_IRQFLAGS1, RFM69_IRQFLAGS1_ModeReady);
+	return rfm_wait_for_bit_high(RFM69_IRQFLAGS1, RFM69_IRQFLAGS1_ModeReady);
 }
 
 /**
@@ -210,7 +195,7 @@ void rfm69_frame_tx(uint8_t *buf, int len) {
 	//while ( (rfm_register_read(RFM69_IRQFLAGS2) & RFM69_IRQFLAGS2_PacketSent_MASK) == 0x00){
 		// TODO: implement timeout
 	//}
-	rfm69_wait_for_bit_high(RFM69_IRQFLAGS2, RFM69_IRQFLAGS2_PacketSent);
+	rfm_wait_for_bit_high(RFM69_IRQFLAGS2, RFM69_IRQFLAGS2_PacketSent);
 	// Back to receive mode
 	// Let main loop manage transition back to default mode
 	//rfm69_mode(RFM69_OPMODE_Mode_RX);

@@ -16,17 +16,30 @@
 #define RFM98_OPMODE_ModulationType_VALUE(x) (((x)<<5)&RFM98_OPMODE_ModulationType_MASK)
 #define RFM98_OPMODE_ModulationType_FSK (0)       /*  */
 #define RFM98_OPMODE_ModulationType_OOK (1)       /*  */
-#define RFM98_OPMODE_LowFrequencyode (1<<3)       /*  */
-#define RFM98_OPMODE_LowFrequencyode_MASK (0x1<<3) /* LowFrequencyode bit mask */
-#define RFM98_OPMODE_LowFrequencyode_VALUE(x) (((x)<<3)&RFM98_OPMODE_LowFrequencyode_MASK)
-#define RFM98_OPMODE_Mode_MASK (0x7)              /* Mode bit mask */
-#define RFM98_OPMODE_Mode_VALUE(x) (((x)<<0)&RFM98_OPMODE_Mode_MASK)
-#define RFM98_OPMODE_Mode_SLEEP (0)               /* Sleep mode */
-#define RFM98_OPMODE_Mode_STDBY (1)               /* Standby mode */
-#define RFM98_OPMODE_Mode_FS (2)                  /* Frequency Synthesis mode */
-#define RFM98_OPMODE_Mode_TX (3)                  /* Transmitter mode */
-#define RFM98_OPMODE_Mode_FSRX (4)                /* Receiver mode */
-#define RFM98_OPMODE_Mode_RX (5)                  /* Receiver mode */
+#define RFM98_OPMODE_LowFrequencyMode (1<<3)      /*  */
+#define RFM98_OPMODE_LowFrequencyMode_MASK (0x1<<3) /* LowFrequencyMode bit mask */
+#define RFM98_OPMODE_LowFrequencyMode_VALUE(x) (((x)<<3)&RFM98_OPMODE_LowFrequencyMode_MASK)
+#define RFM98_OPMODE_FSK_MASK (0x7)               /* FSK bit mask */
+#define RFM98_OPMODE_FSK_VALUE(x) (((x)<<0)&RFM98_OPMODE_FSK_MASK)
+#define RFM98_OPMODE_FSK_SLEEP (0)                /* Sleep mode */
+#define RFM98_OPMODE_FSK_STDBY (1)                /* Standby mode */
+#define RFM98_OPMODE_FSK_FS (2)                   /* Frequency Synthesis mode */
+#define RFM98_OPMODE_FSK_TX (3)                   /* Transmitter mode */
+#define RFM98_OPMODE_FSK_FSRX (4)                 /* Receiver mode */
+#define RFM98_OPMODE_FSK_RX (5)                   /* Receiver mode */
+#define RFM98_OPMODE_LoRa_LF (1<<3)               /*  */
+#define RFM98_OPMODE_LoRa_LF_MASK (0x1<<3)        /* LoRa_LF bit mask */
+#define RFM98_OPMODE_LoRa_LF_VALUE(x) (((x)<<3)&RFM98_OPMODE_LoRa_LF_MASK)
+#define RFM98_OPMODE_LoRa_MASK (0x7)              /* LoRa bit mask */
+#define RFM98_OPMODE_LoRa_VALUE(x) (((x)<<0)&RFM98_OPMODE_LoRa_MASK)
+#define RFM98_OPMODE_LoRa_SLEEP (0)               /* Sleep mode */
+#define RFM98_OPMODE_LoRa_STDBY (1)               /* Standby mode */
+#define RFM98_OPMODE_LoRa_FSTX (2)                /* Frequency Synthesis mode */
+#define RFM98_OPMODE_LoRa_TX (3)                  /* Transmitter mode */
+#define RFM98_OPMODE_LoRa_FSRX (4)                /* Receiver mode */
+#define RFM98_OPMODE_LoRa_RXCONTINUOUS (5)        /* receiver continuous */
+#define RFM98_OPMODE_LoRa_RXSINGLE (6)            /* receive single */
+#define RFM98_OPMODE_LoRa_CAD (7)                 /* channel activity detect */
 
 /** Register RFM98_BITRATEMSB (MSB of Bit Rate (Chip Rate when Manchesterencoing is enabled)) at address 0x02 **/
 #define RFM98_BITRATEMSB (0x02)                   /* BITRATEMSB register address */
@@ -110,6 +123,15 @@
 #define RFM98_LNA_LnaGainSelect_G5 (5)            /* higest gain - 36dB */
 #define RFM98_LNA_LnaGainSelect_G6 (6)            /* higest gain - 48dB */
 
+/** Register RFM98_FIFOADDRPTR (FIFO SPI pointer) at address 0x0d **/
+#define RFM98_FIFOADDRPTR (0x0d)                  /* FIFOADDRPTR register address */
+
+/** Register RFM98_FIFOTXBASEADDR (Start Tx data) at address 0x0e **/
+#define RFM98_FIFOTXBASEADDR (0x0e)               /* FIFOTXBASEADDR register address */
+
+/** Register RFM98_FIFORXBASEADDR (Start Rx data) at address 0x0f **/
+#define RFM98_FIFORXBASEADDR (0x0f)               /* FIFORXBASEADDR register address */
+
 /** Register RFM98_RXBW at address 0x19 **/
 #define RFM98_RXBW (0x19)                         /* RXBW register address */
 #define RFM98_RXBW_DccFreq_MASK (0x7<<5)          /* DccFreq bit mask */
@@ -143,8 +165,8 @@
 #define RFM98_RSSIVALUE_RssiValue_MASK (0xff)     /* RssiValue bit mask */
 #define RFM98_RSSIVALUE_RssiValue_VALUE(x) (((x)<<0)&RFM98_RSSIVALUE_RssiValue_MASK)
 
-/** Register RFM98_IRQFLAGS1 (IRQ Flags 1) at address 0x27 **/
-#define RFM98_IRQFLAGS1 (0x27)                    /* IRQFLAGS1 register address */
+/** Register RFM98_IRQFLAGS1 (IRQ Flags 1) at address 0x3e **/
+#define RFM98_IRQFLAGS1 (0x3e)                    /* IRQFLAGS1 register address */
 #define RFM98_IRQFLAGS1_ModeReady (1<<7)          /* Mode switch complete flag */
 #define RFM98_IRQFLAGS1_ModeReady_MASK (0x1<<7)   /* ModeReady bit mask */
 #define RFM98_IRQFLAGS1_ModeReady_VALUE(x) (((x)<<7)&RFM98_IRQFLAGS1_ModeReady_MASK)
@@ -163,15 +185,15 @@
 #define RFM98_IRQFLAGS1_Timeout (1<<2)            /* Timeout */
 #define RFM98_IRQFLAGS1_Timeout_MASK (0x1<<2)     /* Timeout bit mask */
 #define RFM98_IRQFLAGS1_Timeout_VALUE(x) (((x)<<2)&RFM98_IRQFLAGS1_Timeout_MASK)
-#define RFM98_IRQFLAGS1_AutoMode (1<<1)           /* In intermediate mode state */
-#define RFM98_IRQFLAGS1_AutoMode_MASK (0x1<<1)    /* AutoMode bit mask */
-#define RFM98_IRQFLAGS1_AutoMode_VALUE(x) (((x)<<1)&RFM98_IRQFLAGS1_AutoMode_MASK)
+#define RFM98_IRQFLAGS1_PreambleDetect (1<<1)     /* In intermediate mode state */
+#define RFM98_IRQFLAGS1_PreambleDetect_MASK (0x1<<1) /* PreambleDetect bit mask */
+#define RFM98_IRQFLAGS1_PreambleDetect_VALUE(x) (((x)<<1)&RFM98_IRQFLAGS1_PreambleDetect_MASK)
 #define RFM98_IRQFLAGS1_SyncAddressMatch (1<<0)   /* Sync and Address match */
 #define RFM98_IRQFLAGS1_SyncAddressMatch_MASK (0x1) /* SyncAddressMatch bit mask */
 #define RFM98_IRQFLAGS1_SyncAddressMatch_VALUE(x) (((x)<<0)&RFM98_IRQFLAGS1_SyncAddressMatch_MASK)
 
-/** Register RFM98_IRQFLAGS2 (IRQ Flags 2) at address 0x28 **/
-#define RFM98_IRQFLAGS2 (0x28)                    /* IRQFLAGS2 register address */
+/** Register RFM98_IRQFLAGS2 (IRQ Flags 2) at address 0x3f **/
+#define RFM98_IRQFLAGS2 (0x3f)                    /* IRQFLAGS2 register address */
 #define RFM98_IRQFLAGS2_FifoFull (1<<7)           /* Set when FIFO is full (ie contains 66 bytes) */
 #define RFM98_IRQFLAGS2_FifoFull_MASK (0x1<<7)    /* FifoFull bit mask */
 #define RFM98_IRQFLAGS2_FifoFull_VALUE(x) (((x)<<7)&RFM98_IRQFLAGS2_FifoFull_MASK)
@@ -193,6 +215,9 @@
 #define RFM98_IRQFLAGS2_CrcOk (1<<1)              /* Set when CRC has passed in Rx mode. */
 #define RFM98_IRQFLAGS2_CrcOk_MASK (0x1<<1)       /* CrcOk bit mask */
 #define RFM98_IRQFLAGS2_CrcOk_VALUE(x) (((x)<<1)&RFM98_IRQFLAGS2_CrcOk_MASK)
+#define RFM98_IRQFLAGS2_LowBat (1<<0)             /* Set when the battery voltage drops below the Low Battery threshold. Cleared only when set to 1 by the user */
+#define RFM98_IRQFLAGS2_LowBat_MASK (0x1)         /* LowBat bit mask */
+#define RFM98_IRQFLAGS2_LowBat_VALUE(x) (((x)<<0)&RFM98_IRQFLAGS2_LowBat_MASK)
 
 /** Register RFM98_RSSITHRESH (RSSI trigger level for Rssi interrupt) at address 0x29 **/
 #define RFM98_RSSITHRESH (0x29)                   /* RSSITHRESH register address */

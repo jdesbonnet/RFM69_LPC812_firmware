@@ -34,13 +34,13 @@ HopeRF RFM95/96/97/98 Radio Module
 </bitfield>
 
 <bitfield bit="3" rwmode="rw">
-<sname>LowFrequencyode</sname>
+<sname>LowFrequencyMode</sname>
 <description>0 = High frequence mode (access to HF test registeres); 1 = low frequency mode (access to LF test registers)</description>
 </bitfield>
 
 <bitfield bit="2:0" rwmode="rw">
-<sname>Mode</sname>
-<description>Tranceiver's operating mode</description>
+<sname>FSK</sname>
+<description>Tranceiver FSK/OOK operating mode</description>
 <reference></reference>
 <fieldvalue><value>0</value><sname>SLEEP</sname><name>Sleep mode</name></fieldvalue>
 <fieldvalue><value>1</value><sname>STDBY</sname><name>Standby mode</name></fieldvalue>
@@ -48,8 +48,27 @@ HopeRF RFM95/96/97/98 Radio Module
 <fieldvalue><value>3</value><sname>TX</sname><name>Transmitter mode</name></fieldvalue>
 <fieldvalue><value>4</value><sname>FSRX</sname><name>Receiver mode</name></fieldvalue>
 <fieldvalue><value>5</value><sname>RX</sname><name>Receiver mode</name></fieldvalue>
-
 </bitfield>
+
+<bitfield bit="3" rwmode="rw">
+<sname>LoRa_LF</sname>
+<description>0 = High frequency mode (access to HF test registeres); 1 = low frequency mode (access to LF test registers)</description>
+</bitfield>
+
+<bitfield bit="2:0" rwmode="rw">
+<sname>LoRa</sname>
+<description>Tranceiver LoRa operating mode</description>
+<reference></reference>
+<fieldvalue><value>0</value><sname>SLEEP</sname><name>Sleep mode</name></fieldvalue>
+<fieldvalue><value>1</value><sname>STDBY</sname><name>Standby mode</name></fieldvalue>
+<fieldvalue><value>2</value><sname>FSTX</sname><name>Frequency Synthesis mode</name></fieldvalue>
+<fieldvalue><value>3</value><sname>TX</sname><name>Transmitter mode</name></fieldvalue>
+<fieldvalue><value>4</value><sname>FSRX</sname><name>Receiver mode</name></fieldvalue>
+<fieldvalue><value>5</value><sname>RXCONTINUOUS</sname><name>receiver continuous</name></fieldvalue>
+<fieldvalue><value>6</value><sname>RXSINGLE</sname><name>receive single</name></fieldvalue>
+<fieldvalue><value>7</value><sname>CAD</sname><name>channel activity detect</name></fieldvalue>
+</bitfield>
+
 </register>
 
 
@@ -290,7 +309,7 @@ HopeRF RFM95/96/97/98 Radio Module
 <register>
     <sname>IrqFlags1</sname>
     <name>IRQ Flags 1</name>
-    <address>0x27</address>
+    <address>0x3e</address>
     <bitfield bit="7" rwmode="r">
         <sname>ModeReady</sname>
         <name>Mode switch complete flag</name>
@@ -322,7 +341,7 @@ HopeRF RFM95/96/97/98 Radio Module
         <description>Set when a timeout ocurs (see TimeoutRxStart and TimeoutRssiThresh). Cleared when leaving Rx mode or when FIFO is emptied.</description>
     </bitfield>
     <bitfield bit="1" rwmode="r">
-        <sname>AutoMode</sname>
+        <sname>PreambleDetect</sname>
         <name>In intermediate mode state</name>
 		<description>Set when in intermediate state (while switching modes)</description>
     </bitfield>   
@@ -336,7 +355,7 @@ HopeRF RFM95/96/97/98 Radio Module
 <register>
     <sname>IrqFlags2</sname>
     <name>IRQ Flags 2</name>
-    <address>0x28</address>
+    <address>0x3f</address>
     <bitfield bit="7" rwmode="r">
         <sname>FifoFull</sname>
         <name>Set when FIFO is full (ie contains 66 bytes)</name>
@@ -366,6 +385,10 @@ HopeRF RFM95/96/97/98 Radio Module
         <sname>CrcOk</sname>
         <name>Set when CRC has passed in Rx mode.</name>
     </bitfield>
+	<bitfield bit="0" rwmode="rw">
+		<sname>LowBat</sname>
+		<name>Set when the battery voltage drops below the Low Battery threshold. Cleared only when set to 1 by the user</name>
+	</bitfield>
 </register>
 
 <register>

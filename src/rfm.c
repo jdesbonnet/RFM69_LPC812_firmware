@@ -64,3 +64,15 @@ void rfm_register_write (uint8_t reg_addr, uint8_t reg_value) {
 	rfm_nss_deassert();
 }
 
+/**
+ * Wait for a register bit to go high, with timeout.
+ */
+int rfm_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
+	int niter=50000;
+	while ( (rfm_register_read(reg_addr) & mask) == 0) {
+		if (--niter == 0) {
+			return E_TIMEOUT;
+		}
+	}
+	return E_OK;
+}

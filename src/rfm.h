@@ -14,4 +14,6 @@ uint8_t rfm_spi_transfer_byte(uint8_t b);
 
 uint8_t rfm_register_read (uint8_t reg_addr);
 void rfm_register_write (uint8_t reg_addr, uint8_t reg_value);
+int rfm_wait_for_bit_high (uint8_t reg_addr, uint8_t mask);
+
 #endif /* end __RFM_H */
