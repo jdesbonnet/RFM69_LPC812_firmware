@@ -206,6 +206,24 @@ HopeRF RFM95/96/97/98 Radio Module
     </bitfield>
 </register>
 
+<register>
+    <sname>FifoAddrPtr</sname>
+    <name>FIFO SPI pointer</name>
+    <address>0x0d</address>
+</register>
+
+<register>
+    <sname>FifoTxBaseAddr</sname>
+    <name>Start Tx data</name>
+    <address>0x0e</address>
+</register>
+
+<register>
+    <sname>FifoRxBaseAddr</sname>
+    <name>Start Rx data</name>
+    <address>0x0f</address>
+</register>
+
 
 <register>
     <sname>RxBw</sname>

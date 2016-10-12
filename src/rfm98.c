@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include "rfm.h"
-#include "rfm69.h"
+#include "rfm98.h"
 #include "spi.h"
 #include "err.h"
 #include "delay.h"
@@ -20,11 +20,12 @@ extern const uint8_t RFM98_CONFIG[][2];
 
 
 /**
- * Configure RFM69 radio module for use. Assumes SPI interface is already configured.
+ * Configure RFM98 module.
  */
 void rfm98_config() {
-	//int i;
-	//for (i = 0; RFM69_CONFIG[i][0] != 255; i++) {
-	//    rfm_register_write(RFM69_CONFIG[i][0], RFM69_CONFIG[i][1]);
-	//}
+	rfm_register_write(RFM98_OPMODE_Mode_SLEEP);
+	delayMilliseconds(10);
+	rfm_register_write(RFM98_OPMODE,RFM98_OPMODE_LoRaMode );
+	delayMilliseconds(10);
+
 }

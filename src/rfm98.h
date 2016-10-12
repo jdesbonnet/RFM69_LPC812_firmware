@@ -12,7 +12,4 @@ int rfm98_mode(uint8_t mode);
 int rfm98_frame_rx(uint8_t *buf, int maxlen);
 void rfm98_frame_tx(uint8_t *buf, int len);
 
-uint8_t rfm69_payload_ready();
-uint8_t rfm69_is_pll_lock();
-
 #endif /* end __RFM98_H */
