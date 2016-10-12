@@ -1190,7 +1190,7 @@ int main(void) {
 			}
 
 
-			// Read RFM69 register
+			// Read RFM register
 			case 'R' : {
 				// Parameter is register address
 				int regAddr = parse_hex(args[1]);
@@ -1199,6 +1199,7 @@ int main(void) {
 				MyUARTSendByte(' ');
 				print_hex8 (rfm_register_read(regAddr));
 				MyUARTSendCRLF();
+				break;
 			}
 
 			case 'S' :
