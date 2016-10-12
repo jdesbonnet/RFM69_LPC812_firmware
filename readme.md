@@ -5,6 +5,8 @@ This is firmware to drive my LPC812/RFM69HW and LPC812/RFM98 radio modem.
 The LPC812 with this firmware acts as a radio operating system, providing a simplified
 interface between the RFMxx module and the host application. 
 
+![Radio modem PCB](https://raw.githubusercontent.com/jdesbonnet/RFMxx_LPC812_PCB/master/doc/rfm69hw_board_populated.jpg)
+
 Built with LPCxpresso v7.3.0 (free IDE from NXP). 
 
 PCB project is here: https://github.com/jdesbonnet/RFMxx_LPC812_PCB
