@@ -128,144 +128,32 @@
 /** Register RFM98_FIFORXBASEADDR (Start Rx data) at address 0x0f **/
 #define RFM98_FIFORXBASEADDR (0x0f)               /* FIFORXBASEADDR register address */
 
-/** Register RFM98_RXBW at address 0x19 **/
-#define RFM98_RXBW (0x19)                         /* RXBW register address */
-#define RFM98_RXBW_DccFreq_MASK (0x7<<5)          /* DccFreq bit mask */
-#define RFM98_RXBW_DccFreq_VALUE(x) (((x)<<5)&RFM98_RXBW_DccFreq_MASK)
-#define RFM98_RXBW_RxBwMant_MASK (0x3<<3)         /* RxBwMant bit mask */
-#define RFM98_RXBW_RxBwMant_VALUE(x) (((x)<<3)&RFM98_RXBW_RxBwMant_MASK)
-#define RFM98_RXBW_RxBwExp_MASK (0x7)             /* RxBwExp bit mask */
-#define RFM98_RXBW_RxBwExp_VALUE(x) (((x)<<0)&RFM98_RXBW_RxBwExp_MASK)
-
-/** Register RFM98_AFCBW at address 0x1A **/
-#define RFM98_AFCBW (0x1A)                        /* AFCBW register address */
-#define RFM98_AFCBW_DccFreqAfc_MASK (0x7<<5)      /* DccFreqAfc bit mask */
-#define RFM98_AFCBW_DccFreqAfc_VALUE(x) (((x)<<5)&RFM98_AFCBW_DccFreqAfc_MASK)
-#define RFM98_AFCBW_RxBwMantAfc_MASK (0x3<<3)     /* RxBwMantAfc bit mask */
-#define RFM98_AFCBW_RxBwMantAfc_VALUE(x) (((x)<<3)&RFM98_AFCBW_RxBwMantAfc_MASK)
-#define RFM98_AFCBW_RxBwExpAfc_MASK (0x7)         /* RxBwExpAfc bit mask */
-#define RFM98_AFCBW_RxBwExpAfc_VALUE(x) (((x)<<0)&RFM98_AFCBW_RxBwExpAfc_MASK)
-
-/** Register RFM98_RSSICONFIG at address 0x23 **/
-#define RFM98_RSSICONFIG (0x23)                   /* RSSICONFIG register address */
-#define RFM98_RSSICONFIG_RssiDone (1<<1)          /*  */
-#define RFM98_RSSICONFIG_RssiDone_MASK (0x1<<1)   /* RssiDone bit mask */
-#define RFM98_RSSICONFIG_RssiDone_VALUE(x) (((x)<<1)&RFM98_RSSICONFIG_RssiDone_MASK)
-#define RFM98_RSSICONFIG_RssiDone_RssiDone (1)    /*  */
-#define RFM98_RSSICONFIG_RssiStart (1<<0)         /*  */
-#define RFM98_RSSICONFIG_RssiStart_MASK (0x1)     /* RssiStart bit mask */
-#define RFM98_RSSICONFIG_RssiStart_VALUE(x) (((x)<<0)&RFM98_RSSICONFIG_RssiStart_MASK)
-
-/** Register RFM98_RSSIVALUE (RSSI) at address 0x24 **/
-#define RFM98_RSSIVALUE (0x24)                    /* RSSIVALUE register address */
-#define RFM98_RSSIVALUE_RssiValue_MASK (0xff)     /* RssiValue bit mask */
-#define RFM98_RSSIVALUE_RssiValue_VALUE(x) (((x)<<0)&RFM98_RSSIVALUE_RssiValue_MASK)
-
-/** Register RFM98_IRQFLAGS1 (IRQ Flags 1) at address 0x3e **/
-#define RFM98_IRQFLAGS1 (0x3e)                    /* IRQFLAGS1 register address */
-#define RFM98_IRQFLAGS1_ModeReady (1<<7)          /* Mode switch complete flag */
-#define RFM98_IRQFLAGS1_ModeReady_MASK (0x1<<7)   /* ModeReady bit mask */
-#define RFM98_IRQFLAGS1_ModeReady_VALUE(x) (((x)<<7)&RFM98_IRQFLAGS1_ModeReady_MASK)
-#define RFM98_IRQFLAGS1_RxReady (1<<6)            /* Rx mode ready (RSSI, AGC, AFC complete) */
-#define RFM98_IRQFLAGS1_RxReady_MASK (0x1<<6)     /* RxReady bit mask */
-#define RFM98_IRQFLAGS1_RxReady_VALUE(x) (((x)<<6)&RFM98_IRQFLAGS1_RxReady_MASK)
-#define RFM98_IRQFLAGS1_TxReady (1<<5)            /* Tx mode ready (PA ramped up) */
-#define RFM98_IRQFLAGS1_TxReady_MASK (0x1<<5)     /* TxReady bit mask */
-#define RFM98_IRQFLAGS1_TxReady_VALUE(x) (((x)<<5)&RFM98_IRQFLAGS1_TxReady_MASK)
-#define RFM98_IRQFLAGS1_PllLock (1<<4)            /* PLL locked */
-#define RFM98_IRQFLAGS1_PllLock_MASK (0x1<<4)     /* PllLock bit mask */
-#define RFM98_IRQFLAGS1_PllLock_VALUE(x) (((x)<<4)&RFM98_IRQFLAGS1_PllLock_MASK)
-#define RFM98_IRQFLAGS1_Rssi (1<<3)               /* RSSI exceeds threshold */
-#define RFM98_IRQFLAGS1_Rssi_MASK (0x1<<3)        /* Rssi bit mask */
-#define RFM98_IRQFLAGS1_Rssi_VALUE(x) (((x)<<3)&RFM98_IRQFLAGS1_Rssi_MASK)
-#define RFM98_IRQFLAGS1_Timeout (1<<2)            /* Timeout */
-#define RFM98_IRQFLAGS1_Timeout_MASK (0x1<<2)     /* Timeout bit mask */
-#define RFM98_IRQFLAGS1_Timeout_VALUE(x) (((x)<<2)&RFM98_IRQFLAGS1_Timeout_MASK)
-#define RFM98_IRQFLAGS1_PreambleDetect (1<<1)     /* In intermediate mode state */
-#define RFM98_IRQFLAGS1_PreambleDetect_MASK (0x1<<1) /* PreambleDetect bit mask */
-#define RFM98_IRQFLAGS1_PreambleDetect_VALUE(x) (((x)<<1)&RFM98_IRQFLAGS1_PreambleDetect_MASK)
-#define RFM98_IRQFLAGS1_SyncAddressMatch (1<<0)   /* Sync and Address match */
-#define RFM98_IRQFLAGS1_SyncAddressMatch_MASK (0x1) /* SyncAddressMatch bit mask */
-#define RFM98_IRQFLAGS1_SyncAddressMatch_VALUE(x) (((x)<<0)&RFM98_IRQFLAGS1_SyncAddressMatch_MASK)
-
-/** Register RFM98_IRQFLAGS2 (IRQ Flags 2) at address 0x3f **/
-#define RFM98_IRQFLAGS2 (0x3f)                    /* IRQFLAGS2 register address */
-#define RFM98_IRQFLAGS2_FifoFull (1<<7)           /* Set when FIFO is full (ie contains 66 bytes) */
-#define RFM98_IRQFLAGS2_FifoFull_MASK (0x1<<7)    /* FifoFull bit mask */
-#define RFM98_IRQFLAGS2_FifoFull_VALUE(x) (((x)<<7)&RFM98_IRQFLAGS2_FifoFull_MASK)
-#define RFM98_IRQFLAGS2_FifoNotEmpty (1<<6)       /* Set when FIFO contains at least one byte */
-#define RFM98_IRQFLAGS2_FifoNotEmpty_MASK (0x1<<6) /* FifoNotEmpty bit mask */
-#define RFM98_IRQFLAGS2_FifoNotEmpty_VALUE(x) (((x)<<6)&RFM98_IRQFLAGS2_FifoNotEmpty_MASK)
-#define RFM98_IRQFLAGS2_FifoLevel (1<<5)          /* Set when the number of bytes in the FIFO exceeds FifoThreshold */
-#define RFM98_IRQFLAGS2_FifoLevel_MASK (0x1<<5)   /* FifoLevel bit mask */
-#define RFM98_IRQFLAGS2_FifoLevel_VALUE(x) (((x)<<5)&RFM98_IRQFLAGS2_FifoLevel_MASK)
-#define RFM98_IRQFLAGS2_FifoOverrun (1<<4)        /* Set when FIFO overrun occurs. Flags and FIFO are cleared when this bit is set. */
-#define RFM98_IRQFLAGS2_FifoOverrun_MASK (0x1<<4) /* FifoOverrun bit mask */
-#define RFM98_IRQFLAGS2_FifoOverrun_VALUE(x) (((x)<<4)&RFM98_IRQFLAGS2_FifoOverrun_MASK)
-#define RFM98_IRQFLAGS2_PacketSent (1<<3)         /* Set when packet has been sent when in Tx mode. */
-#define RFM98_IRQFLAGS2_PacketSent_MASK (0x1<<3)  /* PacketSent bit mask */
-#define RFM98_IRQFLAGS2_PacketSent_VALUE(x) (((x)<<3)&RFM98_IRQFLAGS2_PacketSent_MASK)
-#define RFM98_IRQFLAGS2_PayloadReady (1<<2)       /* Set when packet ready to read in Rx mode. */
-#define RFM98_IRQFLAGS2_PayloadReady_MASK (0x1<<2) /* PayloadReady bit mask */
-#define RFM98_IRQFLAGS2_PayloadReady_VALUE(x) (((x)<<2)&RFM98_IRQFLAGS2_PayloadReady_MASK)
-#define RFM98_IRQFLAGS2_CrcOk (1<<1)              /* Set when CRC has passed in Rx mode. */
-#define RFM98_IRQFLAGS2_CrcOk_MASK (0x1<<1)       /* CrcOk bit mask */
-#define RFM98_IRQFLAGS2_CrcOk_VALUE(x) (((x)<<1)&RFM98_IRQFLAGS2_CrcOk_MASK)
-#define RFM98_IRQFLAGS2_LowBat (1<<0)             /* Set when the battery voltage drops below the Low Battery threshold. Cleared only when set to 1 by the user */
-#define RFM98_IRQFLAGS2_LowBat_MASK (0x1)         /* LowBat bit mask */
-#define RFM98_IRQFLAGS2_LowBat_VALUE(x) (((x)<<0)&RFM98_IRQFLAGS2_LowBat_MASK)
-
-/** Register RFM98_RSSITHRESH (RSSI trigger level for Rssi interrupt) at address 0x29 **/
-#define RFM98_RSSITHRESH (0x29)                   /* RSSITHRESH register address */
-#define RFM98_RSSITHRESH_RssiThreshold_MASK (0xff) /* RssiThreshold bit mask */
-#define RFM98_RSSITHRESH_RssiThreshold_VALUE(x) (((x)<<0)&RFM98_RSSITHRESH_RssiThreshold_MASK)
-
-/** Register RFM98_RXTIMEOUT1 at address 0x2A **/
-#define RFM98_RXTIMEOUT1 (0x2A)                   /* RXTIMEOUT1 register address */
-#define RFM98_RXTIMEOUT1_TimeoutRxStart_MASK (0xff) /* TimeoutRxStart bit mask */
-#define RFM98_RXTIMEOUT1_TimeoutRxStart_VALUE(x) (((x)<<0)&RFM98_RXTIMEOUT1_TimeoutRxStart_MASK)
-
-/** Register RFM98_RXTIMEOUT2 at address 0x2B **/
-#define RFM98_RXTIMEOUT2 (0x2B)                   /* RXTIMEOUT2 register address */
-#define RFM98_RXTIMEOUT2_TimeoutRssiThresh_MASK (0xff) /* TimeoutRssiThresh bit mask */
-#define RFM98_RXTIMEOUT2_TimeoutRssiThresh_VALUE(x) (((x)<<0)&RFM98_RXTIMEOUT2_TimeoutRssiThresh_MASK)
-
-/** Register RFM98_SYNCCONFIG at address 0x2e **/
-#define RFM98_SYNCCONFIG (0x2e)                   /* SYNCCONFIG register address */
-#define RFM98_SYNCCONFIG_SyncOn (1<<7)            /* Enables Sync word generation and detection */
-#define RFM98_SYNCCONFIG_SyncOn_MASK (0x1<<7)     /* SyncOn bit mask */
-#define RFM98_SYNCCONFIG_SyncOn_VALUE(x) (((x)<<7)&RFM98_SYNCCONFIG_SyncOn_MASK)
-#define RFM98_SYNCCONFIG_FifoFillCondition (1<<6) /* If 0 fills only if SyncAddress interrupt occurs */
-#define RFM98_SYNCCONFIG_FifoFillCondition_MASK (0x1<<6) /* FifoFillCondition bit mask */
-#define RFM98_SYNCCONFIG_FifoFillCondition_VALUE(x) (((x)<<6)&RFM98_SYNCCONFIG_FifoFillCondition_MASK)
-#define RFM98_SYNCCONFIG_SyncSize_MASK (0x7<<3)   /* SyncSize bit mask */
-#define RFM98_SYNCCONFIG_SyncSize_VALUE(x) (((x)<<3)&RFM98_SYNCCONFIG_SyncSize_MASK)
-#define RFM98_SYNCCONFIG_SyncTol_MASK (0x7)       /* SyncTol bit mask */
-#define RFM98_SYNCCONFIG_SyncTol_VALUE(x) (((x)<<0)&RFM98_SYNCCONFIG_SyncTol_MASK)
-
-/** Register RFM98_SYNCVALUE1 at address 0x2f **/
-#define RFM98_SYNCVALUE1 (0x2f)                   /* SYNCVALUE1 register address */
-
-/** Register RFM98_SYNCVALUE2 at address 0x30 **/
-#define RFM98_SYNCVALUE2 (0x30)                   /* SYNCVALUE2 register address */
-
-/** Register RFM98_SYNCVALUE3 at address 0x31 **/
-#define RFM98_SYNCVALUE3 (0x31)                   /* SYNCVALUE3 register address */
-
-/** Register RFM98_SYNCVALUE4 at address 0x32 **/
-#define RFM98_SYNCVALUE4 (0x32)                   /* SYNCVALUE4 register address */
-
-/** Register RFM98_SYNCVALUE5 at address 0x33 **/
-#define RFM98_SYNCVALUE5 (0x33)                   /* SYNCVALUE5 register address */
-
-/** Register RFM98_SYNCVALUE6 at address 0x34 **/
-#define RFM98_SYNCVALUE6 (0x34)                   /* SYNCVALUE6 register address */
-
-/** Register RFM98_SYNCVALUE7 at address 0x35 **/
-#define RFM98_SYNCVALUE7 (0x35)                   /* SYNCVALUE7 register address */
-
-/** Register RFM98_SYNCVALUE8 at address 0x36 **/
-#define RFM98_SYNCVALUE8 (0x36)                   /* SYNCVALUE8 register address */
+/** Register RFM98_IRQFLAGS (IRQ Flags 1) at address 0x12 **/
+#define RFM98_IRQFLAGS (0x12)                     /* IRQFLAGS register address */
+#define RFM98_IRQFLAGS_RxTimeout (1<<7)           /* Timeout interrupt. Write op clears interrupt. */
+#define RFM98_IRQFLAGS_RxTimeout_MASK (0x1<<7)    /* RxTimeout bit mask */
+#define RFM98_IRQFLAGS_RxTimeout_VALUE(x) (((x)<<7)&RFM98_IRQFLAGS_RxTimeout_MASK)
+#define RFM98_IRQFLAGS_RxDone (1<<6)              /* Packetreception complete interrupt. Write op clears interrupt. */
+#define RFM98_IRQFLAGS_RxDone_MASK (0x1<<6)       /* RxDone bit mask */
+#define RFM98_IRQFLAGS_RxDone_VALUE(x) (((x)<<6)&RFM98_IRQFLAGS_RxDone_MASK)
+#define RFM98_IRQFLAGS_PayloadCrcError (1<<5)     /* Payload CRC error interrupt. */
+#define RFM98_IRQFLAGS_PayloadCrcError_MASK (0x1<<5) /* PayloadCrcError bit mask */
+#define RFM98_IRQFLAGS_PayloadCrcError_VALUE(x) (((x)<<5)&RFM98_IRQFLAGS_PayloadCrcError_MASK)
+#define RFM98_IRQFLAGS_ValidHeader (1<<4)         /* Valid header received in RX. */
+#define RFM98_IRQFLAGS_ValidHeader_MASK (0x1<<4)  /* ValidHeader bit mask */
+#define RFM98_IRQFLAGS_ValidHeader_VALUE(x) (((x)<<4)&RFM98_IRQFLAGS_ValidHeader_MASK)
+#define RFM98_IRQFLAGS_TxDone (1<<3)              /*  */
+#define RFM98_IRQFLAGS_TxDone_MASK (0x1<<3)       /* TxDone bit mask */
+#define RFM98_IRQFLAGS_TxDone_VALUE(x) (((x)<<3)&RFM98_IRQFLAGS_TxDone_MASK)
+#define RFM98_IRQFLAGS_CadDone (1<<2)             /* CAD complete. */
+#define RFM98_IRQFLAGS_CadDone_MASK (0x1<<2)      /* CadDone bit mask */
+#define RFM98_IRQFLAGS_CadDone_VALUE(x) (((x)<<2)&RFM98_IRQFLAGS_CadDone_MASK)
+#define RFM98_IRQFLAGS_FhssChangeChannel (1<<1)   /*  */
+#define RFM98_IRQFLAGS_FhssChangeChannel_MASK (0x1<<1) /* FhssChangeChannel bit mask */
+#define RFM98_IRQFLAGS_FhssChangeChannel_VALUE(x) (((x)<<1)&RFM98_IRQFLAGS_FhssChangeChannel_MASK)
+#define RFM98_IRQFLAGS_CadDetected (1<<0)         /*  */
+#define RFM98_IRQFLAGS_CadDetected_MASK (0x1)     /* CadDetected bit mask */
+#define RFM98_IRQFLAGS_CadDetected_VALUE(x) (((x)<<0)&RFM98_IRQFLAGS_CadDetected_MASK)
 
 /** Register RFM98_PACKETCONFIG1 (Packet Configuration 1) at address 0x37 **/
 #define RFM98_PACKETCONFIG1 (0x37)                /* PACKETCONFIG1 register address */

@@ -240,241 +240,51 @@ HopeRF RFM95/96/97/98 Radio Module
 </register>
 
 
-<register>
-    <sname>RxBw</sname>
-    <address>0x19</address>
-    <bitfield bit="7:5" rwmode="rw">
-        <sname>DccFreq</sname>
-        <defaultvalue>2</defaultvalue>
-        <description>Cut-off frequency of the DC offset canceller (DCC): fc = 4*RxBw / (2*pi*2^(DccFreq+2))) . Set to ~ 4% of the RxBw by default.</description>
-    </bitfield>
-    <bitfield bit="4:3">
-        <sname>RxBwMant</sname>
-        <name>Mantissa component of channel filter bandwidth control </name>
-    </bitfield>
-    <bitfield bit="2:0">
-        <sname>RxBwExp</sname>
-        <name>Exponent component of channel filter bandwidth control</name>
-        <description>In FSK RxBw = Fosc / (RxBwMant*2^(RxBwExp+2)); in OOK RxBw = Fosc/(RxBwMant*2^(RxBwExp+3))</description>
-    </bitfield>      
-</register>
 
 <register>
-    <sname>AfcBw</sname>
-    <address>0x1A</address>
-    <bitfield bit="7:5" rwmode="rw">
-        <sname>DccFreqAfc</sname>
-        <name>DccFreq parameter used during the AFC</name>
-        <defaultvalue>8</defaultvalue>
-    </bitfield>
-    <bitfield bit="4:3" rwmode="rw">
-        <sname>RxBwMantAfc</sname>
-        <name>RxBwMant parameter using during the AFC</name>
-        <defaultvalue>1</defaultvalue>
-    </bitfield>
-    <bitfield bit="2:0" rwmode="rw">
-        <sname>RxBwExpAfc</sname>
-        <name>RxBwExp parameter using during the AFC</name>
-        <defaultvalue>3</defaultvalue>
-    </bitfield>    
-</register>
-
-<register>
-    <sname>RssiConfig</sname>
-    <address>0x23</address>
-    <bitfield bit="1" rwmode="r">
-        <sname>RssiDone</sname>
-        <fieldvalue><value>1</value><sname>RssiDone</sname></fieldvalue>
-    </bitfield>
-    <bitfield bit="0" rwmode="w">
-        <sname>RssiStart</sname>
-    </bitfield>
-</register>
-<register>
-    <sname>RssiValue</sname>
-    <address>0x24</address>
-    <name>RSSI</name>
-    <description>Absolute value of RSSI in dBm in 0.5dB steps. RSSI (dBm) = -RssiValue/2</description>
-    <bitfield bit="7:0" rwmode="r">
-        <sname>RssiValue</sname>
-    </bitfield>
-</register>
-
-
-
-<register>
-    <sname>IrqFlags1</sname>
+    <sname>IrqFlags</sname>
     <name>IRQ Flags 1</name>
-    <address>0x3e</address>
+    <address>0x12</address>
     <bitfield bit="7" rwmode="r">
-        <sname>ModeReady</sname>
-        <name>Mode switch complete flag</name>
-        <description>When a radio mode switch is commanded a value of 1 indicates the mode switch is complete.</description>
+        <sname>RxTimeout</sname>
+        <name>Timeout interrupt. Write op clears interrupt.</name>
+        <description></description>
     </bitfield>
     <bitfield bit="6" rwmode="r">
-        <sname>RxReady</sname>
-        <name>Rx mode ready (RSSI, AGC, AFC complete)</name>
-        <description>Set in Rx mode after RSSI, AGC and AFC. Cleared when leaving Rx mode.</description>
+        <sname>RxDone</sname>
+        <name>Packetreception complete interrupt. Write op clears interrupt.</name>
+        <description></description>
     </bitfield>
     <bitfield bit="5" rwmode="r">
-        <sname>TxReady</sname>
-        <name>Tx mode ready (PA ramped up)</name>
-        <description>Set in Tx mode after PA ramp-up. Cleared when leaving Tx mode.</description>
+        <sname>PayloadCrcError</sname>
+        <name>Payload CRC error interrupt.</name>
+        <description></description>
     </bitfield>
     <bitfield bit="4" rwmode="r">
-        <sname>PllLock</sname>
-        <name>PLL locked</name>
-        <description>Set in FS, Rx or Tx mode when PLL is locked. Cleared when not locked.</description>
+        <sname>ValidHeader</sname>
+        <name>Valid header received in RX.</name>
+        <description></description>
     </bitfield>
     <bitfield bit="3" rwmode="rwc">
-        <sname>Rssi</sname>
-        <name>RSSI exceeds threshold</name>
-        <description>Set in Rx mode when RssiValue exceeds RssiThreshold. Cleared when leaving Rx mode.</description>
+        <sname>TxDone</sname>
+        <name></name>
+        <description></description>
     </bitfield>
     <bitfield bit="2" rwmode="r">
-        <sname>Timeout</sname>
-        <name>Timeout</name>
-        <description>Set when a timeout ocurs (see TimeoutRxStart and TimeoutRssiThresh). Cleared when leaving Rx mode or when FIFO is emptied.</description>
+        <sname>CadDone</sname>
+        <name>CAD complete.</name>
+        <description></description>
     </bitfield>
     <bitfield bit="1" rwmode="r">
-        <sname>PreambleDetect</sname>
-        <name>In intermediate mode state</name>
-		<description>Set when in intermediate state (while switching modes)</description>
+        <sname>FhssChangeChannel</sname>
+        <name></name>
+		<description></description>
     </bitfield>   
      <bitfield bit="0" rwmode="r">
-        <sname>SyncAddressMatch</sname>
-        <name>Sync and Address match</name>
-		<description>Set when Sync and Address (if enabled) are detected. Cleared when leaving Rx mode or FIFO emptied. This bit is read-only in Packet mode, rwc in Continuous mode</description>
+        <sname>CadDetected</sname>
+        <name></name>
+		<description></description>
     </bitfield>    
-</register>
-
-<register>
-    <sname>IrqFlags2</sname>
-    <name>IRQ Flags 2</name>
-    <address>0x3f</address>
-    <bitfield bit="7" rwmode="r">
-        <sname>FifoFull</sname>
-        <name>Set when FIFO is full (ie contains 66 bytes)</name>
-    </bitfield>
-    <bitfield bit="6" rwmode="r">
-        <sname>FifoNotEmpty</sname>
-        <name>Set when FIFO contains at least one byte</name>
-    </bitfield>
-    <bitfield bit="5" rwmode="r">
-        <sname>FifoLevel</sname>
-        <name>Set when the number of bytes in the FIFO exceeds FifoThreshold</name>
-    </bitfield>
-    <bitfield bit="4" rwmode="rwc">
-        <sname>FifoOverrun</sname>
-        <name>Set when FIFO overrun occurs. Flags and FIFO are cleared when this bit is set.</name>
-        <description>Set in FS, Rx or Tx mode when PLL is locked. Cleared when not locked.</description>
-    </bitfield>
-    <bitfield bit="3" rwmode="r">
-        <sname>PacketSent</sname>
-        <name>Set when packet has been sent when in Tx mode.</name>
-    </bitfield>
-    <bitfield bit="2" rwmode="r">
-        <sname>PayloadReady</sname>
-        <name>Set when packet ready to read in Rx mode.</name>
-    </bitfield>
-    <bitfield bit="1" rwmode="r">
-        <sname>CrcOk</sname>
-        <name>Set when CRC has passed in Rx mode.</name>
-    </bitfield>
-	<bitfield bit="0" rwmode="rw">
-		<sname>LowBat</sname>
-		<name>Set when the battery voltage drops below the Low Battery threshold. Cleared only when set to 1 by the user</name>
-	</bitfield>
-</register>
-
-<register>
-    <sname>RssiThresh</sname>
-    <name>RSSI trigger level for Rssi interrupt</name>
-    <address>0x29</address>
-    <description>level (dBm) = RssiThreshold / 2</description>
-    <bitfield bit="7:0" rwmode="rw">
-        <sname>RssiThreshold</sname>
-    	<defaultvalue>0xE4</defaultvalue>
-    </bitfield>
-</register>
-
-<register>
-    <sname>RxTimeout1</sname>
-    <name></name>
-    <address>0x2A</address>
-    <bitfield bit="7:0" rwmode="rw">
-        <sname>TimeoutRxStart</sname>
-    	<defaultvalue>0</defaultvalue>
-    </bitfield>
-</register>
-
-
-<register>
-    <sname>RxTimeout2</sname>
-    <name></name>
-    <address>0x2B</address>
-    <bitfield bit="7:0" rwmode="rw">
-        <sname>TimeoutRssiThresh</sname>
-    	<defaultvalue>0</defaultvalue>
-    </bitfield>
-</register>
-
-<register>
-    <sname>SyncConfig</sname>
-    <address>0x2e</address>
-    <bitfield bit="7" rwmode="rw">
-        <sname>SyncOn</sname>
-        <name>Enables Sync word generation and detection</name>
-        <defaultvalue>1</defaultvalue>
-    </bitfield>
-    <bitfield bit="6" rwmode="rw">
-        <sname>FifoFillCondition</sname>
-        <name>If 0 fills only if SyncAddress interrupt occurs</name>
-        <defaultvalue>0</defaultvalue>
-    </bitfield>
-    <bitfield bit="5:3" rwmode="rw">
-        <sname>SyncSize</sname>
-        <name>Size of the Sync word (SyncSize+1 bytes)</name>
-        <defaultvalue>3</defaultvalue>
-    </bitfield>
-    <bitfield bit="2:0" rwmode="rw">
-        <sname>SyncTol</sname>
-        <name>Number of tolerated bit errors in Sync word</name>
-        <defaultvalue>0</defaultvalue>
-    </bitfield>
-</register>
-
-<register>
-    <sname>SyncValue1</sname>
-    <address>0x2f</address>
-</register>
-<register>
-    <sname>SyncValue2</sname>
-    <address>0x30</address>
-</register>
-<register>
-    <sname>SyncValue3</sname>
-    <address>0x31</address>
-</register>
-<register>
-    <sname>SyncValue4</sname>
-    <address>0x32</address>
-</register>
-<register>
-    <sname>SyncValue5</sname>
-    <address>0x33</address>
-</register>
-<register>
-    <sname>SyncValue6</sname>
-    <address>0x34</address>
-</register>
-<register>
-    <sname>SyncValue7</sname>
-    <address>0x35</address>
-</register>
-<register>
-    <sname>SyncValue8</sname>
-    <address>0x36</address>
 </register>
 
 <register>

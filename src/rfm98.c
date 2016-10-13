@@ -112,15 +112,11 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 	rfm_nss_deassert();
 
 	// Power up TX
-	tfp_printf("; lora mode TX\r\n");
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_TX);
 
 	// Wait for TxDone IRQ
-	rfm_wait_for_bit_high(0x12, (1<<3) );
+	rfm_wait_for_bit_high(RFM98_IRQFLAGS, RFM98_IRQFLAGS_TxDone);
 
-	// Clear IRQ
-	rfm_register_write(0x12, (1<<3) );
-
-	tfp_printf("; frame TXed\r\n");
-
+	// Clear TxDone IRQ
+	rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_TxDone);
 }
