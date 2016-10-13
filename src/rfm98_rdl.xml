@@ -133,21 +133,17 @@ HopeRF RFM95/96/97/98 Radio Module
 <address>0x09</address>
 <name>Power Amplifier (PA) power configuration</name>
 <bitfield bit="7" rwmode="rw">
-    <sname>Pa0On</sname>
-    <name>Enables PA0</name>
+    <sname>PaSelect</sname>
+    <name>Output on PA_BOOST pin if PaSelect=1</name>
     <fieldvalue><value>1</value><sname>ON</sname></fieldvalue>
 </bitfield>
-<bitfield bit="6" rwmode="rw">
-    <sname>Pa1On</sname>
-    <name>Enables PA1</name>
+<bitfield bit="6:4" rwmode="rw">
+    <sname>MaxPower</sname>
+    <name>Select max power: Pmax = 10.8 + 0.6*MaxPower [dBm]</name>
 </bitfield>
-<bitfield bit="5" rwmode="rw">
-    <sname>Pa2On</sname>
-    <name>Enables PA2</name>
-</bitfield>
-<bitfield bit="4:0" rwmode="rw">
+<bitfield bit="3:0" rwmode="rw">
     <sname>OutputPower</sname>
-    <name>Output power setting in 1dB steps</name>
+    <name>Pout = Pmax - (15-OutputPower) if PaSelect=0; Pout=17-(15-OutputPower) if PaSelect=1</name>
     <description>
         Pout = -18 + OutputPower[dBm] with PA0; 
         Pout = -18 + OutputPower[dBm] with PA1; 

@@ -62,8 +62,8 @@
 //#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
 #define BOARD_LPC812_RFM98_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
 
-// One board was populated without the trace cut: reroute RXD. Enable this in addition
-// to BOARD_LPC812_V1
+// One board was populated without the trace cut: reroute RXD.
+// Enable this in addition to BOARD_LPC812_V1
 //#define BOARD_V1B_HACK
 
 
@@ -128,7 +128,7 @@
 #endif
 
 #ifdef BOARD_LPC812_V1
-// PCB v1
+// RFM69 PCB v1
 #define SCK_PIN 7
 #define SS_PIN 1
 #define MOSI_PIN 9
@@ -143,7 +143,7 @@
 #endif
 
 #ifdef BOARD_LPC812_RFM98_V1
-// PCB v1
+// RFM98 PCB v1
 #define SCK_PIN 9
 #define SS_PIN 1
 #define MOSI_PIN 8

@@ -116,16 +116,16 @@ void report_error (uint8_t cmd, int32_t code) {
 void displayStatus () {
 
 #ifdef BOARD_LPC812_RFM98_V1
-	tfp_printf("; radio RFM98\r\n");
+	tfp_printf("; radio=RFM98\r\n");
 #else
-	tfp_printf("; radio RFM69\r\n");
+	tfp_printf("; radio=RFM69\r\n");
 #endif
 
 #ifdef BOARD_LPC812_RFM98_V1
-	int ii;
-	for (ii = 0; ii < 20; ii++) {
-		tfp_printf("; reg[%d]=%x\r\n", ii, rfm_register_read(ii));
-	}
+//	int ii;
+//	for (ii = 0; ii < 20; ii++) {
+//		tfp_printf("; reg[%d]=%x\r\n", ii, rfm_register_read(ii));
+//	}
 #endif
 
 	tfp_printf ("; firmware=%s\r\n", VERSION);

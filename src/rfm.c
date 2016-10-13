@@ -71,8 +71,10 @@ int rfm_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
 	int niter=50000;
 	while ( (rfm_register_read(reg_addr) & mask) == 0) {
 		if (--niter == 0) {
+tfp_printf("; E_TIMEOUT\r\n");
 			return E_TIMEOUT;
 		}
 	}
+tfp_printf("; E_OK niter=%d\r\n",niter);
 	return E_OK;
 }

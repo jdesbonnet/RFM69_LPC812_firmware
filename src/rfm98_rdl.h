@@ -64,17 +64,13 @@
 
 /** Register RFM98_PACONFIG (Power Amplifier (PA) power configuration) at address 0x09 **/
 #define RFM98_PACONFIG (0x09)                     /* PACONFIG register address */
-#define RFM98_PACONFIG_Pa0On (1<<7)               /* Enables PA0 */
-#define RFM98_PACONFIG_Pa0On_MASK (0x1<<7)        /* Pa0On bit mask */
-#define RFM98_PACONFIG_Pa0On_VALUE(x) (((x)<<7)&RFM98_PACONFIG_Pa0On_MASK)
-#define RFM98_PACONFIG_Pa0On_ON (1)               /*  */
-#define RFM98_PACONFIG_Pa1On (1<<6)               /* Enables PA1 */
-#define RFM98_PACONFIG_Pa1On_MASK (0x1<<6)        /* Pa1On bit mask */
-#define RFM98_PACONFIG_Pa1On_VALUE(x) (((x)<<6)&RFM98_PACONFIG_Pa1On_MASK)
-#define RFM98_PACONFIG_Pa2On (1<<5)               /* Enables PA2 */
-#define RFM98_PACONFIG_Pa2On_MASK (0x1<<5)        /* Pa2On bit mask */
-#define RFM98_PACONFIG_Pa2On_VALUE(x) (((x)<<5)&RFM98_PACONFIG_Pa2On_MASK)
-#define RFM98_PACONFIG_OutputPower_MASK (0x1f)    /* OutputPower bit mask */
+#define RFM98_PACONFIG_PaSelect (1<<7)            /* Output on PA_BOOST pin if PaSelect=1 */
+#define RFM98_PACONFIG_PaSelect_MASK (0x1<<7)     /* PaSelect bit mask */
+#define RFM98_PACONFIG_PaSelect_VALUE(x) (((x)<<7)&RFM98_PACONFIG_PaSelect_MASK)
+#define RFM98_PACONFIG_PaSelect_ON (1)            /*  */
+#define RFM98_PACONFIG_MaxPower_MASK (0x7<<4)     /* MaxPower bit mask */
+#define RFM98_PACONFIG_MaxPower_VALUE(x) (((x)<<4)&RFM98_PACONFIG_MaxPower_MASK)
+#define RFM98_PACONFIG_OutputPower_MASK (0xf)     /* OutputPower bit mask */
 #define RFM98_PACONFIG_OutputPower_VALUE(x) (((x)<<0)&RFM98_PACONFIG_OutputPower_MASK)
 
 /** Register RFM98_PARAMP (Control of PA ramp time, low phase noise PLL) at address 0x0a **/

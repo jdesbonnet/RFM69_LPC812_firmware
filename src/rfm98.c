@@ -25,17 +25,20 @@ void rfm98_config() {
 	delayMilliseconds(10);
 	rfm_register_write(RFM98_OPMODE, RFM98_OPMODE_LoRaMode );
 	delayMilliseconds(10);
+
+	// Set max power
+	rfm_register_write(RFM98_PACONFIG, RFM98_PACONFIG_PaSelect
+			| RFM98_PACONFIG_MaxPower_VALUE(4)
+			| RFM98_PACONFIG_OutputPower_VALUE(15)
+			);
 }
 
 /**
- * Set operating mode. Use macro values RFM98_OPMODE_Mode_xxxx as arg.
+ * Set operating mode. Use macro values RFM98_OPMODE_LoRa_xxxx as arg.
  */
 int rfm98_lora_mode(uint8_t mode) {
 	rfm_register_write(RFM98_OPMODE, RFM98_OPMODE_LoRaMode | mode);
-
-	// Wait until mode change is complete
-	// IRQFLAGS1[7] ModeReady: Set to 0 when mode change, 1 when mode change complete
-	return rfm_wait_for_bit_high(RFM98_IRQFLAGS1, RFM98_IRQFLAGS1_ModeReady);
+	return E_OK;
 }
 
 /**
@@ -89,10 +92,14 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 	// Turn off receiver before writing to FIFO
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_STDBY);
 
+
+	// Default TX buffer is at FIFO 0x80
+	rfm_register_write(RFM98_FIFOADDRPTR, 0x80);
+
+	rfm_register_write(0x22, len);
+
 	// Write frame to FIFO
 	rfm_nss_assert();
-
-	rfm_spi_transfer_byte(RFM98_FIFO | 0x80);
 
 	// packet length
 	rfm_spi_transfer_byte(len);
@@ -105,7 +112,15 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 	rfm_nss_deassert();
 
 	// Power up TX
+	tfp_printf("; lora mode TX\r\n");
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_TX);
 
-	rfm_wait_for_bit_high(RFM98_IRQFLAGS2, RFM98_IRQFLAGS2_PacketSent);
+	// Wait for TxDone IRQ
+	rfm_wait_for_bit_high(0x12, (1<<3) );
+
+	// Clear IRQ
+	rfm_register_write(0x12, (1<<3) );
+
+	tfp_printf("; frame TXed\r\n");
+
 }
