@@ -93,7 +93,7 @@ int rfm98_frame_rx(uint8_t *buf, int maxlen) {
 
     // Clear RxDone IRQ
     rfm_register_write(RFM98_IRQFLAGS,RFM98_IRQFLAGS_RxDone);
-    rfm_register_write(RFM98_IRQFLAGS,0xff);
+    //rfm_register_write(RFM98_IRQFLAGS,0xff);
 
     return frame_length;
 }
@@ -135,4 +135,12 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 
 	// Clear TxDone IRQ
 	rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_TxDone);
+}
+
+/**
+ * RSSI of last packet received. dBm.
+ */
+int rfm98_last_packet_rssi() {
+	// RSSI
+	return rfm_register_read(0x1a) - 137;
 }

@@ -116,8 +116,6 @@ void report_error (uint8_t cmd, int32_t code) {
  */
 void displayStatus () {
 
-	debug("****DEBUG TEST");
-
 #ifdef BOARD_LPC812_RFM98_V1
 	tfp_printf("; radio=RFM98\r\n");
 #else
@@ -239,7 +237,11 @@ void transmit_status_packet() {
 
 		// Transmit 'z' periodic wake packet
 		ledOn();
+#ifdef RADIO_RFM9x
+		rfm98_frame_tx(tx_buffer.buffer, 8);
+#else
 		rfm69_frame_tx(tx_buffer.buffer, 8);
+#endif
 		ledOff();
 	} else {
 		tfp_printf("; bat too low to tx");
@@ -253,63 +255,20 @@ void listen_for_status_response () {
 
 	// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
 	// and if detected wait a further 500 ticks for the packet to arrive.
-	int i;
 	int start_time = LPC_WWDT->TV;
 	int end_time = start_time - 16;
-	//uint8_t rssiscan1[120];memset(rssiscan1,0,120);
-	//uint8_t rssiscan2[120];memset(rssiscan2,0,120);
 	while (LPC_WWDT->TV > end_time) {
-		//i = 0;
-		//if (i < 120) {
-			//rssiscan1[i++] = rfm69_register_read(RFM69_RSSIVALUE);
-		//}
 		if (rfm_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
 			start_time = LPC_WWDT->TV;
 			end_time = start_time - 500;
-			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
-			//tfp_printf("; rssi1=%x\r\n",rssi);
-			//i = 0;
 			while (LPC_WWDT->TV > end_time) {
-				//if (i < 120) {
-				//	rssiscan2[i++] = rfm69_register_read(RFM69_RSSIVALUE);
-				//}
-				//rssi = rfm69_register_read(RFM69_RSSIVALUE);
 				if (rfm69_payload_ready()) {
-					//tfp_printf("; rssi2=%x\r\n",rssi);
-					//for (i = 0; i < 120; i++) {
-					//	tfp_printf("%d %d %d\r\n", i,rssiscan1[i],rssiscan2[i]);
-					//}
 					break;
 				}
 			}
 			break;
 		}
 	}
-
-	/*
-	int i;
-	int rssi_time = LPC_WWDT->TV;
-	for (i = 0; i < 10000; i++) {
-		if (rfm69_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
-			rssi_time -= LPC_WWDT->TV;
-			break;
-		}
-	}
-
-	int payload_time = LPC_WWDT->TV;
-	for (i = 0; i < 10000; i++) {
-		if (rfm69_payload_ready()) {
-			payload_time -= LPC_WWDT->TV;
-			break;
-		}
-	}
-
-
-	tfp_printf("; WWDT=%d\r\n", LPC_WWDT->TV);
-	tfp_printf("; RSSI %d ticks\r\n",rssi_time);
-	tfp_printf("; payload_ready %d ticks\r\n",payload_time);
-	*/
-
 }
 
 
@@ -488,7 +447,8 @@ int main(void) {
 
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
 	// RSSI_dBm = -rssi/2
-	uint8_t rssi;
+	// RFM9x: RSSI in dBm
+	int rssi;
 
 	//uint8_t *cmdbuf;
 	uint8_t *args[8];
@@ -708,10 +668,8 @@ int main(void) {
 #endif
 		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && IS_PACKET_READY()) {
 
-			debug ("have packet");
+			rssi = rfm98_last_packet_rssi();
 
-			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
-			//tfp_printf("; rssi_after_payload_ready=%x\r\n",rfm69_register_read(RFM69_RSSIVALUE));
 			// Yes, frame ready to be read from FIFO
 			ledOn();
 #ifdef RADIO_RFM9x
@@ -728,7 +686,8 @@ int main(void) {
 			for (ii = 0; ii < frame_len; ii++) {
 				tfp_printf(" %x", rx_buffer.buffer[ii]);
 			}
-			tfp_printf("\r\n");
+			tfp_printf (" RSSI=%d\r\n", rfm98_last_packet_rssi() );
+			//tfp_printf("\r\n");
 
 #ifdef FEATURE_WATCHDOG_TIMER
 			// Feed watchdog whenever a packet is successfully received.
