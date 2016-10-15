@@ -9,6 +9,7 @@ void rfm98_config(void);
 
 int rfm98_mode(uint8_t mode);
 
+int rfm98_is_packet_ready();
 int rfm98_frame_rx(uint8_t *buf, int maxlen);
 void rfm98_frame_tx(uint8_t *buf, int len);
 

@@ -240,10 +240,16 @@ HopeRF RFM95/96/97/98 Radio Module
 </register>
 
 
+<register>
+    <sname>FifoRxCurrent</sname>
+    <name>Start address (in data buffer) of last packet received.</name>
+    <address>0x10</address>
+</register>
+
 
 <register>
     <sname>IrqFlags</sname>
-    <name>IRQ Flags 1</name>
+    <name>IRQ Flags</name>
     <address>0x12</address>
     <bitfield bit="7" rwmode="r">
         <sname>RxTimeout</sname>
@@ -287,140 +293,12 @@ HopeRF RFM95/96/97/98 Radio Module
     </bitfield>    
 </register>
 
-<register>
-    <sname>PacketConfig1</sname>
-    <address>0x37</address>
-    <name>Packet Configuration 1</name>
-    <bitfield bit="7" rwmode="rw">
-        <sname>PacketFormat</sname>
-        <name>Defines the packet format used 0:fixed length; 1:variable length</name>
-        <defaultvalue>0</defaultvalue>
-        <fieldvalue><value>0</value><sname>Fixed</sname><name>Fixed length packets</name></fieldvalue>
-        <fieldvalue><value>1</value><sname>Variable</sname><name>Variable length packets</name></fieldvalue>
-    </bitfield>
-    <bitfield bit="6:5" rwmode="rw">
-        <sname>DcFree</sname>
-        <name>Defines DC-free encoding/decoding performed</name>
-        <defaultvalue>0</defaultvalue>
-        <fieldvalue><value>0</value><sname>none</sname></fieldvalue>
-        <fieldvalue><value>1</value><sname>Manchester</sname></fieldvalue>
-        <fieldvalue><value>2</value><sname>Whitening</sname></fieldvalue>
-    </bitfield>
-    <bitfield bit="4" rwmode="rw">
-        <sname>CrcOn</sname>
-        <defaultvalue>1</defaultvalue>
-    </bitfield>
-    <bitfield bit="3" rwmode="rw">
-        <sname>CrcAutoClearOff</sname>
-    </bitfield>
-    <bitfield bit="2:1" rwmode="rw">
-        <sname>AddressFiltering</sname>
-        <defaultvalue>0</defaultvalue>
-        <fieldvalue><value>0</value><sname>none</sname></fieldvalue>
-        <fieldvalue><value>1</value><sname>NodeOnly</sname><name>Address must match NodeAddress</name></fieldvalue>
-        <fieldvalue><value>2</value><sname>NodeOrBroadcast</sname><name>Address must match NodeAddress OR BroadcastAddress</name></fieldvalue>
-    </bitfield>
-</register>
 
 <register>
-    <sname>PayloadLength</sname>
-    <address>0x38</address>
-    <bitfield bit="7:0">
-        <sname>PayloadLength</sname>
-        <name></name>
-    </bitfield>
+    <sname>RxNbBytes</sname>
+    <name>Number of payload bytes of last packet received</name>
+    <address>0x13</address>
 </register>
 
-<register>
-    <sname>NodeAdrs</sname>
-    <address>0x39</address>
-    <name>Node address</name>
-</register>
 
-<register>
-    <sname>BroadcastAdrs</sname>
-    <address>0x3a</address>
-</register>
-
-<register>
-    <sname>FifoThresh</sname>
-    <address>0x3C</address>
-    <bitfield bit="7" rwmode="rw">
-        <sname>TxStartCondition</sname>
-        <defaultvalue>1</defaultvalue>
-    </bitfield>
-    <bitfield bit="6:0" rwmode="rw">
-        <sname>FifoThreshold</sname>
-        <defaultvalue>15</defaultvalue>
-    </bitfield>
-</register>
-
-<register>
-    <sname>PacketConfig2</sname>
-    <address>0x3d</address>
-    <name>Packet Configuration 2</name>
-    
-    <bitfield bit="7:4" rwmode="rw">
-        <sname>InterPacketRxDelay</sname>
-        <description>
-            After PayloadReady, defines the delay between FIFO empty and start of new RSSI phase for next packet. Must match TX PA ramp-down time. Tdelay=0 if InterPacketRxDelay>=12.
-            Tdelay = (2^InterPacketRxDelay) / BitRate otherwise.
-        </description>
-    </bitfield>
-    <bitfield bit="2" rwmode="w">
-        <sname>RestartRx</sname>
-        <description>Force receiver in WAIT mode while in continuous RX mode. Always reads as 0.</description>
-    </bitfield>
-    <bitfield bit="1" rwmode="rw">
-        <sname>AutoRxRestartOn</sname>
-        <name>Enable automatic Rx restart after Payloadready and FIFO read.</name>
-    </bitfield>
-    <bitfield bit="0" rwmode="rw">
-        <sname>AesOn</sname>
-        <name>Enable AES encryption</name>
-    </bitfield>
-</register>
-
-<register>
-    <sname>RegTemp1</sname>
-    <address>0xe4</address>
-    <name>Temperature Register 1</name>
-    <bitfield bit="3" rwmode="w">
-        <sname>TempMeasStart</sname>
-        <description>
-            Write 1 to start temperature measurement.
-        </description>
-    </bitfield>
-    <bitfield bit="2" rwmode="r">
-        <sname>TempMeasRunning</sname>
-        <description>
-        Set to 1 when temperature measurement is running.
-        </description>
-    </bitfield>
-</register>
-
-<register>
-    <sname>RegTemp2</sname>
-    <address>0xef</address>
-    <name>Temperature Register 2</name>
-    <bitfield bit="7:0" rwmode="r">
-        <sname>TempValue</sname>
-        <description>
-            Temperature (units C?).
-        </description>
-    </bitfield>
-</register>
-
-<register>
-    <sname>TestDagc</sname>
-    <name>Fading Margin Improvement, ref §3.4.4</name>
-    <address>0x6f</address>
-    <bitfield bit="7:0" rwmode="rw">
-        <sname>ContinuousDagc</sname>
-        <defaultvalue>0x30</defaultvalue>
-        <fieldvalue><value>0</value><sname>Normal</sname></fieldvalue>
-        <fieldvalue><value>0x20</value><sname>LowBetaOn</sname><name>Use if AfcLowBetaOn=1</name></fieldvalue>
-		<fieldvalue><value>0x30</value><sname>LowBetaOff</sname><name>Use if AfcLowBetaOn=0</name></fieldvalue>
-    </bitfield>
-</register>
 </device>

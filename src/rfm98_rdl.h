@@ -128,7 +128,10 @@
 /** Register RFM98_FIFORXBASEADDR (Start Rx data) at address 0x0f **/
 #define RFM98_FIFORXBASEADDR (0x0f)               /* FIFORXBASEADDR register address */
 
-/** Register RFM98_IRQFLAGS (IRQ Flags 1) at address 0x12 **/
+/** Register RFM98_FIFORXCURRENT (Start address (in data buffer) of last packet received.) at address 0x10 **/
+#define RFM98_FIFORXCURRENT (0x10)                /* FIFORXCURRENT register address */
+
+/** Register RFM98_IRQFLAGS (IRQ Flags) at address 0x12 **/
 #define RFM98_IRQFLAGS (0x12)                     /* IRQFLAGS register address */
 #define RFM98_IRQFLAGS_RxTimeout (1<<7)           /* Timeout interrupt. Write op clears interrupt. */
 #define RFM98_IRQFLAGS_RxTimeout_MASK (0x1<<7)    /* RxTimeout bit mask */
@@ -155,83 +158,7 @@
 #define RFM98_IRQFLAGS_CadDetected_MASK (0x1)     /* CadDetected bit mask */
 #define RFM98_IRQFLAGS_CadDetected_VALUE(x) (((x)<<0)&RFM98_IRQFLAGS_CadDetected_MASK)
 
-/** Register RFM98_PACKETCONFIG1 (Packet Configuration 1) at address 0x37 **/
-#define RFM98_PACKETCONFIG1 (0x37)                /* PACKETCONFIG1 register address */
-#define RFM98_PACKETCONFIG1_PacketFormat (1<<7)   /* Defines the packet format used 0:fixed length; 1:variable length */
-#define RFM98_PACKETCONFIG1_PacketFormat_MASK (0x1<<7) /* PacketFormat bit mask */
-#define RFM98_PACKETCONFIG1_PacketFormat_VALUE(x) (((x)<<7)&RFM98_PACKETCONFIG1_PacketFormat_MASK)
-#define RFM98_PACKETCONFIG1_PacketFormat_Fixed (0) /* Fixed length packets */
-#define RFM98_PACKETCONFIG1_PacketFormat_Variable (1) /* Variable length packets */
-#define RFM98_PACKETCONFIG1_DcFree_MASK (0x3<<5)  /* DcFree bit mask */
-#define RFM98_PACKETCONFIG1_DcFree_VALUE(x) (((x)<<5)&RFM98_PACKETCONFIG1_DcFree_MASK)
-#define RFM98_PACKETCONFIG1_DcFree_none (0)       /*  */
-#define RFM98_PACKETCONFIG1_DcFree_Manchester (1) /*  */
-#define RFM98_PACKETCONFIG1_DcFree_Whitening (2)  /*  */
-#define RFM98_PACKETCONFIG1_CrcOn (1<<4)          /*  */
-#define RFM98_PACKETCONFIG1_CrcOn_MASK (0x1<<4)   /* CrcOn bit mask */
-#define RFM98_PACKETCONFIG1_CrcOn_VALUE(x) (((x)<<4)&RFM98_PACKETCONFIG1_CrcOn_MASK)
-#define RFM98_PACKETCONFIG1_CrcAutoClearOff (1<<3) /*  */
-#define RFM98_PACKETCONFIG1_CrcAutoClearOff_MASK (0x1<<3) /* CrcAutoClearOff bit mask */
-#define RFM98_PACKETCONFIG1_CrcAutoClearOff_VALUE(x) (((x)<<3)&RFM98_PACKETCONFIG1_CrcAutoClearOff_MASK)
-#define RFM98_PACKETCONFIG1_AddressFiltering_MASK (0x3<<1) /* AddressFiltering bit mask */
-#define RFM98_PACKETCONFIG1_AddressFiltering_VALUE(x) (((x)<<1)&RFM98_PACKETCONFIG1_AddressFiltering_MASK)
-#define RFM98_PACKETCONFIG1_AddressFiltering_none (0) /*  */
-#define RFM98_PACKETCONFIG1_AddressFiltering_NodeOnly (1) /* Address must match NodeAddress */
-#define RFM98_PACKETCONFIG1_AddressFiltering_NodeOrBroadcast (2) /* Address must match NodeAddress OR BroadcastAddress */
-
-/** Register RFM98_PAYLOADLENGTH at address 0x38 **/
-#define RFM98_PAYLOADLENGTH (0x38)                /* PAYLOADLENGTH register address */
-#define RFM98_PAYLOADLENGTH_PayloadLength_MASK (0xff) /* PayloadLength bit mask */
-#define RFM98_PAYLOADLENGTH_PayloadLength_VALUE(x) (((x)<<0)&RFM98_PAYLOADLENGTH_PayloadLength_MASK)
-
-/** Register RFM98_NODEADRS (Node address) at address 0x39 **/
-#define RFM98_NODEADRS (0x39)                     /* NODEADRS register address */
-
-/** Register RFM98_BROADCASTADRS at address 0x3a **/
-#define RFM98_BROADCASTADRS (0x3a)                /* BROADCASTADRS register address */
-
-/** Register RFM98_FIFOTHRESH at address 0x3C **/
-#define RFM98_FIFOTHRESH (0x3C)                   /* FIFOTHRESH register address */
-#define RFM98_FIFOTHRESH_TxStartCondition (1<<7)  /*  */
-#define RFM98_FIFOTHRESH_TxStartCondition_MASK (0x1<<7) /* TxStartCondition bit mask */
-#define RFM98_FIFOTHRESH_TxStartCondition_VALUE(x) (((x)<<7)&RFM98_FIFOTHRESH_TxStartCondition_MASK)
-#define RFM98_FIFOTHRESH_FifoThreshold_MASK (0x7f) /* FifoThreshold bit mask */
-#define RFM98_FIFOTHRESH_FifoThreshold_VALUE(x) (((x)<<0)&RFM98_FIFOTHRESH_FifoThreshold_MASK)
-
-/** Register RFM98_PACKETCONFIG2 (Packet Configuration 2) at address 0x3d **/
-#define RFM98_PACKETCONFIG2 (0x3d)                /* PACKETCONFIG2 register address */
-#define RFM98_PACKETCONFIG2_InterPacketRxDelay_MASK (0xf<<4) /* InterPacketRxDelay bit mask */
-#define RFM98_PACKETCONFIG2_InterPacketRxDelay_VALUE(x) (((x)<<4)&RFM98_PACKETCONFIG2_InterPacketRxDelay_MASK)
-#define RFM98_PACKETCONFIG2_RestartRx (1<<2)      /*  */
-#define RFM98_PACKETCONFIG2_RestartRx_MASK (0x1<<2) /* RestartRx bit mask */
-#define RFM98_PACKETCONFIG2_RestartRx_VALUE(x) (((x)<<2)&RFM98_PACKETCONFIG2_RestartRx_MASK)
-#define RFM98_PACKETCONFIG2_AutoRxRestartOn (1<<1) /* Enable automatic Rx restart after Payloadready and FIFO read. */
-#define RFM98_PACKETCONFIG2_AutoRxRestartOn_MASK (0x1<<1) /* AutoRxRestartOn bit mask */
-#define RFM98_PACKETCONFIG2_AutoRxRestartOn_VALUE(x) (((x)<<1)&RFM98_PACKETCONFIG2_AutoRxRestartOn_MASK)
-#define RFM98_PACKETCONFIG2_AesOn (1<<0)          /* Enable AES encryption */
-#define RFM98_PACKETCONFIG2_AesOn_MASK (0x1)      /* AesOn bit mask */
-#define RFM98_PACKETCONFIG2_AesOn_VALUE(x) (((x)<<0)&RFM98_PACKETCONFIG2_AesOn_MASK)
-
-/** Register RFM98_REGTEMP1 (Temperature Register 1) at address 0xe4 **/
-#define RFM98_REGTEMP1 (0xe4)                     /* REGTEMP1 register address */
-#define RFM98_REGTEMP1_TempMeasStart (1<<3)       /*  */
-#define RFM98_REGTEMP1_TempMeasStart_MASK (0x1<<3) /* TempMeasStart bit mask */
-#define RFM98_REGTEMP1_TempMeasStart_VALUE(x) (((x)<<3)&RFM98_REGTEMP1_TempMeasStart_MASK)
-#define RFM98_REGTEMP1_TempMeasRunning (1<<2)     /*  */
-#define RFM98_REGTEMP1_TempMeasRunning_MASK (0x1<<2) /* TempMeasRunning bit mask */
-#define RFM98_REGTEMP1_TempMeasRunning_VALUE(x) (((x)<<2)&RFM98_REGTEMP1_TempMeasRunning_MASK)
-
-/** Register RFM98_REGTEMP2 (Temperature Register 2) at address 0xef **/
-#define RFM98_REGTEMP2 (0xef)                     /* REGTEMP2 register address */
-#define RFM98_REGTEMP2_TempValue_MASK (0xff)      /* TempValue bit mask */
-#define RFM98_REGTEMP2_TempValue_VALUE(x) (((x)<<0)&RFM98_REGTEMP2_TempValue_MASK)
-
-/** Register RFM98_TESTDAGC (Fading Margin Improvement, ref §3.4.4) at address 0x6f **/
-#define RFM98_TESTDAGC (0x6f)                     /* TESTDAGC register address */
-#define RFM98_TESTDAGC_ContinuousDagc_MASK (0xff) /* ContinuousDagc bit mask */
-#define RFM98_TESTDAGC_ContinuousDagc_VALUE(x) (((x)<<0)&RFM98_TESTDAGC_ContinuousDagc_MASK)
-#define RFM98_TESTDAGC_ContinuousDagc_Normal (0)  /*  */
-#define RFM98_TESTDAGC_ContinuousDagc_LowBetaOn (0x20) /* Use if AfcLowBetaOn=1 */
-#define RFM98_TESTDAGC_ContinuousDagc_LowBetaOff (0x30) /* Use if AfcLowBetaOn=0 */
+/** Register RFM98_RXNBBYTES (Number of payload bytes of last packet received) at address 0x13 **/
+#define RFM98_RXNBBYTES (0x13)                    /* RXNBBYTES register address */
 
 

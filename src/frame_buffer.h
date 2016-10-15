@@ -1,6 +1,8 @@
 #ifndef FRAME_BUFFER_H_
 #define FRAME_BUFFER_H_
 
+#include "config.h"
+
 typedef struct {
 	//uint8_t flags; // proposed for v0.3
 	uint8_t to_addr;
@@ -11,9 +13,9 @@ typedef struct {
 typedef union {
 	struct {
 		frame_header_type header;
-		uint8_t payload[66 - sizeof(frame_header_type)];
+		uint8_t payload[RXTX_BUFFER_SIZE - sizeof(frame_header_type)];
 	};
-	uint8_t buffer[66];
+	uint8_t buffer[RXTX_BUFFER_SIZE];
 } frame_buffer_type;
 
 #endif

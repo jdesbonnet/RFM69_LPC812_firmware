@@ -32,6 +32,7 @@ For v0.2.0:
 #include <string.h>
 
 #include "config.h"
+#include "debug.h"
 #include "battery.h"
 #include "switchmatrix.h"
 #include "myuart.h"
@@ -114,6 +115,8 @@ void report_error (uint8_t cmd, int32_t code) {
  * Show system settings etc to UART
  */
 void displayStatus () {
+
+	debug("****DEBUG TEST");
 
 #ifdef BOARD_LPC812_RFM98_V1
 	tfp_printf("; radio=RFM98\r\n");
@@ -609,7 +612,11 @@ int main(void) {
 		// TODO: can we avoid calling rfm69_mode() on every iteration?
 		// TODO: use macro to test flags
 		if (params_union.params.operating_mode == MODE_AWAKE) {
+#ifdef RADIO_RFM9x
+			rfm98_lora_mode(RFM98_OPMODE_LoRa_RXCONTINUOUS);
+#else
 			rfm69_mode(RFM69_OPMODE_Mode_RX);
+#endif
 		}
 
 #ifdef FEATURE_DEEPSLEEP
@@ -692,20 +699,36 @@ int main(void) {
 			}
 		}
 
-		// Check for received packet on RFM69
-		//if ( ((flags&0xf)!=MODE_ALL_OFF) && rfm69_payload_ready()) {
-		//if ( ((flags&0xf)!=MODE_ALL_OFF) && IS_PAYLOAD_READY()  ) {
-		// if ( IS_PAYLOAD_READY()  ) {
-		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && rfm69_payload_ready()) {
+		// Check for received packet on RFMxx
+		// TODO: need HAL layer
+#ifdef RADIO_RFM9x
+#define IS_PACKET_READY(x) rfm98_is_packet_ready()
+#else
+#define IS_PACKET_READY(x) rfm69_payload_ready()
+#endif
+		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && IS_PACKET_READY()) {
+
+			debug ("have packet");
 
 			//rssi = rfm69_register_read(RFM69_RSSIVALUE);
 			//tfp_printf("; rssi_after_payload_ready=%x\r\n",rfm69_register_read(RFM69_RSSIVALUE));
 			// Yes, frame ready to be read from FIFO
 			ledOn();
-			int frame_len = rfm69_frame_rx(rx_buffer.buffer,66);
+#ifdef RADIO_RFM9x
+			int frame_len = rfm98_frame_rx(rx_buffer.buffer,RXTX_BUFFER_SIZE);
+#else
+			int frame_len = rfm69_frame_rx(rx_buffer.buffer,RXTX_BUFFER_SIZE);
+#endif
 			ledOff();
 
 			last_frame_time = systick_counter;
+
+			int ii;
+			tfp_printf("; PACKET: ");
+			for (ii = 0; ii < frame_len; ii++) {
+				tfp_printf(" %x", rx_buffer.buffer[ii]);
+			}
+			tfp_printf("\r\n");
 
 #ifdef FEATURE_WATCHDOG_TIMER
 			// Feed watchdog whenever a packet is successfully received.

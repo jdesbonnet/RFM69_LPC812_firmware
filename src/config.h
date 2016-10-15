@@ -57,6 +57,10 @@
 // MCU used (only LPC812 supported, LPC824 later. LPC810 dropped due to lack of flash)
 #define LPC812
 
+// Radio module used
+//#define RADIO_RFM69
+#define RADIO_RFM9x
+
 // What PCB board or pin layout?
 //#define BOARD_LPC812_V0 // Deadbug LPC812 made back in Sep 2014.
 //#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
@@ -191,4 +195,12 @@
 #define IS_PAYLOAD_READY() rfm69_payload_ready()
 #endif
 
+// Buffer size for RFM9x 128; for RFM96 66 bytes
+#ifdef RADIO_RFM9x
+#define RXTX_BUFFER_SIZE 128
+#else
+#define RXTX_BUFFER_SIZE 66
 #endif
+
+
+#endif // end CONFIG_H_
