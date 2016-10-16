@@ -9,11 +9,29 @@
 
 extern const uint8_t RFM98_CONFIG[][2];
 
+/**
+ * Assert hardware reset line on RFM9x. Active low.
+ */
+void rfm98_hard_reset(void) {
+#ifdef RESET_PIN
+	// Configure RESET_PIN as output
+	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	regVal |= (1<<RESET_PIN);
+	LPC_GPIO_PORT->DIR0 = regVal;
+
+	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
+	delay(20000);
+	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
+#endif
+}
 
 /**
  * Configure RFM98 module.
  */
 void rfm98_config() {
+
+	rfm98_hard_reset();
+
 	rfm_register_write(RFM98_OPMODE, RFM98_OPMODE_LoRa_SLEEP);
 	delayMilliseconds(10);
 	rfm_register_write(RFM98_OPMODE, RFM98_OPMODE_LoRaMode );
@@ -26,7 +44,7 @@ void rfm98_config() {
 			| RFM98_PACONFIG_OutputPower_VALUE(15)
 			);
 
-	rfm_config(RFM98_CONFIG);
+	//rfm_config(RFM98_CONFIG);
 }
 
 /**
@@ -38,17 +56,9 @@ int rfm98_lora_mode(uint8_t mode) {
 }
 
 int rfm98_is_packet_ready() {
+	//uint8_t regVal =  rfm_register_read(RFM98_IRQFLAGS);
+	//debug("irq=%x",regVal);
 	return rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_RxDone;
-	/*
-	if (rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_RxDone) {
-		// Clear RxDone IRQ
-		rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_RxDone);
-
-		return 1;
-	}
-
-	return 0;
-	*/
 }
 
 /**
@@ -147,3 +157,6 @@ int rfm98_last_packet_rssi() {
 int rfm98_last_packet_snr() {
 	return (int)rfm_register_read(0x19);
 }
+
+
+

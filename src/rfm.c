@@ -6,29 +6,11 @@
 
 #include "config.h"
 
-#include <stdint.h>
-#include "rfm.h"
-#include "spi.h"
-#include "err.h"
-#include "delay.h"
-
 void rfm_init(void) {
 	spi_init();
 }
 
-void rfm_hard_reset(void) {
-#ifdef RESET_PIN
-	// If RFM reset line available, configure PIO pin for output and set low
-	// (RFM resets are active high).
-	regVal = LPC_GPIO_PORT->DIR0;
-	regVal |= (1<<RESET_PIN);
-	LPC_GPIO_PORT->DIR0 = regVal;
-	// Force reset on boot
-	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
-	delay(20000);
-	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
-#endif
-}
+
 
 /**
  * Configure radio module registers.

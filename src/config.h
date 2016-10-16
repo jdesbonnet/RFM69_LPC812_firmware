@@ -152,7 +152,7 @@
 #define SS_PIN 1
 #define MOSI_PIN 8
 #define MISO_PIN 7
-//#define RESET_PIN 15
+#define RESET_PIN 15
 //#define DIO0_PIN 6
 #define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
