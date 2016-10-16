@@ -181,8 +181,8 @@
 
 
 // UART speed ('baud rate')
-#define UART_BPS (9600)
-//#define UART_BPS (115200)
+//#define UART_BPS (9600)
+#define UART_BPS (115200)
 
 // Max size of NMEA sentence: standard specifies 79 + '$' + CRLF
 #define GPS_NMEA_SIZE 84
