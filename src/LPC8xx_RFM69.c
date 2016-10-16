@@ -372,7 +372,18 @@ int main(void) {
 		case 0x5046043:
 			params_union.params.node_addr = 0x45;
 			break;
+
+
+		case 0x19017037:
+			params_union.params.node_addr = 0x51; // RFM98
+			break;
+
+		case 0x1902e034:
+			params_union.params.node_addr = 0x52; // RFM98
+			break;
+
 		}
+
 	}
 
 
@@ -423,6 +434,7 @@ int main(void) {
 	// RSSI_dBm = -rssi/2
 	// RFM9x: RSSI in dBm
 	int rssi;
+	uint8_t modem_state,prev_modem_state;
 
 	// Used in UART commands
 	uint8_t *args[8];
@@ -637,6 +649,15 @@ int main(void) {
 			}
 		}
 
+#ifdef RADIO_RFM9x
+		if (params_union.params.operating_mode != MODE_AWAKE) {
+			modem_state = rfm_register_read(RFM98_MODEMSTAT);
+			if (modem_state != prev_modem_state) {
+				debug("MODEM %x",modem_state);
+				prev_modem_state=modem_state;
+			}
+		}
+#endif
 
 		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && IS_PACKET_READY()) {
 
@@ -658,11 +679,11 @@ int main(void) {
 
 #ifdef RADIO_RFM9x
 			int ii;
-			tfp_printf("; PACKET: ");
+			tfp_printf("; FRAME: [ ");
 			for (ii = 0; ii < frame_len; ii++) {
 				tfp_printf(" %x", rx_buffer.buffer[ii]);
 			}
-			tfp_printf (" %d %d\r\n", rfm98_last_packet_rssi(), rfm98_last_packet_snr() );
+			tfp_printf (" ] %d %d\r\n", rfm98_last_packet_rssi(), rfm98_last_packet_snr() );
 #endif
 
 #ifdef FEATURE_WATCHDOG_TIMER
@@ -968,12 +989,23 @@ int main(void) {
 			// Split command line into parameters (separated by spaces)
 			argc = 1;
 			args[0] = uart_buf;
+			uint8_t quote_state=0;
 			while (*uart_buf != 0) {
-				if (*uart_buf == ' ') {
+				if (*uart_buf == '"') {
+					// toggle quote_state
+					quote_state = quote_state==0? 1:0;
+				}
+				if (*uart_buf == ' ' && quote_state == 0) {
 					*uart_buf = 0;
+
 					args[argc++] = uart_buf+1;
 				}
 				uart_buf++;
+			}
+
+			int ii;
+			for (ii = 0; ii < argc; ii++) {
+				debug("arg[%d]=%s",ii,args[ii]);
 			}
 
 			// TODO: using an array of functions may be more space efficient than
