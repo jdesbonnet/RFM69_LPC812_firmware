@@ -300,5 +300,171 @@ HopeRF RFM95/96/97/98 Radio Module
     <address>0x13</address>
 </register>
 
+<register>
+    <sname>RxHeaderCountMsb</sname>
+    <name>Number of valid headers received since last switch to RX mode. MSB of 16 bit value.</name>
+    <address>0x14</address>
+</register>
+
+<register>
+    <sname>RxHeaderCount</sname>
+    <name>Number of valid headers received since last switch to RX mode. LSB of 16 bit value.</name>  
+    <address>0x15</address>
+</register>
+
+
+<register>
+    <sname>ModemStat</sname>
+    <name>Modem status.</name>  
+    <address>0x15</address>
+
+    <bitfield bit="7:5" rwmode="r">
+        <sname>RxCodingRate</sname>
+        <name></name>
+		<description></description>
+    </bitfield> 
+    
+    <bitfield bit="3" rwmode="r">
+        <sname>ModemClear</sname>
+        <name></name>
+		<description></description>
+    </bitfield> 
+      
+    <bitfield bit="3" rwmode="r">
+        <sname>HeaderValid</sname>
+        <name></name>
+		<description></description>
+    </bitfield> 
+    
+    <bitfield bit="2" rwmode="r">
+        <sname>RxOngoing</sname>
+        <name></name>
+		<description></description>
+    </bitfield>  
+    
+    <bitfield bit="1" rwmode="r">
+        <sname>SignalSync</sname>
+        <name></name>
+		<description></description>
+    </bitfield> 
+    
+    <bitfield bit="0" rwmode="r">
+        <sname>SignalDetect</sname>
+        <name></name>
+		<description></description>
+    </bitfield>    
+    
+</register>
+
+<register>
+    <sname>PacketSnr</sname>
+    <name>Estimation of SNR on last packet received (signed int8). SNR dB = regValue / 4. </name>  
+    <address>0x19</address>
+</register>
+
+<register>
+    <sname>PacketRssi</sname>
+    <name>RSSI of latest packet received (dBm). RSSI dBm = -137 + regValue. </name>  
+    <address>0x1A</address>
+</register>
+
+<register>
+    <sname>CurrentRssi</sname>
+    <name>Current RSSI (dBm). RSSI dBm = -137 + regValue. </name>  
+    <address>0x1B</address>
+</register>
+
+<register>
+    <sname>ModemConfig1</sname>
+    <name>Modem configuration register 1. </name>  
+    <address>0x1D</address>
+    
+    <bitfield bit="7:4" rwmode="rw">
+        <sname>Bw</sname>
+        <name></name>
+		<description></description>
+		<fieldvalue><value>0</value><sname>BW_7K8</sname><name>7.8 kHz</name></fieldvalue>
+		<fieldvalue><value>1</value><sname>BW_10K4</sname><name>10.4 kHz</name></fieldvalue>
+		<fieldvalue><value>2</value><sname>BW_15K6</sname><name>15.6 kHz</name></fieldvalue>
+		<fieldvalue><value>3</value><sname>BW_28K8</sname><name>20.8 kHz</name></fieldvalue>
+		<fieldvalue><value>4</value><sname>BW_31K25</sname><name>31.25 kHz</name></fieldvalue>
+		<fieldvalue><value>5</value><sname>BW_41K7</sname><name>41.7 kHz</name></fieldvalue>
+		<fieldvalue><value>6</value><sname>BW_62K5</sname><name>62.5 kHz</name></fieldvalue>
+		<fieldvalue><value>7</value><sname>BW_125K</sname><name>125 kHz</name></fieldvalue>
+		<fieldvalue><value>8</value><sname>BW_250K</sname><name>250 kHz</name></fieldvalue>
+		<fieldvalue><value>9</value><sname>BW_500K</sname><name>500 kHz</name></fieldvalue>
+    </bitfield> 
+     <bitfield bit="3:1" rwmode="rw">
+        <sname>CodingRate</sname>
+        <name>Error coding rate. See datasheet section 4.1.1.3.</name>
+		<description></description>
+		<fieldvalue><value>1</value><sname>CodingRate_4_5</sname><name>4/5</name></fieldvalue>
+		<fieldvalue><value>2</value><sname>CodingRate_4_6</sname><name>4/6</name></fieldvalue>
+		<fieldvalue><value>3</value><sname>CodingRate_4_7</sname><name>4/7</name></fieldvalue>
+		<fieldvalue><value>4</value><sname>CodingRate_4_8</sname><name>4/8</name></fieldvalue>
+    </bitfield>
+    <bitfield bit="0" rwmode="rw">
+        <sname>HeaderMode</sname>
+        <name></name>
+		<description></description>
+		<fieldvalue><value>0</value><sname>Explicit</sname><name>Explicit header mode</name></fieldvalue>
+		<fieldvalue><value>1</value><sname>Implicit</sname><name>Implicit header mode</name></fieldvalue>
+    </bitfield>  
+</register>
+
+<register>
+    <sname>ModemConfig2</sname>
+    <name>Modem configuration register 2.</name>  
+    <address>0x1E</address>
+    
+    <bitfield bit="7:4" rwmode="rw">
+        <sname>SpreadFactor</sname>
+        <name>Spread factor rate (chips per symbol).</name>
+		<description></description>
+		<fieldvalue><value>6</value><sname>64_ChipsPerSymbol</sname><name>64 chips / symbol</name></fieldvalue>
+		<fieldvalue><value>7</value><sname>128_ChipsPerSymbol</sname><name>128 chips / symbol</name></fieldvalue>
+		<fieldvalue><value>8</value><sname>256_ChipsPerSymbol</sname><name>256</name></fieldvalue>
+		<fieldvalue><value>9</value><sname>512_ChipsPerSymbol</sname><name>512</name></fieldvalue>
+		<fieldvalue><value>10</value><sname>1024_ChipsPerSymbol</sname><name>1024</name></fieldvalue>
+		<fieldvalue><value>11</value><sname>2048</sname><name>2048</name></fieldvalue>
+		<fieldvalue><value>12</value><sname>4096</sname><name>4096</name></fieldvalue>
+    </bitfield> 
+     <bitfield bit="3" rwmode="rw">
+        <sname>TxContinuousMode</sname>
+        <name></name>
+		<description></description>
+		<fieldvalue><value>0</value><sname>SinglePacket</sname><name>Single packet mode</name></fieldvalue>
+		<fieldvalue><value>1</value><sname>Continuous</sname><name>Continuous transmission, send multiple packets across the FIFO (used for spectral analysis)</name></fieldvalue>
+    </bitfield>
+    <bitfield bit="2" rwmode="rw">
+        <sname>RxPayloadCrc</sname>
+        <name></name>
+		<description></description>
+		<fieldvalue><value>0</value><sname>CRC_Off</sname><name></name></fieldvalue>
+		<fieldvalue><value>1</value><sname>CRC_On</sname><name></name></fieldvalue>
+    </bitfield> 
+</register>
+
+
+<register>
+    <sname>ModemConfig3</sname>
+    <name>Modem configuration register 3.</name>  
+    <address>0x26</address>
+    
+     <bitfield bit="3" rwmode="rw">
+        <sname>MobileNode</sname>
+        <name></name>
+		<description></description>
+		<fieldvalue><value>0</value><sname>StaticNode</sname><name>Single packet mode</name></fieldvalue>
+		<fieldvalue><value>1</value><sname>MobileNode</sname><name>Continuous transmission, send multiple packets across the FIFO (used for spectral analysis)</name></fieldvalue>
+    </bitfield>
+    <bitfield bit="2" rwmode="rw">
+        <sname>AgcAuto</sname>
+        <name></name>
+		<description></description>
+		<fieldvalue><value>0</value><sname>AgcOff</sname><name></name></fieldvalue>
+		<fieldvalue><value>1</value><sname>AgcOn</sname><name></name></fieldvalue>
+    </bitfield> 
+</register>
 
 </device>

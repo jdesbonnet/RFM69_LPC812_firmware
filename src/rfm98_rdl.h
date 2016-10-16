@@ -161,4 +161,100 @@
 /** Register RFM98_RXNBBYTES (Number of payload bytes of last packet received) at address 0x13 **/
 #define RFM98_RXNBBYTES (0x13)                    /* RXNBBYTES register address */
 
+/** Register RFM98_RXHEADERCOUNTMSB (Number of valid headers received since last switch to RX mode. MSB of 16 bit value.) at address 0x14 **/
+#define RFM98_RXHEADERCOUNTMSB (0x14)             /* RXHEADERCOUNTMSB register address */
+
+/** Register RFM98_RXHEADERCOUNT (Number of valid headers received since last switch to RX mode. LSB of 16 bit value.) at address 0x15 **/
+#define RFM98_RXHEADERCOUNT (0x15)                /* RXHEADERCOUNT register address */
+
+/** Register RFM98_MODEMSTAT (Modem status.) at address 0x15 **/
+#define RFM98_MODEMSTAT (0x15)                    /* MODEMSTAT register address */
+#define RFM98_MODEMSTAT_RxCodingRate_MASK (0x7<<5) /* RxCodingRate bit mask */
+#define RFM98_MODEMSTAT_RxCodingRate_VALUE(x) (((x)<<5)&RFM98_MODEMSTAT_RxCodingRate_MASK)
+#define RFM98_MODEMSTAT_ModemClear (1<<3)         /*  */
+#define RFM98_MODEMSTAT_ModemClear_MASK (0x1<<3)  /* ModemClear bit mask */
+#define RFM98_MODEMSTAT_ModemClear_VALUE(x) (((x)<<3)&RFM98_MODEMSTAT_ModemClear_MASK)
+#define RFM98_MODEMSTAT_HeaderValid (1<<3)        /*  */
+#define RFM98_MODEMSTAT_HeaderValid_MASK (0x1<<3) /* HeaderValid bit mask */
+#define RFM98_MODEMSTAT_HeaderValid_VALUE(x) (((x)<<3)&RFM98_MODEMSTAT_HeaderValid_MASK)
+#define RFM98_MODEMSTAT_RxOngoing (1<<2)          /*  */
+#define RFM98_MODEMSTAT_RxOngoing_MASK (0x1<<2)   /* RxOngoing bit mask */
+#define RFM98_MODEMSTAT_RxOngoing_VALUE(x) (((x)<<2)&RFM98_MODEMSTAT_RxOngoing_MASK)
+#define RFM98_MODEMSTAT_SignalSync (1<<1)         /*  */
+#define RFM98_MODEMSTAT_SignalSync_MASK (0x1<<1)  /* SignalSync bit mask */
+#define RFM98_MODEMSTAT_SignalSync_VALUE(x) (((x)<<1)&RFM98_MODEMSTAT_SignalSync_MASK)
+#define RFM98_MODEMSTAT_SignalDetect (1<<0)       /*  */
+#define RFM98_MODEMSTAT_SignalDetect_MASK (0x1)   /* SignalDetect bit mask */
+#define RFM98_MODEMSTAT_SignalDetect_VALUE(x) (((x)<<0)&RFM98_MODEMSTAT_SignalDetect_MASK)
+
+/** Register RFM98_PACKETSNR (Estimation of SNR on last packet received (signed int8). SNR dB = regValue / 4. ) at address 0x19 **/
+#define RFM98_PACKETSNR (0x19)                    /* PACKETSNR register address */
+
+/** Register RFM98_PACKETRSSI (RSSI of latest packet received (dBm). RSSI dBm = -137 + regValue. ) at address 0x1A **/
+#define RFM98_PACKETRSSI (0x1A)                   /* PACKETRSSI register address */
+
+/** Register RFM98_CURRENTRSSI (Current RSSI (dBm). RSSI dBm = -137 + regValue. ) at address 0x1B **/
+#define RFM98_CURRENTRSSI (0x1B)                  /* CURRENTRSSI register address */
+
+/** Register RFM98_MODEMCONFIG1 (Modem configuration register 1. ) at address 0x1D **/
+#define RFM98_MODEMCONFIG1 (0x1D)                 /* MODEMCONFIG1 register address */
+#define RFM98_MODEMCONFIG1_Bw_MASK (0xf<<4)       /* Bw bit mask */
+#define RFM98_MODEMCONFIG1_Bw_VALUE(x) (((x)<<4)&RFM98_MODEMCONFIG1_Bw_MASK)
+#define RFM98_MODEMCONFIG1_Bw_BW_7K8 (0)          /* 7.8 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_10K4 (1)         /* 10.4 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_15K6 (2)         /* 15.6 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_28K8 (3)         /* 20.8 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_31K25 (4)        /* 31.25 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_41K7 (5)         /* 41.7 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_62K5 (6)         /* 62.5 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_125K (7)         /* 125 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_250K (8)         /* 250 kHz */
+#define RFM98_MODEMCONFIG1_Bw_BW_500K (9)         /* 500 kHz */
+#define RFM98_MODEMCONFIG1_CodingRate_MASK (0x7<<1) /* CodingRate bit mask */
+#define RFM98_MODEMCONFIG1_CodingRate_VALUE(x) (((x)<<1)&RFM98_MODEMCONFIG1_CodingRate_MASK)
+#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_5 (1) /* 4/5 */
+#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_6 (2) /* 4/6 */
+#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_7 (3) /* 4/7 */
+#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_8 (4) /* 4/8 */
+#define RFM98_MODEMCONFIG1_HeaderMode (1<<0)      /*  */
+#define RFM98_MODEMCONFIG1_HeaderMode_MASK (0x1)  /* HeaderMode bit mask */
+#define RFM98_MODEMCONFIG1_HeaderMode_VALUE(x) (((x)<<0)&RFM98_MODEMCONFIG1_HeaderMode_MASK)
+#define RFM98_MODEMCONFIG1_HeaderMode_Explicit (0) /* Explicit header mode */
+#define RFM98_MODEMCONFIG1_HeaderMode_Implicit (1) /* Implicit header mode */
+
+/** Register RFM98_MODEMCONFIG2 (Modem configuration register 2.) at address 0x1E **/
+#define RFM98_MODEMCONFIG2 (0x1E)                 /* MODEMCONFIG2 register address */
+#define RFM98_MODEMCONFIG2_SpreadFactor_MASK (0xf<<4) /* SpreadFactor bit mask */
+#define RFM98_MODEMCONFIG2_SpreadFactor_VALUE(x) (((x)<<4)&RFM98_MODEMCONFIG2_SpreadFactor_MASK)
+#define RFM98_MODEMCONFIG2_SpreadFactor_64_ChipsPerSymbol (6) /* 64 chips / symbol */
+#define RFM98_MODEMCONFIG2_SpreadFactor_128_ChipsPerSymbol (7) /* 128 chips / symbol */
+#define RFM98_MODEMCONFIG2_SpreadFactor_256_ChipsPerSymbol (8) /* 256 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_512_ChipsPerSymbol (9) /* 512 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_1024_ChipsPerSymbol (10) /* 1024 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_2048 (11) /* 2048 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_4096 (12) /* 4096 */
+#define RFM98_MODEMCONFIG2_TxContinuousMode (1<<3) /*  */
+#define RFM98_MODEMCONFIG2_TxContinuousMode_MASK (0x1<<3) /* TxContinuousMode bit mask */
+#define RFM98_MODEMCONFIG2_TxContinuousMode_VALUE(x) (((x)<<3)&RFM98_MODEMCONFIG2_TxContinuousMode_MASK)
+#define RFM98_MODEMCONFIG2_TxContinuousMode_SinglePacket (0) /* Single packet mode */
+#define RFM98_MODEMCONFIG2_TxContinuousMode_Continuous (1) /* Continuous transmission, send multiple packets across the FIFO (used for spectral analysis) */
+#define RFM98_MODEMCONFIG2_RxPayloadCrc (1<<2)    /*  */
+#define RFM98_MODEMCONFIG2_RxPayloadCrc_MASK (0x1<<2) /* RxPayloadCrc bit mask */
+#define RFM98_MODEMCONFIG2_RxPayloadCrc_VALUE(x) (((x)<<2)&RFM98_MODEMCONFIG2_RxPayloadCrc_MASK)
+#define RFM98_MODEMCONFIG2_RxPayloadCrc_CRC_Off (0) /*  */
+#define RFM98_MODEMCONFIG2_RxPayloadCrc_CRC_On (1) /*  */
+
+/** Register RFM98_MODEMCONFIG3 (Modem configuration register 3.) at address 0x26 **/
+#define RFM98_MODEMCONFIG3 (0x26)                 /* MODEMCONFIG3 register address */
+#define RFM98_MODEMCONFIG3_MobileNode (1<<3)      /*  */
+#define RFM98_MODEMCONFIG3_MobileNode_MASK (0x1<<3) /* MobileNode bit mask */
+#define RFM98_MODEMCONFIG3_MobileNode_VALUE(x) (((x)<<3)&RFM98_MODEMCONFIG3_MobileNode_MASK)
+#define RFM98_MODEMCONFIG3_MobileNode_StaticNode (0) /* Single packet mode */
+#define RFM98_MODEMCONFIG3_MobileNode_MobileNode (1) /* Continuous transmission, send multiple packets across the FIFO (used for spectral analysis) */
+#define RFM98_MODEMCONFIG3_AgcAuto (1<<2)         /*  */
+#define RFM98_MODEMCONFIG3_AgcAuto_MASK (0x1<<2)  /* AgcAuto bit mask */
+#define RFM98_MODEMCONFIG3_AgcAuto_VALUE(x) (((x)<<2)&RFM98_MODEMCONFIG3_AgcAuto_MASK)
+#define RFM98_MODEMCONFIG3_AgcAuto_AgcOff (0)     /*  */
+#define RFM98_MODEMCONFIG3_AgcAuto_AgcOn (1)      /*  */
+
 
