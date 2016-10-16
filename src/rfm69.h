@@ -26,11 +26,12 @@ void rfm69_nss_deassert(void);
 uint8_t rfm69_spi_transfer_byte (uint8_t b);
 
 
-
 // Debug functions
 void rfm69_register_print(void);
 void rfm69_config_print(void);
 void rfm69_config_verify(void);
 void rfm69_showirqreg (void);
+
+#define IS_PACKET_READY(x) rfm69_payload_ready()
 
 #endif /* end __RFM69_H */

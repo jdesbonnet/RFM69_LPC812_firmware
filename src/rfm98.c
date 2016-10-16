@@ -5,15 +5,7 @@
  */
 
 #include "config.h"
-
-#include <stdint.h>
-#include "rfm.h"
-#include "rfm98.h"
-#include "spi.h"
-#include "err.h"
-#include "delay.h"
-#include "debug.h"
-
+#include "rfm98_config.h"
 
 extern const uint8_t RFM98_CONFIG[][2];
 
@@ -28,10 +20,13 @@ void rfm98_config() {
 	delayMilliseconds(10);
 
 	// Set max power
+
 	rfm_register_write(RFM98_PACONFIG, RFM98_PACONFIG_PaSelect
 			| RFM98_PACONFIG_MaxPower_VALUE(4)
 			| RFM98_PACONFIG_OutputPower_VALUE(15)
 			);
+
+	rfm_config(RFM98_CONFIG);
 }
 
 /**
@@ -71,11 +66,11 @@ int rfm98_frame_rx(uint8_t *buf, int maxlen) {
 
     uint8_t frame_length = rfm_register_read(RFM98_RXNBBYTES);
 
-    debug("frame_length=%d", frame_length);
+    //debug("frame_length=%d", frame_length);
 
     uint8_t start_buf_addr = rfm_register_read(RFM98_FIFORXCURRENT);
 
-    debug("start_buf_addr=%d", start_buf_addr);
+    //debug("start_buf_addr=%d", start_buf_addr);
 
     rfm_register_write(RFM98_FIFOADDRPTR, start_buf_addr);
 
@@ -143,4 +138,12 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 int rfm98_last_packet_rssi() {
 	// RSSI
 	return rfm_register_read(0x1a) - 137;
+}
+
+
+/**
+ * SNR of last packet received. dB.
+ */
+int rfm98_last_packet_snr() {
+	return (int)rfm_register_read(0x19);
 }

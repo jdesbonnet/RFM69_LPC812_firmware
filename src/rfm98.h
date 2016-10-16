@@ -7,10 +7,17 @@
 void rfm98_init(void);
 void rfm98_config(void);
 
-int rfm98_mode(uint8_t mode);
+int rfm98_lora_mode(uint8_t mode);
 
 int rfm98_is_packet_ready();
 int rfm98_frame_rx(uint8_t *buf, int maxlen);
 void rfm98_frame_tx(uint8_t *buf, int len);
+
+int rfm98_last_packet_rssi();
+int rfm98_last_packet_snr();
+
+// Check for received packet on RFMxx
+// TODO: need HAL layer
+#define IS_PACKET_READY(x) rfm98_is_packet_ready()
 
 #endif /* end __RFM98_H */

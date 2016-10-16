@@ -50,8 +50,8 @@
 /** Register RFM98_FDEVMSB (MSB of frequency deviation) at address 0x04 **/
 #define RFM98_FDEVMSB (0x04)                      /* FDEVMSB register address */
 
-/** Register RFM98_FDEVMSB (LSB of frequency deviation) at address 0x05 **/
-#define RFM98_FDEVMSB (0x05)                      /* FDEVMSB register address */
+/** Register RFM98_FDEVLSB (LSB of frequency deviation) at address 0x05 **/
+#define RFM98_FDEVLSB (0x05)                      /* FDEVLSB register address */
 
 /** Register RFM98_FRFMSB (MSB of the RF carrier frequency) at address 0x06 **/
 #define RFM98_FRFMSB (0x06)                       /* FRFMSB register address */
@@ -212,10 +212,10 @@
 #define RFM98_MODEMCONFIG1_Bw_BW_500K (9)         /* 500 kHz */
 #define RFM98_MODEMCONFIG1_CodingRate_MASK (0x7<<1) /* CodingRate bit mask */
 #define RFM98_MODEMCONFIG1_CodingRate_VALUE(x) (((x)<<1)&RFM98_MODEMCONFIG1_CodingRate_MASK)
-#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_5 (1) /* 4/5 */
-#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_6 (2) /* 4/6 */
-#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_7 (3) /* 4/7 */
-#define RFM98_MODEMCONFIG1_CodingRate_CodingRate_4_8 (4) /* 4/8 */
+#define RFM98_MODEMCONFIG1_CodingRate_4_5 (1)     /* 4/5 */
+#define RFM98_MODEMCONFIG1_CodingRate_4_6 (2)     /* 4/6 */
+#define RFM98_MODEMCONFIG1_CodingRate_4_7 (3)     /* 4/7 */
+#define RFM98_MODEMCONFIG1_CodingRate_4_8 (4)     /* 4/8 */
 #define RFM98_MODEMCONFIG1_HeaderMode (1<<0)      /*  */
 #define RFM98_MODEMCONFIG1_HeaderMode_MASK (0x1)  /* HeaderMode bit mask */
 #define RFM98_MODEMCONFIG1_HeaderMode_VALUE(x) (((x)<<0)&RFM98_MODEMCONFIG1_HeaderMode_MASK)
@@ -226,13 +226,13 @@
 #define RFM98_MODEMCONFIG2 (0x1E)                 /* MODEMCONFIG2 register address */
 #define RFM98_MODEMCONFIG2_SpreadFactor_MASK (0xf<<4) /* SpreadFactor bit mask */
 #define RFM98_MODEMCONFIG2_SpreadFactor_VALUE(x) (((x)<<4)&RFM98_MODEMCONFIG2_SpreadFactor_MASK)
-#define RFM98_MODEMCONFIG2_SpreadFactor_64_ChipsPerSymbol (6) /* 64 chips / symbol */
-#define RFM98_MODEMCONFIG2_SpreadFactor_128_ChipsPerSymbol (7) /* 128 chips / symbol */
-#define RFM98_MODEMCONFIG2_SpreadFactor_256_ChipsPerSymbol (8) /* 256 */
-#define RFM98_MODEMCONFIG2_SpreadFactor_512_ChipsPerSymbol (9) /* 512 */
-#define RFM98_MODEMCONFIG2_SpreadFactor_1024_ChipsPerSymbol (10) /* 1024 */
-#define RFM98_MODEMCONFIG2_SpreadFactor_2048 (11) /* 2048 */
-#define RFM98_MODEMCONFIG2_SpreadFactor_4096 (12) /* 4096 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_64 (6)    /* 64 chips / symbol (-5 dB) */
+#define RFM98_MODEMCONFIG2_SpreadFactor_128 (7)   /* 128 chips / symbol (-7.5dB) */
+#define RFM98_MODEMCONFIG2_SpreadFactor_256 (8)   /* 256 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_512 (9)   /* 512 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_1024 (10) /* 1024 */
+#define RFM98_MODEMCONFIG2_SpreadFactor_2048 (11) /* 2048 cps (receiver SNR -17.5 dB) */
+#define RFM98_MODEMCONFIG2_SpreadFactor_4096 (12) /* 4096 cps (receiver SNR -20.0 dB) */
 #define RFM98_MODEMCONFIG2_TxContinuousMode (1<<3) /*  */
 #define RFM98_MODEMCONFIG2_TxContinuousMode_MASK (0x1<<3) /* TxContinuousMode bit mask */
 #define RFM98_MODEMCONFIG2_TxContinuousMode_VALUE(x) (((x)<<3)&RFM98_MODEMCONFIG2_TxContinuousMode_MASK)
@@ -241,8 +241,8 @@
 #define RFM98_MODEMCONFIG2_RxPayloadCrc (1<<2)    /*  */
 #define RFM98_MODEMCONFIG2_RxPayloadCrc_MASK (0x1<<2) /* RxPayloadCrc bit mask */
 #define RFM98_MODEMCONFIG2_RxPayloadCrc_VALUE(x) (((x)<<2)&RFM98_MODEMCONFIG2_RxPayloadCrc_MASK)
-#define RFM98_MODEMCONFIG2_RxPayloadCrc_CRC_Off (0) /*  */
-#define RFM98_MODEMCONFIG2_RxPayloadCrc_CRC_On (1) /*  */
+#define RFM98_MODEMCONFIG2_RxPayloadCrc_Off (0)   /*  */
+#define RFM98_MODEMCONFIG2_RxPayloadCrc_On (1)    /*  */
 
 /** Register RFM98_MODEMCONFIG3 (Modem configuration register 3.) at address 0x26 **/
 #define RFM98_MODEMCONFIG3 (0x26)                 /* MODEMCONFIG3 register address */

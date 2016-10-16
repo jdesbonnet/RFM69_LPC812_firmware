@@ -23,29 +23,13 @@ For v0.2.0:
 */
 
 
-#ifdef __USE_CMSIS
-#include "LPC8xx.h"
-#endif
-
-#include <cr_section_macros.h>
-
-#include <string.h>
-
 #include "config.h"
-#include "debug.h"
-#include "battery.h"
 #include "switchmatrix.h"
 #include "myuart.h"
 #include "sleep.h"
 #include "print_util.h"
 #include "parse_util.h"
-#include "printf.h"
-#include "rfm.h"
-#include "rfm69.h"
-#include "rfm98.h"
 #include "cmd.h"
-#include "err.h"
-#include "spi.h"
 #include "led.h"
 #include "flags.h"
 #include "params.h"
@@ -53,6 +37,7 @@ For v0.2.0:
 #include "eeprom.h"
 #include "frame_buffer.h"
 #include "mac.h"
+#include "iap_driver.h"
 
 #include "lpc8xx_pmu.h"
 #include "onewire.h"
@@ -251,18 +236,22 @@ void transmit_status_packet() {
 void listen_for_status_response () {
 
 	// Listen for a short period for a response
+#ifdef RADIO_RFM9x
+	rfm98_lora_mode(RFM98_OPMODE_LoRa_RXSINGLE);
+#else
 	rfm69_mode(RFM69_OPMODE_Mode_RX);
+#endif
 
 	// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
 	// and if detected wait a further 500 ticks for the packet to arrive.
 	int start_time = LPC_WWDT->TV;
 	int end_time = start_time - 16;
 	while (LPC_WWDT->TV > end_time) {
-		if (rfm_register_read(RFM69_IRQFLAGS1) & RFM69_IRQFLAGS1_Rssi_MASK) {
+		if (IS_PACKET_READY()) {
 			start_time = LPC_WWDT->TV;
 			end_time = start_time - 500;
 			while (LPC_WWDT->TV > end_time) {
-				if (rfm69_payload_ready()) {
+				if (IS_PACKET_READY()) {
 					break;
 				}
 			}
@@ -414,22 +403,7 @@ int main(void) {
 
 #endif
 
-
 	spi_init();
-
-	uint32_t regVal;
-
-#ifdef RESET_PIN
-	// If RFM reset line available, configure PIO pin for output and set low
-	// (RFM resets are active high).
-	regVal = LPC_GPIO_PORT->DIR0;
-	regVal |= (1<<RESET_PIN);
-	LPC_GPIO_PORT->DIR0 = regVal;
-	// Force reset on boot
-	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
-	delay(20000);
-	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
-#endif
 
 #ifdef DIO0_PIN
 	// If RFM DIO0 output line is available configure PIO pin for input. In RFM69 packet
@@ -450,7 +424,7 @@ int main(void) {
 	// RFM9x: RSSI in dBm
 	int rssi;
 
-	//uint8_t *cmdbuf;
+	// Used in UART commands
 	uint8_t *args[8];
 
 
@@ -588,7 +562,11 @@ int main(void) {
 			uint8_t battery_v = readBattery_dV();
 
 			// Set radio in SLEEP mode
+#ifdef RADIO_RFM9x
+			rfm98_lora_mode(RFM98_OPMODE_LoRa_SLEEP);
+#else
 			rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
+#endif
 
 			// Make sure 'z' message fully transmitted before sleeping
 			MyUARTSendDrain();
@@ -659,19 +637,16 @@ int main(void) {
 			}
 		}
 
-		// Check for received packet on RFMxx
-		// TODO: need HAL layer
-#ifdef RADIO_RFM9x
-#define IS_PACKET_READY(x) rfm98_is_packet_ready()
-#else
-#define IS_PACKET_READY(x) rfm69_payload_ready()
-#endif
+
 		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && IS_PACKET_READY()) {
 
+#ifdef RADIO_RFM9x
 			rssi = rfm98_last_packet_rssi();
+#endif
 
 			// Yes, frame ready to be read from FIFO
 			ledOn();
+
 #ifdef RADIO_RFM9x
 			int frame_len = rfm98_frame_rx(rx_buffer.buffer,RXTX_BUFFER_SIZE);
 #else
@@ -681,13 +656,14 @@ int main(void) {
 
 			last_frame_time = systick_counter;
 
+#ifdef RADIO_RFM9x
 			int ii;
 			tfp_printf("; PACKET: ");
 			for (ii = 0; ii < frame_len; ii++) {
 				tfp_printf(" %x", rx_buffer.buffer[ii]);
 			}
-			tfp_printf (" RSSI=%d\r\n", rfm98_last_packet_rssi() );
-			//tfp_printf("\r\n");
+			tfp_printf (" %d %d\r\n", rfm98_last_packet_rssi(), rfm98_last_packet_snr() );
+#endif
 
 #ifdef FEATURE_WATCHDOG_TIMER
 			// Feed watchdog whenever a packet is successfully received.
@@ -1005,11 +981,13 @@ int main(void) {
 
 			switch (*args[0]) {
 
+			// Enter bootloader mode
 			case 'A' : {
 				ota_bootloader(params_union.params.node_addr);
 				break;
 			}
 
+			// Set API UART bitrate
 			case 'B' : {
 				cmd_set_uart_speed (argc, args);
 				break;
@@ -1018,7 +996,11 @@ int main(void) {
 			// Reset RFM69 with default configuration
 			case 'C' :
 			{
+#ifdef RADIO_RFM9x
+				rfm98_config();
+#else
 				rfm69_config();
+#endif
 				break;
 			}
 
@@ -1039,7 +1021,7 @@ int main(void) {
 				params_union.params.gps_echo = parse_hex(args[1]);
 			}
 
-			// Transmit arbitrary packet
+			// Query node status
 			case 'F' : {
 				int status = cmd_node_query(argc, args);
 				if ( status ) {
@@ -1078,7 +1060,11 @@ int main(void) {
 				break;
 			}
 
-
+			// Packet transmit test
+			case 'K' : {
+				cmd_tx_test(argc, args);
+				break;
+			}
 
 			// Set current location
 			case 'L' : {
@@ -1109,7 +1095,6 @@ int main(void) {
 				if (argc == 3) {
 					if (args[2][0]=='S') {
 						tfp_printf("; ModeSaveAndReset\r\n");
-						//eeprom_write(params_union.params_buffer);
 						eeprom_params_save();
 						MyUARTSendDrain();
 						NVIC_SystemReset();
@@ -1138,18 +1123,9 @@ int main(void) {
 			// Set parameter <byte-index> <value>
 			case 'P' : {
 
-				/*
-				int status = cmd_param (argc, args);
-				if ( status ) {
-					report_error('P', status);
-				}
-				break;
-				*/
-
 				if (argc == 2) {
 					uint32_t param_index = parse_hex(args[1]);
-					MyUARTPrintHex(params_union.params_buffer[param_index]);
-					MyUARTSendCRLF();
+					tfp_printf("%x\r\n",params_union.params_buffer[param_index]);
 					break;
 				}
 
@@ -1163,9 +1139,10 @@ int main(void) {
 				break;
 			}
 
+			// Reset MCU
 			case 'Q' : {
 				// Report reset for reason=1 (explicit reset command)
-				MyUARTSendStringZ("q 1\r\n");
+				tfp_printf("q 1\r\n");
 				MyUARTSendDrain();
 				NVIC_SystemReset();
 				// no need for break
@@ -1174,21 +1151,14 @@ int main(void) {
 
 			// Read RFM register
 			case 'R' : {
-				// Parameter is register address
 				int regAddr = parse_hex(args[1]);
-				MyUARTSendStringZ("r ");
-				print_hex8 (regAddr);
-				MyUARTSendByte(' ');
-				print_hex8 (rfm_register_read(regAddr));
-				MyUARTSendCRLF();
+				tfp_printf("r %x %x\r\n",regAddr,rfm_register_read(regAddr));
 				break;
 			}
 
+			// Save current settings in flash
 			case 'S' :
 			{
-				//uint8_t tmpbuf[64];
-				//memcpy(tmpbuf,params_union.params_buffer,64);
-				//eeprom_write(tmpbuf);
 				eeprom_params_save();
 				break;
 			}

@@ -6,6 +6,8 @@
  */
 
 void rfm_init();
+void rfm_hard_reset();
+void rfm_config(uint8_t config[][2]);
 
 void rfm_nss_assert();
 void rfm_nss_deassert();

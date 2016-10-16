@@ -97,7 +97,7 @@ HopeRF RFM95/96/97/98 Radio Module
 </register>
 
 <register>
-<sname>FdevMsb</sname>
+<sname>FdevLsb</sname>
 <address>0x05</address>
 <name>LSB of frequency deviation</name>
 <description>Applicable in FSK/OOK mode. Not applicable in LoRa mode. Fdev = Fstep * (FdevMsb*256+FdevLsb)</description>
@@ -145,10 +145,6 @@ HopeRF RFM95/96/97/98 Radio Module
     <sname>OutputPower</sname>
     <name>Pout = Pmax - (15-OutputPower) if PaSelect=0; Pout=17-(15-OutputPower) if PaSelect=1</name>
     <description>
-        Pout = -18 + OutputPower[dBm] with PA0; 
-        Pout = -18 + OutputPower[dBm] with PA1; 
-        Pout = -14 + OutputPower[dBm] with PA1 and PA2;
-        Pout = -11 + OutputPower[dBm] with PA1 and PA2 and high Power PA settings (ref §3.3.7);
     </description>
 </bitfield>
 
@@ -398,10 +394,10 @@ HopeRF RFM95/96/97/98 Radio Module
         <sname>CodingRate</sname>
         <name>Error coding rate. See datasheet section 4.1.1.3.</name>
 		<description></description>
-		<fieldvalue><value>1</value><sname>CodingRate_4_5</sname><name>4/5</name></fieldvalue>
-		<fieldvalue><value>2</value><sname>CodingRate_4_6</sname><name>4/6</name></fieldvalue>
-		<fieldvalue><value>3</value><sname>CodingRate_4_7</sname><name>4/7</name></fieldvalue>
-		<fieldvalue><value>4</value><sname>CodingRate_4_8</sname><name>4/8</name></fieldvalue>
+		<fieldvalue><value>1</value><sname>4_5</sname><name>4/5</name></fieldvalue>
+		<fieldvalue><value>2</value><sname>4_6</sname><name>4/6</name></fieldvalue>
+		<fieldvalue><value>3</value><sname>4_7</sname><name>4/7</name></fieldvalue>
+		<fieldvalue><value>4</value><sname>4_8</sname><name>4/8</name></fieldvalue>
     </bitfield>
     <bitfield bit="0" rwmode="rw">
         <sname>HeaderMode</sname>
@@ -419,15 +415,15 @@ HopeRF RFM95/96/97/98 Radio Module
     
     <bitfield bit="7:4" rwmode="rw">
         <sname>SpreadFactor</sname>
-        <name>Spread factor rate (chips per symbol).</name>
+        <name>Spread factor rate (chips per symbol). Ref datasheet section 4.1.1.2.</name>
 		<description></description>
-		<fieldvalue><value>6</value><sname>64_ChipsPerSymbol</sname><name>64 chips / symbol</name></fieldvalue>
-		<fieldvalue><value>7</value><sname>128_ChipsPerSymbol</sname><name>128 chips / symbol</name></fieldvalue>
-		<fieldvalue><value>8</value><sname>256_ChipsPerSymbol</sname><name>256</name></fieldvalue>
-		<fieldvalue><value>9</value><sname>512_ChipsPerSymbol</sname><name>512</name></fieldvalue>
-		<fieldvalue><value>10</value><sname>1024_ChipsPerSymbol</sname><name>1024</name></fieldvalue>
-		<fieldvalue><value>11</value><sname>2048</sname><name>2048</name></fieldvalue>
-		<fieldvalue><value>12</value><sname>4096</sname><name>4096</name></fieldvalue>
+		<fieldvalue><value>6</value><sname>64</sname><name>64 chips / symbol (-5 dB)</name></fieldvalue>
+		<fieldvalue><value>7</value><sname>128</sname><name>128 chips / symbol (-7.5dB)</name></fieldvalue>
+		<fieldvalue><value>8</value><sname>256</sname><name>256</name></fieldvalue>
+		<fieldvalue><value>9</value><sname>512</sname><name>512</name></fieldvalue>
+		<fieldvalue><value>10</value><sname>1024</sname><name>1024</name></fieldvalue>
+		<fieldvalue><value>11</value><sname>2048</sname><name>2048 cps (receiver SNR -17.5 dB)</name></fieldvalue>
+		<fieldvalue><value>12</value><sname>4096</sname><name>4096 cps (receiver SNR -20.0 dB)</name></fieldvalue>
     </bitfield> 
      <bitfield bit="3" rwmode="rw">
         <sname>TxContinuousMode</sname>
@@ -440,8 +436,8 @@ HopeRF RFM95/96/97/98 Radio Module
         <sname>RxPayloadCrc</sname>
         <name></name>
 		<description></description>
-		<fieldvalue><value>0</value><sname>CRC_Off</sname><name></name></fieldvalue>
-		<fieldvalue><value>1</value><sname>CRC_On</sname><name></name></fieldvalue>
+		<fieldvalue><value>0</value><sname>Off</sname><name></name></fieldvalue>
+		<fieldvalue><value>1</value><sname>On</sname><name></name></fieldvalue>
     </bitfield> 
 </register>
 

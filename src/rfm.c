@@ -16,6 +16,31 @@ void rfm_init(void) {
 	spi_init();
 }
 
+void rfm_hard_reset(void) {
+#ifdef RESET_PIN
+	// If RFM reset line available, configure PIO pin for output and set low
+	// (RFM resets are active high).
+	regVal = LPC_GPIO_PORT->DIR0;
+	regVal |= (1<<RESET_PIN);
+	LPC_GPIO_PORT->DIR0 = regVal;
+	// Force reset on boot
+	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
+	delay(20000);
+	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
+#endif
+}
+
+/**
+ * Configure radio module registers.
+ */
+void rfm_config(uint8_t config[][2]) {
+	int i;
+	for (i = 0; config[i][0] != 255; i++) {
+		debug("config reg[%x]=%x",config[i][0],config[i][1]);
+	    rfm_register_write(config[i][0], config[i][1]);
+	}
+}
+
 /**
  * Assert NSS line (bring low)
  */
@@ -71,10 +96,9 @@ int rfm_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
 	int niter=50000;
 	while ( (rfm_register_read(reg_addr) & mask) == 0) {
 		if (--niter == 0) {
-tfp_printf("; E_TIMEOUT\r\n");
+			debug("E_TIMEOUT");
 			return E_TIMEOUT;
 		}
 	}
-tfp_printf("; E_OK niter=%d\r\n",niter);
 	return E_OK;
 }
