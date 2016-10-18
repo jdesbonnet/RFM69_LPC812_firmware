@@ -20,6 +20,14 @@ const uint8_t RFM98_CONFIG[][2] = {
     	| RFM98_PACONFIG_MaxPower_VALUE(4)
 		| RFM98_PACONFIG_OutputPower_VALUE(15)
 	},
+	{ RFM98_MODEMCONFIG1,
+		RFM98_MODEMCONFIG1_Bw_VALUE(7)
+		| RFM98_MODEMCONFIG1_CodingRate_VALUE(4)
+	},
+
+	{ RFM98_MODEMCONFIG2,
+		RFM98_MODEMCONFIG2_SpreadFactor_VALUE(12)
+	},
 
     // Configuration Terminator
     {255, 0}

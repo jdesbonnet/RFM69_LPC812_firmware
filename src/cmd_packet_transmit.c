@@ -74,11 +74,7 @@ int cmd_packet_transmit (int argc, uint8_t **argv) {
 	//}
 
 	// Transmit frame
-#ifdef BOARD_LPC812_RFM98_V1
-	rfm98_frame_tx (tx_buffer.buffer,payload_len+2);
-#else
-	rfm69_frame_tx (tx_buffer.buffer,payload_len+2);
-#endif
+	rfm_frame_tx (tx_buffer.buffer,payload_len+2);
 
 	return E_OK;
 }

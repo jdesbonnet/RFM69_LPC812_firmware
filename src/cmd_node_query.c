@@ -21,7 +21,7 @@
 extern frame_buffer_type tx_buffer;
 int cmd_node_query (int argc, uint8_t **argv) {
 
-	if (argc != 2) {
+	if (argc < 2) {
 		return E_WRONG_ARGC;
 	}
 
@@ -30,7 +30,7 @@ int cmd_node_query (int argc, uint8_t **argv) {
 	tx_buffer.buffer[2] = 'R';
 
 	// Transmit frame
-	rfm69_frame_tx (tx_buffer.buffer,3);
+	rfm_frame_tx (tx_buffer.buffer,3);
 
 	return E_OK;
 }

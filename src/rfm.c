@@ -6,22 +6,31 @@
 
 #include "config.h"
 
+
 void rfm_init(void) {
 	spi_init();
 }
 
-
-
 /**
  * Configure radio module registers.
  */
-void rfm_config(uint8_t config[][2]) {
+void rfm_register_config(uint8_t config[][2]) {
 	int i;
 	for (i = 0; config[i][0] != 255; i++) {
-		debug("config reg[%x]=%x",config[i][0],config[i][1]);
+		debug("RFM config reg[%x]=%x",config[i][0],config[i][1]);
 	    rfm_register_write(config[i][0], config[i][1]);
 	}
 }
+
+void rfm_config() {
+#ifdef RADIO_RFM9x
+	rfm98_config();
+#else
+	rfm69_config();
+#endif
+}
+
+
 
 /**
  * Assert NSS line (bring low)
@@ -84,3 +93,13 @@ int rfm_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
 	}
 	return E_OK;
 }
+
+
+void rfm_frame_tx(uint8_t *buf, int len) {
+#ifdef RADIO_RFM9x
+	rfm98_frame_tx(buf,len);
+#else
+	rfm69_frame_tx(buf,len);
+#endif
+}
+

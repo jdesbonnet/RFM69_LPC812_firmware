@@ -16,8 +16,8 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 
 #ifdef RADIO_RFM9x
 
-	if (argc != 7) {
-		debug("<node> <bw> <sf> <ecr> <npacket> <delay>");
+	if (argc != 8) {
+		debug("<node> <bw> <sf> <ecr> <npacket> <delay> <reset>");
 		return;
 	}
 
@@ -27,8 +27,9 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 	int cr = parse_hex(argv[4]);
 	int n = parse_hex(argv[5]);
 	int delay = parse_hex(argv[6]);
+	int reset = parse_hex(argv[7]);
 
-	debug("bw=%d sf=%d cr=%d n=%d delay=%d", bw,sf,cr,n,delay);
+	debug("bw=%d sf=%d cr=%d n=%d delay=%d reset=%d", bw,sf,cr,n,delay,reset);
 
 	rfm_register_write(RFM98_MODEMCONFIG1,
 			RFM98_MODEMCONFIG1_Bw_VALUE(bw)
@@ -57,7 +58,9 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 #endif
 
 
-	NVIC_SystemReset();
+	if (reset) {
+		NVIC_SystemReset();
+	}
 
 	return E_OK;
 }

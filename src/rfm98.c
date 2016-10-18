@@ -38,13 +38,15 @@ void rfm98_config() {
 	delayMilliseconds(10);
 
 	// Set max power
-
+	// move to RFM98_CONFIG
+	/*
 	rfm_register_write(RFM98_PACONFIG, RFM98_PACONFIG_PaSelect
 			| RFM98_PACONFIG_MaxPower_VALUE(4)
 			| RFM98_PACONFIG_OutputPower_VALUE(15)
 			);
+	*/
 
-	//rfm_config(RFM98_CONFIG);
+	rfm_register_config(RFM98_CONFIG);
 }
 
 /**
@@ -111,7 +113,6 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 	// Turn off receiver before writing to FIFO
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_STDBY);
 
-
 	// Default TX buffer is at FIFO 0x80
 	rfm_register_write(RFM98_FIFOADDRPTR, 0x80);
 
@@ -122,8 +123,6 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 	rfm_nss_assert();
 
 	rfm_spi_transfer_byte(RFM98_FIFO | 0x80);
-	// packet length
-	//rfm_spi_transfer_byte(len);
 
 	int i;
 	for (i = 0; i < len; i++) {
@@ -155,7 +154,7 @@ int rfm98_last_packet_rssi() {
  * SNR of last packet received. dB.
  */
 int rfm98_last_packet_snr() {
-	return (int)rfm_register_read(0x19);
+	return (int)((int8_t)rfm_register_read(0x19));
 }
 
 

@@ -196,6 +196,14 @@ void eeprom_params_save (void) {
 
 void transmit_status_packet() {
 
+
+	// TODO:
+	// This seems to be necessary after a module SLEEP. Why?
+	//rfm98_lora_mode(RFM98_OPMODE_LoRa_RXCONTINUOUS);
+	rfm98_lora_mode(RFM98_OPMODE_LoRa_FSRX);
+	//delayMilliseconds(5);
+
+
 	// Battery in 0.1V units
 	uint8_t battery_v = readBattery_dV();
 
@@ -221,12 +229,9 @@ void transmit_status_packet() {
 #endif
 
 		// Transmit 'z' periodic wake packet
+		//rfm_config(); // why is this needed?
 		ledOn();
-#ifdef RADIO_RFM9x
-		rfm98_frame_tx(tx_buffer.buffer, 8);
-#else
-		rfm69_frame_tx(tx_buffer.buffer, 8);
-#endif
+		rfm_frame_tx(tx_buffer.buffer, 8);
 		ledOff();
 	} else {
 		tfp_printf("; bat too low to tx");
@@ -511,7 +516,6 @@ int main(void) {
 	// Test radio module
 	//
 #ifdef BOARD_LPC812_RFM98_V1
-
 #else
 	if (rfm69_test() != 0) {
 		// Error communicating with RFM69: 4 blinks
@@ -535,11 +539,7 @@ int main(void) {
 	}
 	tfp_printf("k %x\r\n",test_result);
 
-#ifdef BOARD_LPC812_RFM98_V1
-	rfm98_config();
-#else
-	rfm69_config();
-#endif
+	rfm_config();
 
 	//
 	// Main program loop
@@ -573,7 +573,7 @@ int main(void) {
 
 			uint8_t battery_v = readBattery_dV();
 
-			// Set radio in SLEEP mode
+			// Set radio in SLEEP mode (sub microamp current use). Register retention.
 #ifdef RADIO_RFM9x
 			rfm98_lora_mode(RFM98_OPMODE_LoRa_SLEEP);
 #else
@@ -808,7 +808,7 @@ int main(void) {
 #endif
 				case PKT_STATUS_REPORT :
 				{
-					tfp_printf("; received status request from %x\r\n",rx_buffer.header.from_addr);
+					debug ("; received status request from %x\r\n",rx_buffer.header.from_addr);
 
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = PKT_STATUS_RESPONSE; // node status response
@@ -820,8 +820,7 @@ int main(void) {
 					int32_t temperature = ds18b20_temperature_read();
 					tx_buffer.payload[4] = temperature>>8;
 					tx_buffer.payload[5] = temperature&0xff;
-
-					rfm69_frame_tx(tx_buffer.buffer, 3+6);
+					rfm_frame_tx(tx_buffer.buffer, 3+6);
 					break;
 				}
 
@@ -829,6 +828,7 @@ int main(void) {
 				// Remote request to LED blink
 				case PKT_LED_BLINK : {
 					//tx_buffer.header.to_addr = from_addr;
+					//is there any need for a reply? Just use ACK mechanism instead?
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'u';
 					rfm69_frame_tx(tx_buffer.buffer, 3);
@@ -848,7 +848,7 @@ int main(void) {
 					for (i = 0; i < read_len; i++) {
 						tx_buffer.payload[i+1] = rfm_register_read(base_addr+i);
 					}
-					rfm69_frame_tx(tx_buffer.buffer, read_len+4);
+					rfm_frame_tx(tx_buffer.buffer, read_len+4);
 					break;
 				}
 
@@ -1028,11 +1028,7 @@ int main(void) {
 			// Reset RFM69 with default configuration
 			case 'C' :
 			{
-#ifdef RADIO_RFM9x
-				rfm98_config();
-#else
-				rfm69_config();
-#endif
+				rfm_config();
 				break;
 			}
 
