@@ -1,6 +1,6 @@
-# LPC812/RFM69HW board firmware
+# LPC812/RFM69HW/RFM9x radio modem firmware
 
-This is firmware to drive my LPC812/RFM69HW and LPC812/RFM98 radio modem.
+This is firmware to drive my LPC812/RFM69HW and LPC812/RFM9x radio modem.
 
 The LPC812 with this firmware acts as a radio operating system, providing a simplified
 interface between the RFMxx module and the host application. 
