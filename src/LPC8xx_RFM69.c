@@ -74,6 +74,9 @@ volatile interrupt_source_type interrupt_source;
 frame_buffer_type tx_buffer;
 frame_buffer_type rx_buffer;
 
+static uint32_t last_gps_report_t = 0;
+uint8_t wake_list[4] = {0,0,0,0};
+
 #ifdef FEATURE_EVENT_COUNTER
 	volatile uint32_t event_counter = 0;
 	volatile uint32_t event_time = 0;
@@ -173,9 +176,7 @@ void displayStatus () {
 
 }
 
-// TODO: is volatile necessary?
 
-static uint32_t last_gps_report_t = 0;
 
 
 // To facilitate tfp_printf()
@@ -233,6 +234,9 @@ void transmit_status_packet() {
 		ledOn();
 		rfm_frame_tx(tx_buffer.buffer, 8);
 		ledOff();
+
+		//debug("temp=%d", rfm98_temperature());
+
 	} else {
 		tfp_printf("; bat too low to tx");
 	}
@@ -240,29 +244,74 @@ void transmit_status_packet() {
 
 void listen_for_status_response () {
 
+	int start_time = LPC_WWDT->TV;
+
 	// Listen for a short period for a response
 #ifdef RADIO_RFM9x
+	// Set timeout register
+
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_RXSINGLE);
-#else
-	rfm69_mode(RFM69_OPMODE_Mode_RX);
-#endif
 
 	// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
 	// and if detected wait a further 500 ticks for the packet to arrive.
-	int start_time = LPC_WWDT->TV;
-	int end_time = start_time - 16;
+	int end_time = start_time - 2000;
+	debug("listening");
 	while (LPC_WWDT->TV > end_time) {
-		if (IS_PACKET_READY()) {
-			start_time = LPC_WWDT->TV;
+		if (rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_ValidHeader) {
+			debug("valid header after %d WDT cycles", (start_time - LPC_WWDT->TV) );
+			// clear ValidHeader IRQ
+			rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_ValidHeader);
+
+			// Wait for full frame
+			end_time = start_time - 16000;
+			while (LPC_WWDT->TV > end_time) {
+				if (IS_PACKET_READY()) {
+					debug("frame detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
+					break;
+				}
+			}
+			break;
+
+		}
+
+		if (rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_CadDetected) {
+			debug("CAD detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
+
+			// clear CAD IRQ
+			rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_CadDetected);
+
+			// Wait for full frame
 			end_time = start_time - 500;
 			while (LPC_WWDT->TV > end_time) {
 				if (IS_PACKET_READY()) {
+					debug("frame detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
 					break;
 				}
 			}
 			break;
 		}
 	}
+	debug("listen over");
+#else
+	rfm69_mode(RFM69_OPMODE_Mode_RX);
+
+	// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
+	// and if detected wait a further 500 ticks for the packet to arrive.
+	int end_time = start_time - 16;
+	while (LPC_WWDT->TV > end_time) {
+		if (IS_PACKET_READY()) { // ??
+			end_time = start_time - 500;
+			while (LPC_WWDT->TV > end_time) {
+				if (IS_PACKET_READY()) {
+					debug("frame detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
+					break;
+				}
+			}
+			break;
+		}
+	}
+#endif
+
 }
 
 
@@ -277,7 +326,6 @@ int main(void) {
     		| (1<<9)  // Wake Timer (WKT)
     		| (1<<17) // Watchdog timer (note: it may not be necessary to have on all the time)
     		;
-
 
     // Read MCU serial number
     uint32_t mcu_unique_id[4];
@@ -385,6 +433,10 @@ int main(void) {
 
 		case 0x1902e034:
 			params_union.params.node_addr = 0x52; // RFM98
+			break;
+
+		case 0x1900c037:
+			params_union.params.node_addr = 0x53; // RFM98
 			break;
 
 		}
@@ -677,13 +729,35 @@ int main(void) {
 
 			last_frame_time = systick_counter;
 
+			//
+			// Experimental wake list
+			//
+			{
+				int ii;
+				for (ii = 0; ii < 4; ii++) {
+					if (rx_buffer.header.from_addr == wake_list[ii]) {
+						debug("found on wake list");
+						// Wake with remote command "M 3" (mode 3 = wake with radio on)
+						tx_buffer.header.to_addr = rx_buffer.header.from_addr;
+						tx_buffer.header.msg_type = PKT_REMOTE_CMD;
+						tx_buffer.payload[0]='M';
+						tx_buffer.payload[1]=' ';
+						tx_buffer.payload[2]='3';
+						rfm_frame_tx(tx_buffer.buffer, 3+3);
+						wake_list[ii]=0;
+					}
+				}
+			}
+
 #ifdef RADIO_RFM9x
+			{
 			int ii;
 			tfp_printf("; FRAME: [ ");
 			for (ii = 0; ii < frame_len; ii++) {
 				tfp_printf(" %x", rx_buffer.buffer[ii]);
 			}
 			tfp_printf (" ] %d %d\r\n", rfm98_last_packet_rssi(), rfm98_last_packet_snr() );
+			}
 #endif
 
 #ifdef FEATURE_WATCHDOG_TIMER
@@ -1065,6 +1139,11 @@ int main(void) {
 				break;
 			}
 #endif
+
+			case 'H' : {
+				cmd_wake_node (argc, args);
+				break;
+			}
 
 			// Display MCU unique ID
 			case 'I' : {

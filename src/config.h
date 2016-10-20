@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.0rc4"
+#define VERSION "RFM69/9x 0.7.0rc5"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )

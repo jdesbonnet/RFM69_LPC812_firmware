@@ -11,4 +11,6 @@
 #define E_CMD_DROPPED (-7)  /* A UART command in the buffer was dropped due to incoming remote CMD */
 #define E_TIMEOUT (-8)	/* Operation timeout for unspecified reason */
 #define E_BATTERY_V_TOO_LOW (-9)
+
+#define E_NO_WAKE_SLOTS (-10) /* No slots left in wake list array */
 #endif

@@ -157,5 +157,28 @@ int rfm98_last_packet_snr() {
 	return (int)((int8_t)rfm_register_read(0x19));
 }
 
+int rfm98_temperature() {
 
+	// Doesn't seen to work
+
+	rfm_register_write(1,RFM98_OPMODE_FSK_STDBY);
+	delayMilliseconds(1);
+	rfm_register_write(1,RFM98_OPMODE_FSK_FSRX);
+
+	// TempMonitorOff=0
+	uint8_t regVal = rfm_register_read(0x3b);
+	regVal &= ~1;
+	rfm_register_write(0x3b,regVal);
+
+	delayMicroseconds(160);
+
+	// TempMonitorOn=1
+	regVal |= 1;
+	rfm_register_write(0x3b,regVal);
+
+	rfm_register_write(1,RFM98_OPMODE_FSK_SLEEP);
+
+	// Read RegTemp
+	return rfm_register_read(0x3c);
+}
 
