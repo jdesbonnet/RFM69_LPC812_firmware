@@ -250,48 +250,44 @@ void listen_for_status_response () {
 #ifdef RADIO_RFM9x
 	// Set timeout register
 
-	rfm98_lora_mode(RFM98_OPMODE_LoRa_RXSINGLE);
+	rfm98_lora_mode(RFM98_OPMODE_LoRa_CAD);
+	rfm_wait_for_bit_high(RFM98_IRQFLAGS,RFM98_IRQFLAGS_CadDone);
 
 	// Wait max 16 WWDT ticks for RSSI (indication of incoming packet)
 	// and if detected wait a further 500 ticks for the packet to arrive.
-	int end_time = start_time - 2000;
-	debug("listening");
+	int end_time = start_time - 500;
+	int cad=0;
 	while (LPC_WWDT->TV > end_time) {
-		if (rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_ValidHeader) {
-			debug("valid header after %d WDT cycles", (start_time - LPC_WWDT->TV) );
-			// clear ValidHeader IRQ
-			rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_ValidHeader);
+
+		rfm98_lora_mode(RFM98_OPMODE_LoRa_CAD);
+		rfm_wait_for_bit_high(RFM98_IRQFLAGS,RFM98_IRQFLAGS_CadDone);
+		rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_CadDone);
+		cad++;
+
+		if (rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_CadDetected) {
+
+			rfm98_lora_mode(RFM98_OPMODE_LoRa_RXCONTINUOUS);
+
+			debug("CAD after %d WDT cycles, %d CAD ops", (start_time - LPC_WWDT->TV) , cad);
 
 			// Wait for full frame
-			end_time = start_time - 16000;
+			end_time = start_time - 26000;
 			while (LPC_WWDT->TV > end_time) {
 				if (IS_PACKET_READY()) {
 					debug("frame detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
 					break;
 				}
 			}
-			break;
-
-		}
-
-		if (rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_CadDetected) {
-			debug("CAD detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
 
 			// clear CAD IRQ
 			rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_CadDetected);
 
-			// Wait for full frame
-			end_time = start_time - 500;
-			while (LPC_WWDT->TV > end_time) {
-				if (IS_PACKET_READY()) {
-					debug("frame detected after %d WDT cycles", (start_time - LPC_WWDT->TV));
-					break;
-				}
-			}
 			break;
+
 		}
+
 	}
-	debug("listen over");
+
 #else
 	rfm69_mode(RFM69_OPMODE_Mode_RX);
 
@@ -743,6 +739,11 @@ int main(void) {
 						tx_buffer.payload[0]='M';
 						tx_buffer.payload[1]=' ';
 						tx_buffer.payload[2]='3';
+
+						// Send it twice: CAD seems to prevent reception of first packet
+						// TODO: not sure why that's the case. TODO: sent a NOP first (shorter).
+						rfm_frame_tx(tx_buffer.buffer, 3+3);
+						delayMilliseconds(20);
 						rfm_frame_tx(tx_buffer.buffer, 3+3);
 						wake_list[ii]=0;
 					}
