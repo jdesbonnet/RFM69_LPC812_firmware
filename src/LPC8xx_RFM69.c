@@ -363,10 +363,13 @@ int main(void) {
 #endif
 #endif
 
+	// Turn off clock to SwitchMatrix
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
+
+
 	// Reset GPIO
 	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
 	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
-	//lpc8xx_peripheral_reset(10);
 
 
 	//

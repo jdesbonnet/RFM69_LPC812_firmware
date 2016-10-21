@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.0rc5"
+#define VERSION "RFM69/9x 0.7.0rc6"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -28,8 +28,8 @@
 //#define DEFAULT_NODE_ADDR 0x45 // 4th
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
-#define DEFAULT_MODE MODE_RADIO_OFF
-//#define DEFAULT_MODE MODE_LOW_POWER_POLL
+//#define DEFAULT_MODE MODE_RADIO_OFF
+#define DEFAULT_MODE MODE_LOW_POWER_POLL
 //#define DEFAULT_MODE MODE_AWAKE
 
 
@@ -110,6 +110,9 @@
 
 // Use LPC8xx watchdog timer
 #define FEATURE_WATCHDOG_TIMER
+
+// Measure battery V using comparator with Vref and Vcc through voltage ladder
+#define FEATURE_VBAT
 
 // GPS on second UART port.
 //#define FEATURE_GPS_ON_USART1

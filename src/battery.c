@@ -1,4 +1,4 @@
-#include "LPC8xx.h"
+#include "config.h"
 
 /**
  * Use analog comparator with internal reference to find approx battery voltage. This
@@ -7,7 +7,7 @@
  * @return Battery voltage in mV
  */
 int readBattery () {
-
+#ifdef FEATURE_VBAT
 	//
 	// Analog comparator configure
 	//
@@ -51,6 +51,11 @@ int readBattery () {
 
 	// 900mV*31/k
 	return 27900/k;
+
+#else
+	return 0;
+#endif
+
 }
 
 /**
