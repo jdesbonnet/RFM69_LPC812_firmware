@@ -9,20 +9,22 @@
  */
 void SwitchMatrix_Init()
 {
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+    // Enable clock to SwitchMatrix
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
 
-    /* Pin Assign 8 bit Configuration */
-    /* U0_TXD */
-    /* U0_RXD */
+    // Pin Assign
+    // U0_TXD (bits 7:0) set to 0x4 (PIO0_4)
+    // U0_RXD (bits 15:8) set to 0x0 (PIO0_0)
     LPC_SWM->PINASSIGN0 = 0xffff0004UL;
 
-    /* Pin Assign 1 bit Configuration */
-    /* SWCLK */
-    /* SWDIO */
-    /* RESET */
-    LPC_SWM->PINENABLE0 = 0xffffffb3UL;
+    // Pin Enable
+    // Bit 2: SWCLK set to 0 (enable)
+    // Bit 3: SWDIO set to 0 (enable)
+    // Bit 6: RESET set to 0 (enable)
+    LPC_SWM->PINENABLE0 = 0xffffffb3UL; //1...10110011
 
+	// Disable clock to SwitchMatrix
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
 }
 
 #ifdef FEATURE_GPS_ON_USART1

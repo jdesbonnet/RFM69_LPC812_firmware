@@ -13,10 +13,9 @@
 #include "config.h"
 
 /**
- * Condition MCU (pin states etc) to minimize current consumption during
- * deep sleep modes.
+ * Condition perhiperals and external pins for optimal power consuption while in sleep/power-down.
  */
-void prepareForPowerDown () {
+void sleep_condition_for_powerdown () {
 
 	// Condition pins to minimize current use during sleep
 
@@ -35,16 +34,77 @@ void prepareForPowerDown () {
 	// 44uA current consumption with all SPI pins output and high during power down mode.
 
 	// Set MISO (normally input) to output
-	LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
+	//LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
+
+	// Unused pins
+	//LPC_GPIO_PORT->DIR0 |= ( (1<<11) | (1<<10) | (1<<16) );
+
+
+#ifdef DIO0_PIN
+	//LPC_GPIO_PORT->DIR0 |= 1<<DIO0_PIN;
+	//LPC_GPIO_PORT->CLR0 = (1<<DIO0_PIN);
+#endif
 
 	// Set all SPI pins high
 	LPC_GPIO_PORT->SET0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
 
+
+	// .. or low?
+	//LPC_GPIO_PORT->CLR0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
+
+	// All inputs - no difference still 240uA?
+	//LPC_GPIO_PORT->DIR0 &= ~((1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN));
+
 	// 320uA
 	//LPC_GPIO_PORT->DIR0 |= 0xFFF;
 
-
+	// Turn off clock to GPIO
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<6);
 //#endif
+
+
+	// Observation: disconnecting SWCLK during sleep reduces current draw from 200uA to 150uA.
+	// Experimental disable SWD - na doesn't make a difference.
+
+    /* Enable SWM clock */
+    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+
+    /* Bit 2: SWCLK;  Bit 3: SWDIO */
+    //LPC_SWM->PINENABLE0 |= (1<<2) | (1<<3);
+
+	// Turn off clock to SwitchMatrix
+	//LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
+
+}
+
+/**
+ * Restore perhipherals and pins after wake from sleep/power-down
+ */
+void sleep_condition_after_wake () {
+
+	// Turn on clock to GPIO
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<6);
+
+	// Experimental reenable SWD
+
+    /* Enable SWM clock */
+    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
+
+    /* Bit 2: SWCLK;  Bit 3: SWDIO */
+    //LPC_SWM->PINENABLE0 &= ~ ((1<<2) | (1<<3));
+
+	// Turn off clock to SwitchMatrix
+	//LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
+
+	// Reinit SPI
+	spi_init();
+}
+
+/**
+ * Condition MCU (pin states etc) to minimize current consumption during
+ * deep sleep modes.
+ */
+void prepareForPowerDown () {
 
 	//
 	// UM10601 §5.7.6.2, p52: Programming Power-down mode.
@@ -56,15 +116,15 @@ void prepareForPowerDown () {
 	// Step 1: The PM (power mode) bits (bits 2:0) in the PCON (power control)
 	// register must be set to 0x2 (power down mode)
 	// Ref UM10601 §5.6.1, Table 44,  p46.
-	// 0x1 Deep-sleep; 0x2 Power-down
-	//LPC_PMU->PCON = 0x1; // Getting ~ 200uA in this mode
-	LPC_PMU->PCON = 0x2; // Getting ~ 60uA in this mode with LPC810
-
+	// 0x1 Deep-sleep; 0x2 Power-down; 0x3 Deep power-down
+	// LPC812 with RFM98 (fw 0.7.0) PCON=1 400uA; PCON=2 240uA;
+	//LPC_PMU->PCON = 0x1;
+	LPC_PMU->PCON = 0x2;
 
 
 	  // Step 2: Select the power configuration in Power-down mode in the
 	  // PDSLEEPCFG (Table 35) register
-	  LPC_SYSCON->PDSLEEPCFG = ~(1<<3); // WDT on during deep sleep/power down
+	  //LPC_SYSCON->PDSLEEPCFG = ~(1<<3); // WDT on during deep sleep/power down
 	  //LPC_SYSCON->PDSLEEPCFG = ~((1<<6)|(1<<3)); // WDT+BOD on during deep sleep/power down
 
 
@@ -82,6 +142,7 @@ void prepareForPowerDown () {
 	  // Step 5: Write one to the SLEEPDEEP bit in the ARM Cortex-M0+
 	  // SCR register (Table 41) UM10601 §5.3.1.1 p42
 	  SCB->SCR |= NVIC_LP_SLEEPDEEP;
+
 
 	  // STARTERP1: Start logic 1 interrupt wake-up enable register
 	  // Bit 15: 1 = enable self wake-up timer interrupt wake-up
@@ -108,7 +169,9 @@ void prepareForPowerDown () {
 	  // Bit 1 (WAKEPAD_DISABLE): 0=enable wakeup on PIO0_4.
 	  // Bit 2 (LPOSCEN): 10kHz low power oscillator enable
 	  // Bit 3 (LPOSCDPDEN): enable LPOSC in DPD mode.
-	  LPC_PMU->DPDCTRL |= (0x1 << 2);
+	  LPC_PMU->DPDCTRL |= (0x1 << 2)
+			  // | (1<<3)
+			  ;
 
 
 	  // Enable clock for WKT in System clock control register (SYSAHBCLKCTRL)

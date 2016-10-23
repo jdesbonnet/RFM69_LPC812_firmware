@@ -94,7 +94,7 @@
 #define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
+#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
@@ -118,7 +118,7 @@
 //#define FEATURE_GPS_ON_USART1
 
 // WS2812B RGB LED driver
-//#define FEATURE_WS2812B
+#define FEATURE_WS2812B
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)

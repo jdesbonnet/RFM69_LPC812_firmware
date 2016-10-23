@@ -8,7 +8,8 @@
 #ifndef SLEEP_H_
 #define SLEEP_H_
 
-
+void sleep_condition_for_powerdown(void);
+void sleep_condition_after_wake (void);
 void prepareForPowerDown (void);
 void prepareForPowerDown2 (void); // works
 void prepareForDeepPowerDown (void);

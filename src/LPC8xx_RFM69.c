@@ -44,7 +44,6 @@ For v0.2.0:
 #include "ds18b20.h"
 #include "ws2812b.h"
 #include "gps.h"
-#include "iap_driver.h"
 
 #define SYSTICK_DELAY		(SystemCoreClock/100)
 
@@ -140,7 +139,9 @@ void displayStatus () {
 	tfp_printf ("; link_loss_timeout=%x\r\n",params_union.params.link_loss_timeout_s);
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
 	tfp_printf ("; systick_counter=%x\r\n", systick_counter);
+#ifdef FEATURE_EVENT_COUNTER
 	tfp_printf ("; event_counter=%x\r\n", event_counter);
+#endif
 	tfp_printf ("; ds18b20_mode=%x\r\n",params_union.params.ds18b20_mode);
 	tfp_printf ("; low_battery_v=%d\r\n",params_union.params.low_battery_v);
 	tfp_printf ("; min_battery_v=%d\r\n",params_union.params.min_battery_v);
@@ -212,7 +213,9 @@ void transmit_status_packet() {
 		tx_buffer.header.to_addr = 0;
 		tx_buffer.header.msg_type = 'z';
 		tx_buffer.payload[0] = sleep_counter++;
+#ifdef FEATURE_EVENT_COUNTER
 		tx_buffer.payload[1] = event_counter;
+#endif
 		tx_buffer.payload[2] = battery_v;
 
 #ifdef FEATURE_DS18B20
@@ -363,14 +366,21 @@ int main(void) {
 #endif
 #endif
 
-	// Turn off clock to SwitchMatrix
-	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
+
 
 
 	// Reset GPIO
 	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
 	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
 
+	// Experimental: turn off clock to other modules. Saves ~50uA.
+	// Turn off clock to GPIO
+	//LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<6);
+	// Turn off clock to WKT
+	//LPC_SY
+	//SCON->SYSAHBCLKCTRL &= ~(1<<9);
+	// Turn off clock to WDT
+	//LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<17);
 
 	//
 	// Initialize UART(s)
@@ -475,15 +485,13 @@ int main(void) {
 #ifdef DIO0_PIN
 	// If RFM DIO0 output line is available configure PIO pin for input. In RFM69 packet
 	// mode DIO0 high signifies frame is ready to read from FIFO.
-	regVal = LPC_GPIO_PORT->DIR0;
-	regVal &= ~(1<<DIO0_PIN);
-	LPC_GPIO_PORT->DIR0 = regVal;
+	//LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
 
 	// Enable interrupt when DIO0 goes high.
-	LPC_SYSCON->PINTSEL[3] = DIO0_PIN;
-	LPC_PIN_INT->ISEL &= ~(0x1<<3);	/* Edge trigger */
-	LPC_PIN_INT->IENR |= (0x1<<3);	/* Rising edge */
-	NVIC_EnableIRQ((IRQn_Type)(PININT3_IRQn));
+	//LPC_SYSCON->PINTSEL[3] = DIO0_PIN;
+	//LPC_PIN_INT->ISEL &= ~(0x1<<3);	/* Edge trigger */
+	//LPC_PIN_INT->IENR |= (0x1<<3);	/* Rising edge */
+	//NVIC_EnableIRQ((IRQn_Type)(PININT3_IRQn));
 #endif
 
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
@@ -627,6 +635,7 @@ int main(void) {
 			// Set radio in SLEEP mode (sub microamp current use). Register retention.
 #ifdef RADIO_RFM9x
 			rfm98_lora_mode(RFM98_OPMODE_LoRa_SLEEP);
+			//rfm_register_write(RFM98_OPMODE,0); // TODO experiment
 #else
 			rfm69_mode(RFM69_OPMODE_Mode_SLEEP);
 #endif
@@ -637,6 +646,8 @@ int main(void) {
 
 			// Reset source of wake event
 			interrupt_source = 0;
+
+			sleep_condition_for_powerdown();
 
 			// Setup power management registers so that WFI causes DEEPSLEEP
 			prepareForPowerDown();
@@ -658,8 +669,8 @@ int main(void) {
 			// WKT in 100us increments, want sleep_clock in 10ms increments
 			systick_counter += (wakeup_time - LPC_WKT->COUNT)/100;
 
-			// Experimental: Re-set SPI pins after deepsleep/powerdown conditioning
-			spi_init();
+
+			sleep_condition_after_wake();
 
 			// Allow time for clocks to stabilise after wake
 			// TODO: can we use WKT and WFI?
@@ -892,8 +903,10 @@ int main(void) {
 					tx_buffer.header.msg_type = PKT_STATUS_RESPONSE; // node status response
 					tx_buffer.payload[0] = readBattery_dV();
 					tx_buffer.payload[1] = rssi;
+#ifdef FEATURE_EVENT_COUNTER
 					tx_buffer.payload[2] = ((event_counter>>8)&0xff);
 					tx_buffer.payload[3] = (event_counter&0xff);
+#endif
 
 					int32_t temperature = ds18b20_temperature_read();
 					tx_buffer.payload[4] = temperature>>8;
@@ -1320,6 +1333,7 @@ int main(void) {
 				break;
 			}
 
+#ifdef FEATURE_WS2812B
 			case 'Z' : {
 				int rgb = parse_hex(args[1]);
 				ws2812b_init();
@@ -1327,6 +1341,7 @@ int main(void) {
 				ws2812b_bitbang(rgb);
 				break;
 			}
+#endif
 
 			// Experimental write to memory. Write 8 bits at a time as writing more
 			// might trigger a fault if not correctly aligned.

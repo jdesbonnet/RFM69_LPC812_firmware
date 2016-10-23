@@ -1,13 +1,14 @@
-#include "LPC8xx.h"
-#include "lpc8xx_gpio.h"
 #include "config.h"
+
+#ifdef FEATURE_WS2812B
 
 /**
  * Initialize pin for output to WS2812B LED chain.
  */
 void ws2812b_init () {
 	// set direction output
-	GPIOSetDir(0, WS2812B_PIN, 1);
+	//GPIOSetDir(0, WS2812B_PIN, 1);
+	LPC_GPIO_PORT->DIR0 |= 1<<WS2812B_PIN;
 }
 
 /**
@@ -41,3 +42,5 @@ void ws2812b_reset () {
 		__NOP();
 	}
 }
+
+#endif
