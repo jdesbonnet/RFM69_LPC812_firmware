@@ -13,88 +13,31 @@
 #include "config.h"
 
 /**
- * Condition perhiperals and external pins for optimal power consuption while in sleep/power-down.
+ * Condition peripherals and external pins for optimal power consumption while in sleep/power-down.
  */
 void sleep_condition_for_powerdown () {
 
 	// Condition pins to minimize current use during sleep
 
-//#ifdef LPC812
-	// Experiment to disconnect UART to see if it reduces current during sleep
-	//LPC_SWM->PINASSIGN0 = 0xffffffffUL;
-
-	// Experiment (conducted w/o RFM69 radio connected): set SPI pins to output
-	// SPI pins output, all 0 results in 380uA
-	// SPI pins output, MISO=1, rest=0 328uA
-	// SPI pins output, MISO=MOSI=1, rest=0 275uA
-	// SPI pins output, MISO=MOSI=SCK=1, SS=0 222uA
-	// SPI pins output, all=1 results in 169uA power down current
-
-	// Experiment on LPC810 with RFM69HW connected:
-	// 44uA current consumption with all SPI pins output and high during power down mode.
-
-	// Set MISO (normally input) to output
-	//LPC_GPIO_PORT->DIR0 |= 1<<MISO_PIN;
-
-	// Unused pins
-	//LPC_GPIO_PORT->DIR0 |= ( (1<<11) | (1<<10) | (1<<16) );
-
-
 #ifdef DIO0_PIN
-	//LPC_GPIO_PORT->DIR0 |= 1<<DIO0_PIN;
-	//LPC_GPIO_PORT->CLR0 = (1<<DIO0_PIN);
+	// Set as output, 0V: 20uA from MCU to RFM module on DIO0 line.
+	// Set as input, 50uA from MCU to RFM module on DIO0 line.
+//	LPC_GPIO_PORT->DIR0 |= 1<<DIO0_PIN;
+//	LPC_GPIO_PORT->CLR0 = (1<<DIO0_PIN);
 #endif
 
-	// Set all SPI pins high
-	LPC_GPIO_PORT->SET0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
+#ifdef DIO1_PIN
+//	LPC_GPIO_PORT->DIR0 |= 1<<DIO1_PIN;
+//	LPC_GPIO_PORT->CLR0 = (1<<DIO1_PIN);
+#endif
 
-
-	// .. or low?
-	//LPC_GPIO_PORT->CLR0 = (1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN);
-
-	// All inputs - no difference still 240uA?
-	//LPC_GPIO_PORT->DIR0 &= ~((1<<MISO_PIN) | (1<<MOSI_PIN) | (1<<SCK_PIN) | (1<<SS_PIN));
-
-	// 320uA
-	//LPC_GPIO_PORT->DIR0 |= 0xFFF;
-
-	// Turn off clock to GPIO
-	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<6);
-//#endif
-
-
-	// Observation: disconnecting SWCLK during sleep reduces current draw from 200uA to 150uA.
-	// Experimental disable SWD - na doesn't make a difference.
-
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-    /* Bit 2: SWCLK;  Bit 3: SWDIO */
-    //LPC_SWM->PINENABLE0 |= (1<<2) | (1<<3);
-
-	// Turn off clock to SwitchMatrix
-	//LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
-
+	spi_deinit();
 }
 
 /**
  * Restore perhipherals and pins after wake from sleep/power-down
  */
 void sleep_condition_after_wake () {
-
-	// Turn on clock to GPIO
-	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<6);
-
-	// Experimental reenable SWD
-
-    /* Enable SWM clock */
-    //LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
-
-    /* Bit 2: SWCLK;  Bit 3: SWDIO */
-    //LPC_SWM->PINENABLE0 &= ~ ((1<<2) | (1<<3));
-
-	// Turn off clock to SwitchMatrix
-	//LPC_SYSCON->SYSAHBCLKCTRL &= ~(1<<7);
 
 	// Reinit SPI
 	spi_init();

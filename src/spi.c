@@ -57,6 +57,12 @@ void spi_init () {
 	LPC_GPIO_PORT->DIR0 = regVal;
 }
 
+void spi_deinit () {
+	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	regVal &=  ~((1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN));
+	LPC_GPIO_PORT->DIR0 = regVal;
+}
+
 /**
  * Disable SPI pins (for power saving)
  */
@@ -69,12 +75,12 @@ void spi_off () {
 */
 
 static void spi_delay(void) {
-	/*
+
 	int i = 0;
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 16; i++) {
 		__NOP();
 	}
-	*/
+
 	__NOP();
 	__NOP();
 	//__NOP();

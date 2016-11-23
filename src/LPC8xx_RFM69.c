@@ -316,7 +316,7 @@ void listen_for_status_response () {
 
 int main(void) {
 
-	// Enable MCU subsystems needed in this application in one step. Saves bytes.
+	// Enable clock to MCU subsystems needed in this application in one step. Saves bytes.
 	// (it would be preferable to have in each subsystem init, but we're very
 	// tight for space on LPC810).
     LPC_SYSCON->SYSAHBCLKCTRL |=
@@ -485,7 +485,7 @@ int main(void) {
 #ifdef DIO0_PIN
 	// If RFM DIO0 output line is available configure PIO pin for input. In RFM69 packet
 	// mode DIO0 high signifies frame is ready to read from FIFO.
-	//LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
+	LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
 
 	// Enable interrupt when DIO0 goes high.
 	//LPC_SYSCON->PINTSEL[3] = DIO0_PIN;
@@ -642,7 +642,6 @@ int main(void) {
 
 			// Make sure 'z' message fully transmitted before sleeping
 			MyUARTSendDrain();
-
 
 			// Reset source of wake event
 			interrupt_source = 0;

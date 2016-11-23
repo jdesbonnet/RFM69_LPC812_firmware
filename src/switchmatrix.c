@@ -12,7 +12,7 @@ void SwitchMatrix_Init()
     // Enable clock to SwitchMatrix
     LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);
 
-    // Pin Assign
+    // Pin Assign (ref Table 109)
     // U0_TXD (bits 7:0) set to 0x4 (PIO0_4)
     // U0_RXD (bits 15:8) set to 0x0 (PIO0_0)
     LPC_SWM->PINASSIGN0 = 0xffff0004UL;
