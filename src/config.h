@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.0rc6"
+#define VERSION "RFM69/9x 0.7.0"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -156,8 +156,8 @@
 #define MOSI_PIN 8
 #define MISO_PIN 7
 #define RESET_PIN 15
-#define DIO0_PIN 6
-#define DIO1_PIN 14
+//#define DIO0_PIN 6
+//#define DIO1_PIN 14
 #define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0

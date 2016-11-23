@@ -76,10 +76,12 @@ void spi_off () {
 
 static void spi_delay(void) {
 
+	/*
 	int i = 0;
 	for (i = 0; i < 16; i++) {
 		__NOP();
 	}
+	*/
 
 	__NOP();
 	__NOP();

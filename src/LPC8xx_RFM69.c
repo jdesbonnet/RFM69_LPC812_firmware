@@ -665,6 +665,8 @@ int main(void) {
 			// DeepSleep until WKT interrupt (or PIN interrupt)
 			__WFI();
 
+
+
 			// WKT in 100us increments, want sleep_clock in 10ms increments
 			systick_counter += (wakeup_time - LPC_WKT->COUNT)/100;
 
@@ -684,11 +686,12 @@ int main(void) {
 				}
 			}
 
+			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
+			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
+
 			// Indicator to host there is a short time window to issue command
 			tfp_printf("z\r\n");
 
-			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
-			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
 		}
 #else
 		// If not using DEEPSLEEP, use regular SLEEP mode until next interrupt arrives
