@@ -485,7 +485,16 @@ int main(void) {
 #ifdef DIO0_PIN
 	// If RFM DIO0 output line is available configure PIO pin for input. In RFM69 packet
 	// mode DIO0 high signifies frame is ready to read from FIFO.
-	LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
+	//LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
+
+	// Pulldown resistor on PIO0_6 (tip DIO0)
+	LPC_IOCON->PIO0_6=(0x1<<3);
+
+	// Pulldown resistor on PIO0_14 (tip DIO1)
+	LPC_IOCON->PIO0_14=(0x1<<3);
+
+	//LPC_GPIO_PORT->DIR0 |= (1<<DIO0_PIN);
+	//LPC_GPIO_PORT->CLR0 |= (1<<DIO0_PIN);
 
 	// Enable interrupt when DIO0 goes high.
 	//LPC_SYSCON->PINTSEL[3] = DIO0_PIN;
