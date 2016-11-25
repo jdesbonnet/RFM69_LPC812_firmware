@@ -33,7 +33,7 @@
 //#define DEFAULT_MODE MODE_AWAKE
 
 
-#define DEFAULT_POLL_INTERVAL 30
+#define DEFAULT_POLL_INTERVAL 3
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
@@ -88,16 +88,16 @@
 #define FEATURE_UART_MEM_RWX
 
 // Diagnostic LED
-#define FEATURE_LED
+//#define FEATURE_LED
 
 // Experimental application to count rain tip bucket
-#define FEATURE_EVENT_COUNTER
+//#define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-#define FEATURE_DS18B20
+//#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
-#define FEATURE_UART_INTERRUPT
+//#define FEATURE_UART_INTERRUPT
 
 // Support NMEA sentences for location
 #define FEATURE_NMEA_INPUT
@@ -109,16 +109,16 @@
 #define FEATURE_LINK_LOSS_RESET
 
 // Use LPC8xx watchdog timer
-#define FEATURE_WATCHDOG_TIMER
+//#define FEATURE_WATCHDOG_TIMER
 
 // Measure battery V using comparator with Vref and Vcc through voltage ladder
-#define FEATURE_VBAT
+//#define FEATURE_VBAT
 
 // GPS on second UART port.
 //#define FEATURE_GPS_ON_USART1
 
 // WS2812B RGB LED driver
-#define FEATURE_WS2812B
+//#define FEATURE_WS2812B
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
@@ -156,13 +156,13 @@
 #define MOSI_PIN 8
 #define MISO_PIN 7
 #define RESET_PIN 15
-//#define DIO0_PIN 6
+#define DIO0_PIN 6
 //#define DIO1_PIN 14
-#define EVENT_COUNTER_PIN 16
+//#define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0
-#define DS18B20_PIN 14
-#define WS2812B_PIN 14
+//#define DS18B20_PIN 14
+//#define WS2812B_PIN 14
 #endif
 
 

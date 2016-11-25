@@ -113,8 +113,7 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 	// Turn off receiver before writing to FIFO
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_STDBY);
 
-	// is this necessary?
-	delay(20000);
+	//debug ("rfm98_frame_tx mode before FIFO write %x", rfm_register_read(1));
 
 	// Default TX buffer is at FIFO 0x80
 	rfm_register_write(RFM98_FIFOADDRPTR, 0x80);
@@ -134,8 +133,13 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 
 	rfm_nss_deassert();
 
+	//debug ("rfm98_frame_tx mode before tx %x", rfm_register_read(1));
+
 	// Power up TX
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_TX);
+
+	//debug ("rfm98_frame_tx mode after tx %x", rfm_register_read(1));
+
 
 	// Wait for TxDone IRQ
 	int status = rfm_wait_for_bit_high(RFM98_IRQFLAGS, RFM98_IRQFLAGS_TxDone);
@@ -143,9 +147,15 @@ void rfm98_frame_tx(uint8_t *buf, int len) {
 		debug ("timeout waiting for TxDone %d", status);
 	}
 
+	//debug ("rfm98_frame_tx mode after TxDone %x", rfm_register_read(1));
+	//debug ("rfm98_frame_tx flags after TxDone %x", rfm_register_read(RFM98_IRQFLAGS));
+
 	// Clear TxDone IRQ
 	rfm_register_write(RFM98_IRQFLAGS, RFM98_IRQFLAGS_TxDone);
 	//rfm_register_write(RFM98_IRQFLAGS, 0xff);
+
+	//debug ("rfm98_frame_tx mode after IRQ clear %x", rfm_register_read(1));
+	//debug ("rfm98_irq_flags after IRQ clear	 %x", rfm_register_read(RFM98_IRQFLAGS));
 }
 
 /**

@@ -362,7 +362,6 @@ int main(void) {
 
 #else
 	SwitchMatrix_Init();
-	//SwitchMatrix_Acmp_Init();
 #endif
 #endif
 
@@ -487,11 +486,8 @@ int main(void) {
 	// mode DIO0 high signifies frame is ready to read from FIFO.
 	//LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
 
-	// Pulldown resistor on PIO0_6 (tip DIO0)
+	// Pulldown resistor on PIO0_6 (pin DIO0)
 	LPC_IOCON->PIO0_6=(0x1<<3);
-
-	// Pulldown resistor on PIO0_14 (tip DIO1)
-	LPC_IOCON->PIO0_14=(0x1<<3);
 
 	//LPC_GPIO_PORT->DIR0 |= (1<<DIO0_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<DIO0_PIN);
@@ -502,6 +498,12 @@ int main(void) {
 	//LPC_PIN_INT->IENR |= (0x1<<3);	/* Rising edge */
 	//NVIC_EnableIRQ((IRQn_Type)(PININT3_IRQn));
 #endif
+
+#ifdef DIO1_PIN
+	// Pulldown resistor on PIO0_14 (pin DIO1)
+	//LPC_IOCON->PIO0_14=(0x1<<3);
+#endif
+
 
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
 	// RSSI_dBm = -rssi/2
@@ -712,6 +714,7 @@ int main(void) {
 
 		// If in MODE_LOW_POWER_POLL send status packet and listen for response
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
+#ifdef FEATURE_VBAT
 			uint8_t battery_v = readBattery_dV();
 			if (battery_v >= params_union.params.min_battery_v) {
 				transmit_status_packet();
@@ -720,6 +723,10 @@ int main(void) {
 				tfp_printf("; battery too low to tx/rx\r\n");
 				report_error((uint8_t)'z', E_BATTERY_V_TOO_LOW);
 			}
+#else
+			transmit_status_packet();
+			listen_for_status_response();
+#endif
 		}
 
 #ifdef RADIO_RFM9x

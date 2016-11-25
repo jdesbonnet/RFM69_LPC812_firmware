@@ -139,5 +139,3 @@ void prepareForPowerDown () {
 	  // Bit 1: ALARMFLAG 0=no timeout; 1=timeout.
 	  LPC_WKT->CTRL |= 0x01; // 10kHz LPOSC
 }
-
-
