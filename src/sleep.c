@@ -32,12 +32,21 @@ void sleep_condition_for_powerdown () {
 #endif
 
 	spi_deinit();
+
+	// Setting LED pin into input with pull down R seems to elimiate the
+	// last 60uA of unexplained current use.
+	LPC_GPIO_PORT->DIR0 &= ~(1<<LED_PIN);
+	// Pulldown resistor on PIO0_17 (pin LED_PIN)
+	LPC_IOCON->PIO0_17=(0x1<<3);
+
 }
 
 /**
  * Restore perhipherals and pins after wake from sleep/power-down
  */
 void sleep_condition_after_wake () {
+
+	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
 
 	// Reinit SPI
 	spi_init();

@@ -88,7 +88,7 @@
 #define FEATURE_UART_MEM_RWX
 
 // Diagnostic LED
-//#define FEATURE_LED
+#define FEATURE_LED
 
 // Experimental application to count rain tip bucket
 //#define FEATURE_EVENT_COUNTER
@@ -112,7 +112,7 @@
 //#define FEATURE_WATCHDOG_TIMER
 
 // Measure battery V using comparator with Vref and Vcc through voltage ladder
-//#define FEATURE_VBAT
+#define FEATURE_VBAT
 
 // GPS on second UART port.
 //#define FEATURE_GPS_ON_USART1
@@ -156,7 +156,7 @@
 #define MOSI_PIN 8
 #define MISO_PIN 7
 #define RESET_PIN 15
-#define DIO0_PIN 6
+//#define DIO0_PIN 6
 //#define DIO1_PIN 14
 //#define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
