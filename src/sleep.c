@@ -33,11 +33,14 @@ void sleep_condition_for_powerdown () {
 
 	spi_deinit();
 
-	// Setting LED pin into input with pull down R seems to elimiate the
+#ifdef FEATURE_LED
+	// Setting LED pin into input with pull down R seems to eliminate the
 	// last 60uA of unexplained current use.
 	LPC_GPIO_PORT->DIR0 &= ~(1<<LED_PIN);
 	// Pulldown resistor on PIO0_17 (pin LED_PIN)
+	// TODO: PIO0_17 IOCON hard coded
 	LPC_IOCON->PIO0_17=(0x1<<3);
+#endif
 
 }
 
@@ -46,7 +49,9 @@ void sleep_condition_for_powerdown () {
  */
 void sleep_condition_after_wake () {
 
+#ifdef FEATURE_LED
 	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+#endif
 
 	// Reinit SPI
 	spi_init();

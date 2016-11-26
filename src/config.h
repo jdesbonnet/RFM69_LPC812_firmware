@@ -156,8 +156,8 @@
 #define MOSI_PIN 8
 #define MISO_PIN 7
 #define RESET_PIN 15
-//#define DIO0_PIN 6
-//#define DIO1_PIN 14
+#define DIO0_PIN 6
+#define DIO1_PIN 14
 //#define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0

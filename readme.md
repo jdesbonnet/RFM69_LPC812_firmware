@@ -27,6 +27,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.0, 26 Nov 2016
+ * Support for RFM98
+ * 3µA sleep current achieved.
+
 ## 0.6.1, 11 Sep 2016
  * Low battery modes (low and minimum).
  * Fixes to OTA firmware code.

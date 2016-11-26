@@ -487,6 +487,7 @@ int main(void) {
 	//LPC_GPIO_PORT->DIR0 &= ~(1<<DIO0_PIN);
 
 	// Pulldown resistor on PIO0_6 (pin DIO0)
+	// TODO: PIO0_6 IOCON hard coded
 	LPC_IOCON->PIO0_6=(0x1<<3);
 
 	//LPC_GPIO_PORT->DIR0 |= (1<<DIO0_PIN);
@@ -501,7 +502,8 @@ int main(void) {
 
 #ifdef DIO1_PIN
 	// Pulldown resistor on PIO0_14 (pin DIO1)
-	//LPC_IOCON->PIO0_14=(0x1<<3);
+	// TODO: PIO0_14 IOCON hard coded
+	LPC_IOCON->PIO0_14=(0x1<<3);
 #endif
 
 
