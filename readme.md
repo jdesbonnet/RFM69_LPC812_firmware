@@ -1,10 +1,11 @@
-# LPC812/RFM69HW board firmware
+# LPC812/RFM69HW/RFM9x radio modem firmware
 
-This is firmware to drive my LPC812/RFM69HW radio board. The indended application is for
-use with robot boat competitions, but can be used for any telemetry application.
+This is firmware to drive my LPC812/RFM69HW and LPC812/RFM9x radio modem.
 
 The LPC812 with this firmware acts as a radio operating system, providing a simplified
-interface between the RFM69 module and the host application. 
+interface between the RFMxx module and the host application. 
+
+![Radio modem PCB](https://raw.githubusercontent.com/jdesbonnet/RFMxx_LPC812_PCB/master/doc/rfm69hw_board_populated.jpg)
 
 Built with LPCxpresso v7.3.0 (free IDE from NXP). 
 
@@ -15,15 +16,14 @@ here:
 https://docs.google.com/document/d/1FBZINVb_g0gnWlEkQYNBEHTwiyHNY0fn5J37EqBPyog/edit?usp=sharing
 
 
-Also included is a web test user interface. This interfaces to the LPC812/RFM69 board through
-WebSockets. To operate run a WebSocket to UART on LPC812/RFM69 bridge.
-See https://github.com/jdesbonnet/WebSocketUARTBridge. 
+Also included is a web test user interface. This interfaces to modem board using
+WebSockets and a UART to WebSockets bridge. See https://github.com/jdesbonnet/WebSocketUARTBridge. 
 
 ![test UI](./doc/test_ui.png)
 
 
 Joe Desbonnet, jdesbonnet@gmail.com
-13 Feb 2015
+12 Oct 2016
 
 # Release History:
 
