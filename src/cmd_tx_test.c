@@ -52,15 +52,14 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 		ledOff();
 
 		delayMilliseconds(delay);
+
+		if (reset) {
+			NVIC_SystemReset();
+		}
 	}
 #else
 	debug("not supported for RFM69");
 #endif
-
-
-	if (reset) {
-		NVIC_SystemReset();
-	}
 
 	return E_OK;
 }

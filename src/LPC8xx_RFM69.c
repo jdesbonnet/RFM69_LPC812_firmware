@@ -103,11 +103,13 @@ void report_error (uint8_t cmd, int32_t code) {
  */
 void displayStatus () {
 
-#ifdef BOARD_LPC812_RFM98_V1
+#ifdef RADIO_RFM98
 	tfp_printf("; radio=RFM98\r\n");
-#else
+#endif
+#ifdef RADIO_RFM69
 	tfp_printf("; radio=RFM69\r\n");
 #endif
+
 
 #ifdef BOARD_LPC812_RFM98_V1
 //	int ii;
@@ -199,12 +201,13 @@ void eeprom_params_save (void) {
 void transmit_status_packet() {
 
 
+#ifdef RFM98
 	// TODO:
 	// This seems to be necessary after a module SLEEP. Why?
 	//rfm98_lora_mode(RFM98_OPMODE_LoRa_RXCONTINUOUS);
 	rfm98_lora_mode(RFM98_OPMODE_LoRa_FSRX);
 	//delayMilliseconds(5);
-
+#endif
 
 	// Battery in 0.1V units
 	uint8_t battery_v = readBattery_dV();
@@ -765,12 +768,12 @@ int main(void) {
 			last_frame_time = systick_counter;
 
 			//
-			// Experimental wake list
+			// Experimental wake list. Node 0 reserved for empty slot (so cannot wake node 0).
 			//
 			{
 				int ii;
 				for (ii = 0; ii < 4; ii++) {
-					if (rx_buffer.header.from_addr == wake_list[ii]) {
+					if ( (wake_list[ii]!=0) && (rx_buffer.header.from_addr == wake_list[ii]) ) {
 						// Wake with remote command "M 3" (mode 3 = wake with radio on)
 						tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 						tx_buffer.header.msg_type = PKT_REMOTE_CMD;

@@ -19,18 +19,6 @@ void sleep_set_pins_for_powerdown () {
 
 	// Condition pins to minimize current use during sleep
 
-#ifdef DIO0_PIN
-	// Set as output, 0V: 20uA from MCU to RFM module on DIO0 line.
-	// Set as input, 50uA from MCU to RFM module on DIO0 line.
-//	LPC_GPIO_PORT->DIR0 |= 1<<DIO0_PIN;
-//	LPC_GPIO_PORT->CLR0 = (1<<DIO0_PIN);
-#endif
-
-#ifdef DIO1_PIN
-//	LPC_GPIO_PORT->DIR0 |= 1<<DIO1_PIN;
-//	LPC_GPIO_PORT->CLR0 = (1<<DIO1_PIN);
-#endif
-
 	spi_deinit();
 
 #ifdef FEATURE_LED
