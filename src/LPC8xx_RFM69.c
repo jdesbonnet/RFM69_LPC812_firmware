@@ -510,8 +510,13 @@ int main(void) {
 	// Pulldown resistor on PIO0_14 (pin DIO1)
 	// TODO: PIO0_14 IOCON hard coded
 	LPC_IOCON->PIO0_14=(0x1<<3);
+#else
+	// If unused setting to OUTPUT high or input tied low helps
+	//LPC_GPIO_PORT->DIR0 |= (1<<14);
+	//LPC_GPIO_PORT->SET0 |= (1<<14);
+	//LPC_IOCON->PIO0_14=(0x1<<3); // pull down?
+	//LPC_IOCON->PIO0_14=(0x2<<3); // pull up?
 #endif
-
 
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
 	// RSSI_dBm = -rssi/2
