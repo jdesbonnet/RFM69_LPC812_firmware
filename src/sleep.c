@@ -15,7 +15,7 @@
 /**
  * Condition peripherals and external pins for optimal power consumption while in sleep/power-down.
  */
-void sleep_condition_for_powerdown () {
+void sleep_set_pins_for_powerdown () {
 
 	// Condition pins to minimize current use during sleep
 
@@ -47,7 +47,7 @@ void sleep_condition_for_powerdown () {
 /**
  * Restore perhipherals and pins after wake from sleep/power-down
  */
-void sleep_condition_after_wake () {
+void sleep_set_pins_for_wake () {
 
 #ifdef FEATURE_LED
 	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);

@@ -659,7 +659,7 @@ int main(void) {
 			// Reset source of wake event
 			interrupt_source = 0;
 
-			sleep_condition_for_powerdown();
+			sleep_set_pins_for_powerdown();
 
 			// Setup power management registers so that WFI causes DEEPSLEEP
 			prepareForPowerDown();
@@ -684,7 +684,7 @@ int main(void) {
 			systick_counter += (wakeup_time - LPC_WKT->COUNT)/100;
 
 
-			sleep_condition_after_wake();
+			sleep_set_pins_for_wake();
 
 			// Allow time for clocks to stabilise after wake
 			// TODO: can we use WKT and WFI?
@@ -766,7 +766,6 @@ int main(void) {
 				int ii;
 				for (ii = 0; ii < 4; ii++) {
 					if (rx_buffer.header.from_addr == wake_list[ii]) {
-						debug("found on wake list");
 						// Wake with remote command "M 3" (mode 3 = wake with radio on)
 						tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 						tx_buffer.header.msg_type = PKT_REMOTE_CMD;
@@ -777,9 +776,12 @@ int main(void) {
 						// Send it twice: CAD seems to prevent reception of first packet
 						// TODO: not sure why that's the case. TODO: sent a NOP first (shorter).
 						rfm_frame_tx(tx_buffer.buffer, 3+3);
-						delayMilliseconds(20);
+						delayMilliseconds(10);
 						rfm_frame_tx(tx_buffer.buffer, 3+3);
 						wake_list[ii]=0;
+
+						debug("wake sent to %x", rx_buffer.header.from_addr);
+
 					}
 				}
 			}
