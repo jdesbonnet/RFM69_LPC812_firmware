@@ -245,6 +245,9 @@ void transmit_status_packet() {
 	}
 }
 
+/**
+ * Note: this currently requires Watchdog timer operating.
+ */
 void listen_for_status_response () {
 
 	int start_time = LPC_WWDT->TV;
@@ -688,7 +691,9 @@ int main(void) {
 
 			// Allow time for clocks to stabilise after wake
 			// TODO: can we use WKT and WFI?
-			delay(20000);
+			//delay(20000);
+			//delayMilliseconds() didn't work!
+			//delayMilliseconds(10);
 
 			if (interrupt_source == UART_INTERRUPT) {
 				tfp_printf("; UART interrupt, awake\r\n");
@@ -793,7 +798,11 @@ int main(void) {
 			for (ii = 0; ii < frame_len; ii++) {
 				tfp_printf(" %x", rx_buffer.buffer[ii]);
 			}
-			tfp_printf (" ] %d %d\r\n", rfm98_last_packet_rssi(), rfm98_last_packet_snr() );
+			tfp_printf (" ] %d %d %d\r\n",
+					rfm98_last_packet_rssi(),
+					rfm98_last_packet_snr(),
+					rfm98_last_packet_crc_ok()
+					);
 			}
 #endif
 

@@ -15,6 +15,7 @@ void rfm98_frame_tx(uint8_t *buf, int len);
 
 int rfm98_last_packet_rssi();
 int rfm98_last_packet_snr();
+int rfm98_last_packet_crc_ok();
 
 // Check for received packet on RFMxx
 // TODO: need HAL layer

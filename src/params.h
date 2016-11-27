@@ -11,14 +11,14 @@ typedef struct __attribute__((packed)) {
 	uint8_t node_addr;
 	uint8_t operating_mode;
 	uint8_t listen_period_cs;
-	uint8_t poll_interval;      // poll interval in seconds
+	uint8_t poll_interval;      // index 3: poll interval in seconds
 
 	uint8_t gps_echo;
 	uint8_t ds18b20_mode;
-	uint16_t link_loss_timeout_s;
+	uint16_t link_loss_timeout_s;  // index 6,7
 
-	uint8_t min_battery_v;	// min voltage required for radio operation in 0.1V units
-	uint8_t low_battery_v;	// min voltage for regular operation 0.1V units.
+	uint8_t min_battery_v;	// index 8: min voltage required for radio operation in 0.1V units
+	uint8_t low_battery_v;	// index 9: min voltage for regular operation 0.1V units.
 
 	// To facilitate experimenting with the optimum low power state of pins
 	// allow the GPIO pin directions and states to be configured here.

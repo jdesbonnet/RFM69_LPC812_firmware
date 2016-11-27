@@ -174,6 +174,13 @@ int rfm98_last_packet_snr() {
 	return (int)((int8_t)rfm_register_read(0x19));
 }
 
+/**
+ * SNR of last packet received. dB.
+ */
+int rfm98_last_packet_crc_ok() {
+	return rfm_register_read(RFM98_IRQFLAGS) & RFM98_IRQFLAGS_PayloadCrcError_MASK ? 0 : 1;
+}
+
 int rfm98_temperature() {
 
 	// Doesn't seen to work
