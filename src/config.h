@@ -58,13 +58,13 @@
 #define LPC812
 
 // Radio module used
-#define RADIO_RFM69
-//#define RADIO_RFM9x
+//#define RADIO_RFM69
+#define RADIO_RFM9x
 
 // What PCB board or pin layout?
 //#define BOARD_LPC812_V0 // Deadbug LPC812 made back in Sep 2014.
-#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
-//#define BOARD_LPC812_RFM98_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
+//#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
+#define BOARD_LPC812_RFM98_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
 
 // One board was populated without the trace cut: reroute RXD.
 // Enable this in addition to BOARD_LPC812_V1
@@ -78,7 +78,7 @@
 
 #define FEATURE_SLEEP
 
-// Support MCU deep-sleep (~10uA)
+// Support MCU deep-sleep (~3uA)
 #define FEATURE_DEEPSLEEP
 
 // Remote MCU memory read/write and execute (+160bytes)
@@ -108,7 +108,9 @@
 // Use WDT to reset MCU on loss of link
 #define FEATURE_LINK_LOSS_RESET
 
-// Use LPC8xx watchdog timer
+// Use LPC8xx watchdog timer. Note currently this timer is used
+// for timing listening periods after sending status packet,
+// so not an optional feature if low power mode required.
 #define FEATURE_WATCHDOG_TIMER
 
 // Measure battery V using comparator with Vref and Vcc through voltage ladder

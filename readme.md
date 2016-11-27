@@ -28,8 +28,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 # Release History:
 
 ## 0.7.0, 26 Nov 2016
- * Support for RFM98
- * 3µA sleep current achieved.
+ * Support for RFM98 and RFM69
+ * 3µA sleep current achieved with RFM98
+ * 40µA sleep current achieved with RFM69
+ * Print CRC status with FRAME debug message
 
 ## 0.6.1, 11 Sep 2016
  * Low battery modes (low and minimum).
