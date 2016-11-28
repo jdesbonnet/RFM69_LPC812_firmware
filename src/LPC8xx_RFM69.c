@@ -201,7 +201,7 @@ void eeprom_params_save (void) {
 void transmit_status_packet() {
 
 
-#ifdef RFM98
+#ifdef RADIO_RFM9x
 	// TODO:
 	// This seems to be necessary after a module SLEEP. Why?
 	//rfm98_lora_mode(RFM98_OPMODE_LoRa_RXCONTINUOUS);
@@ -518,6 +518,13 @@ int main(void) {
 	//LPC_IOCON->PIO0_14=(0x2<<3); // pull up?
 #endif
 
+#ifdef RESET_PIN
+	#ifdef RADIO_RFM69
+	//LPC_GPIO_PORT->DIR0 |= (1<<RESET_PIN);
+	//LPC_GPIO_PORT->CLR0 |= (1<<RESET_PIN);
+	LPC_IOCON->PIO0_15=(0x1<<3); // pull down?
+	#endif
+#endif
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
 	// RSSI_dBm = -rssi/2
 	// RFM9x: RSSI in dBm
@@ -623,6 +630,33 @@ int main(void) {
 	tfp_printf("k %x\r\n",test_result);
 
 	rfm_config();
+
+
+#ifdef RADIO_RFM9x
+	uint8_t regval;
+	// Power amp settings
+	regval = rfm_register_read(RFM98_PACONFIG);
+	rfm_register_write(RFM98_PACONFIG,
+			regval
+			| RFM98_PACONFIG_MaxPower_VALUE(params_union.params.tx_power)
+	);
+
+	// LoRa Bandwidth, coding rate
+	regval = rfm_register_read(RFM98_MODEMCONFIG1);
+	rfm_register_write(RFM98_MODEMCONFIG1,
+			regval
+			| RFM98_MODEMCONFIG1_Bw_VALUE(params_union.params.lora_bw)
+			| RFM98_MODEMCONFIG1_CodingRate_VALUE(params_union.params.lora_cr)
+			| 1 // explicit header
+	);
+
+	// LoRa spreadfactor
+	regval = rfm_register_read(RFM98_MODEMCONFIG2);
+	rfm_register_write(RFM98_MODEMCONFIG2,
+			regval
+			| RFM98_MODEMCONFIG2_SpreadFactor_VALUE(params_union.params.lora_sf)
+	);
+#endif
 
 	//
 	// Main program loop
