@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.0"
+#define VERSION "RFM69/9x 0.7.1b"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -33,7 +33,7 @@
 //#define DEFAULT_MODE MODE_AWAKE
 
 
-#define DEFAULT_POLL_INTERVAL 3
+#define DEFAULT_POLL_INTERVAL 30
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
@@ -50,7 +50,10 @@
 // Minimum voltage require to operate radio (0.1V units)
 #define DEFAULT_MIN_BATTERY_V (22)
 
-
+#define DEFAULT_TX_POWER (15)  // RFM9x 0 - 15
+#define DEFAULT_LORA_BW   (7)  // RFM9x LoRa BW 0 - 9
+#define DEFAULT_LORA_CR   (4)  // RFM9x LoRa CodingRate 0 - 5
+#define DEFAULT_LORA_SF  (12)  // RFM9x LoRa SpreadingFactor  6 - 12
 
 #define WWDT_CLOCK_SPEED_HZ (2000)
 
@@ -90,11 +93,14 @@
 // Diagnostic LED
 #define FEATURE_LED
 
+#define FEATURE_DIO0
+//#define FEATURE_DIO1
+
 // Experimental application to count rain tip bucket
 //#define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
+#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
@@ -163,7 +169,7 @@
 //#define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0
-//#define DS18B20_PIN 14
+#define DS18B20_PIN 14
 //#define WS2812B_PIN 14
 #endif
 

@@ -103,7 +103,7 @@ void report_error (uint8_t cmd, int32_t code) {
  */
 void displayStatus () {
 
-#ifdef RADIO_RFM98
+#ifdef RADIO_RFM9x
 	tfp_printf("; radio=RFM98\r\n");
 #endif
 #ifdef RADIO_RFM69
@@ -506,7 +506,7 @@ int main(void) {
 	//NVIC_EnableIRQ((IRQn_Type)(PININT3_IRQn));
 #endif
 
-#ifdef DIO1_PIN
+#ifdef FEATURE_DIO1
 	// Pulldown resistor on PIO0_14 (pin DIO1)
 	// TODO: PIO0_14 IOCON hard coded
 	LPC_IOCON->PIO0_14=(0x1<<3);
@@ -579,6 +579,7 @@ int main(void) {
 #ifdef FEATURE_DS18B20
 	// Pullup resistor on DS18B20 data pin PIO0_14
 	ow_init(0,DS18B20_PIN);
+	LPC_IOCON->PIO0_14=(0x2<<3); // pull up
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -647,7 +648,7 @@ int main(void) {
 			regval
 			| RFM98_MODEMCONFIG1_Bw_VALUE(params_union.params.lora_bw)
 			| RFM98_MODEMCONFIG1_CodingRate_VALUE(params_union.params.lora_cr)
-			| 1 // explicit header
+			| 0 // implicit header
 	);
 
 	// LoRa spreadfactor
@@ -1041,7 +1042,7 @@ int main(void) {
 					mem_addr = (uint32_t **)&rx_buffer.payload[0];
 
 					int len = (frame_len - 3 - 4)/4;
-					tfp_printf("; memory write request at %x, len=%d\r\n", *mem_addr,len);
+					debug("memory write request at %x, len=%d\r\n", *mem_addr,len);
 
 					memcpy(*mem_addr, rx_buffer.payload+4, len*4);
 
@@ -1054,9 +1055,8 @@ int main(void) {
 					// Note address and result is LSB first (little endian)
 					uint32_t **mem_addr;
 					mem_addr = (uint32_t *)&rx_buffer.payload[0];
-					tfp_printf("; memory read request at %x\r\n", *mem_addr);
-
-					tfp_printf("; value of location %x = %x\r\n", *mem_addr, **mem_addr);
+					debug("memory read request at %x\r\n", *mem_addr);
+					debug("value of location %x = %x\r\n", *mem_addr, **mem_addr);
 					// First 4 bytes of return is base address
 					*(uint32_t *)tx_buffer.payload = *mem_addr;
 
@@ -1082,16 +1082,23 @@ int main(void) {
 					// Note on ARM Cortex M devices LSB always 1 for Thumb instruction set.
 					uint32_t **mem_addr;
 					mem_addr = rx_buffer.payload;
+
+					debug("exec at %x\r\n", *mem_addr);
+
 					typedef void (*E)(void);
 					E e_entry = (E)*mem_addr;
 					e_entry();
 					break;
 				}
 
-				case PKG_OTA_ENTER_BOOTLOADER : {
+				case PKT_OTA_ENTER_BOOTLOADER : {
 					// Can never exit from here: only reset when complete
 					ota_bootloader(params_union.params.node_addr);
 					break;
+				}
+
+				case PKT_ISP_ENTER_BOOTLOADER : {
+					iap_reinvoke_isp();
 				}
 
 				}
@@ -1317,6 +1324,10 @@ int main(void) {
 				break;
 			}
 
+			case 'O' : {
+				iap_reinvoke_isp();
+			}
+
 			// Set parameter <byte-index> <value>
 			case 'P' : {
 
@@ -1432,6 +1443,17 @@ int main(void) {
 				mem_addr = (uint32_t *)parse_hex(args[1]);
 				MyUARTPrintHex(*mem_addr);
 				MyUARTSendCRLF();
+				break;
+			}
+
+			case '#' : {
+				// Execute function at memory location payload+0
+				// Note on ARM Cortex M devices LSB always 1 for Thumb instruction set.
+				uint32_t *mem_addr;
+				mem_addr = (uint32_t *)parse_hex(args[1]);
+				typedef void (*E)(void);
+				E e_entry = (E)mem_addr;
+				e_entry();
 				break;
 			}
 

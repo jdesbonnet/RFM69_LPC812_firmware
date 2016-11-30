@@ -232,3 +232,14 @@ int iap_read_unique_id(uint32_t *unique_id) {
 
 	return (int)result_table.ret_code;
 }
+
+//RAM_FUNC
+void iap_reinvoke_isp(void) {
+	cmd_table.cmd_code = REINVOKE_ISP;
+
+	//__disable_irq();
+	iap_call(&cmd_table, &result_table);
+	//__enable_irq();
+
+    /* Never return from here */
+}

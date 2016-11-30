@@ -6,6 +6,8 @@
  *
  * Design note: must be no more than 64 bytes in length to fit in single page
  * of flash memory.
+ *
+ * Default values currently in eeprom.c (not ideal).
  */
 typedef struct __attribute__((packed)) {
 	uint8_t node_addr;
@@ -19,6 +21,11 @@ typedef struct __attribute__((packed)) {
 
 	uint8_t min_battery_v;	// index 8: min voltage required for radio operation in 0.1V units
 	uint8_t low_battery_v;	// index 9: min voltage for regular operation 0.1V units.
+
+	uint8_t tx_power; // index 0xa: RFM9x 0 - 15
+	uint8_t lora_bw;  // index 0xb: RFM9x LoRa BW 0 - 9
+	uint8_t lora_cr;  // index 0xc: RFM9x LoRa CodingRate 0 - 5
+	uint8_t lora_sf;  // index 0xd: RFM9x LoRa SpreadingFactor  6 - 12
 
 	// To facilitate experimenting with the optimum low power state of pins
 	// allow the GPIO pin directions and states to be configured here.

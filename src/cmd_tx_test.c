@@ -34,6 +34,7 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 	rfm_register_write(RFM98_MODEMCONFIG1,
 			RFM98_MODEMCONFIG1_Bw_VALUE(bw)
 			| RFM98_MODEMCONFIG1_CodingRate_VALUE(cr)
+			| 1 // explicit header
 	);
 
 	rfm_register_write(RFM98_MODEMCONFIG2,

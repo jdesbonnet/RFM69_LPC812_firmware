@@ -118,4 +118,7 @@ int iap_read_bootcode_rev(uint32_t *bootcode_rev);
  */
 int iap_read_unique_id(uint32_t *unique_id);
 
+
+void iap_reinvoke_isp(void);
+
 #endif /* IAP_DRIVER_H_ */

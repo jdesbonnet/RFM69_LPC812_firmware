@@ -30,6 +30,12 @@ void sleep_set_pins_for_powerdown () {
 	LPC_IOCON->PIO0_17=(0x1<<3);
 #endif
 
+#ifdef FEATURE_WS2812B
+	//LPC_GPIO_PORT->SET0 |= (1<<WS2812B_PIN);
+	//LPC_GPIO_PORT->CLR0 |= (1<<WS2812B_PIN);
+	LPC_GPIO_PORT->DIR0 &= ~(1<<WS2812B_PIN);
+	LPC_IOCON->PIO0_14=(0x2<<3);
+#endif
 }
 
 /**

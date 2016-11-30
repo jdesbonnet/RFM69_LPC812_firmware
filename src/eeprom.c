@@ -30,7 +30,12 @@ const params_union_type eeprom_flashpage __attribute__ ((aligned (64))) = {
 		.listen_period_cs = DEFAULT_LISTEN_TIME_CS,
 		.link_loss_timeout_s = DEFAULT_LINK_LOSS_TIMEOUT,
 		.low_battery_v = DEFAULT_LOW_BATTERY_V,
-		.min_battery_v = DEFAULT_MIN_BATTERY_V
+		.min_battery_v = DEFAULT_MIN_BATTERY_V,
+
+		.tx_power = DEFAULT_TX_POWER,
+		.lora_bw  = DEFAULT_LORA_BW, // index 0xb: RFM9x LoRa BW 0 - 9
+		.lora_cr = DEFAULT_LORA_CR,  // index 0xc: RFM9x LoRa CodingRate 0 - 5
+		.lora_sf = DEFAULT_LORA_SF  // index 0xd: RFM9x LoRa SpreadingFactor  6 - 12
 		}
 };
 
