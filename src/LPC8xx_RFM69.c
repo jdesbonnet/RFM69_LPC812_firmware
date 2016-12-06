@@ -453,6 +453,9 @@ int main(void) {
 			params_union.params.node_addr = 0x53; // RFM98
 			break;
 
+		case 0x1901703c:
+			params_union.params.node_addr = 0x61; // RFM95 868
+
 		}
 
 	}
@@ -855,8 +858,25 @@ int main(void) {
 			LPC_WWDT->FEED = 0x55;
 #endif
 
+#ifdef FEATURE_RELAY
+			// Experimental relay feature.
+			// Only relay non-broadcast packets. Relay to broadcast address.
+			if (rx_buffer.header.to_addr != 0xff) {
+				debug ("relay frame");
+				tx_buffer.header.to_addr = 0xff;
+				tx_buffer.header.msg_type = PKT_RELAY;
+				tx_buffer.payload[0] = rx_buffer.header.from_addr;
+				// copy packet into tx buffer
+				memcpy(tx_buffer.payload+1,rx_buffer.payload,frame_len-3);
 
-			// 0xff is the broadcast address
+				// Delay a random period of time. Use WWDT timer LS byte
+				delayMilliseconds( 40 + (LPC_WWDT->TV & 0xff) * 10 );
+
+				rfm_frame_tx(tx_buffer.buffer, frame_len+1);
+			}
+#endif
+
+			// Is this frame addressed to this node? 0xff is the broadcast address
 			if ( rx_buffer.header.to_addr == 0xff
 					|| rx_buffer.header.to_addr == tx_buffer.header.from_addr) {
 

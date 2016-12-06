@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.1"
+#define VERSION "RFM69/9x 0.7.2a"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -127,6 +127,9 @@
 
 // WS2812B RGB LED driver
 //#define FEATURE_WS2812B
+
+// Experiment relay feature
+#define FEATURE_RELAY
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
