@@ -27,6 +27,14 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.2
+ * Workaround for Issue #13: first iteration of low power mode does not go into proper
+   low power mode (consumes >1mA). Solution is to make first iteration very short. Root
+   cause still unknown.
+
+## 0.7.1
+ * RFM68 board sleep current now down to 2.6µA due to conditioning of MCU to RFM reset pin.
+
 ## 0.7.0, 26 Nov 2016
  * Support for RFM98 and RFM69
  * 3µA sleep current achieved with RFM98

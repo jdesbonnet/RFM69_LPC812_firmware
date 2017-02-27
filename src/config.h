@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 //#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.2a"
+#define VERSION "RFM69/9x 0.7.2"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -60,7 +60,7 @@
 // MCU used (only LPC812 supported, LPC824 later. LPC810 dropped due to lack of flash)
 #define LPC812
 
-// Radio module used
+// Radio module used: can be one of RADIO_RFM69 or RADIO_RFM9x (LoRa)
 //#define RADIO_RFM69
 #define RADIO_RFM9x
 

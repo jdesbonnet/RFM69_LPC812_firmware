@@ -531,7 +531,7 @@ int main(void) {
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
 	// RSSI_dBm = -rssi/2
 	// RFM9x: RSSI in dBm
-	int rssi;
+	int rssi,snr;
 	uint8_t modem_state,prev_modem_state;
 
 	// Used in UART commands
@@ -662,6 +662,10 @@ int main(void) {
 	);
 #endif
 
+
+	// Issue #13:
+	uint8_t first_iteration = 1;
+
 	//
 	// Main program loop
 	//
@@ -722,6 +726,14 @@ int main(void) {
 			if (battery_v <= params_union.params.low_battery_v) {;
 				wakeup_time *= 8;
 			}
+
+			// Issue #13: first iteration does not enter proper low power mode. Cause
+			// still unknown. Workaround is to make first iteration very short.
+			if (first_iteration) {
+				wakeup_time = 100;
+				first_iteration = 0;
+			}
+
 			LPC_WKT->COUNT = wakeup_time ;
 
 			// DeepSleep until WKT interrupt (or PIN interrupt)
@@ -796,6 +808,7 @@ int main(void) {
 
 #ifdef RADIO_RFM9x
 			rssi = rfm98_last_packet_rssi();
+			snr = rfm98_last_packet_snr();
 #endif
 
 			// Yes, frame ready to be read from FIFO
@@ -865,9 +878,15 @@ int main(void) {
 				debug ("relay frame");
 				tx_buffer.header.to_addr = 0xff;
 				tx_buffer.header.msg_type = PKT_RELAY;
+
 				tx_buffer.payload[0] = rx_buffer.header.from_addr;
+				tx_buffer.payload[1] = rssi;
+				tx_buffer.payload[2] = snr;
+				tx_buffer.payload[3] = rx_buffer.header.msg_type;
+
+
 				// copy packet into tx buffer
-				memcpy(tx_buffer.payload+1,rx_buffer.payload,frame_len-3);
+				memcpy(tx_buffer.payload+4,rx_buffer.payload,frame_len-3);
 
 				// Delay a random period of time. Use WWDT timer LS byte
 				delayMilliseconds( 40 + (LPC_WWDT->TV & 0xff) * 10 );
