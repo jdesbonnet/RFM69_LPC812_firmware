@@ -27,7 +27,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
-## 0.7.2
+## 0.7.3, 27 Feb 2017
+ * Change poll_interval time unit from seconds to 10 seconds to facilitate sleep interals up to 2550 seconds. 
+
+## 0.7.2, 27 Feb 2017
  * Workaround for Issue #13: first iteration of low power mode does not go into proper
    low power mode (consumes >1mA). Solution is to make first iteration very short. Root
    cause still unknown.
@@ -98,4 +101,14 @@ greatly reduced.
  * WDT timer set command working
  * MCU Unique ID working properly
  * Read MCU unique ID to auto implement V1B PCB hack
- 
+
+# Programming field units
+
+Units can be programmed through SWD or UART. 
+
+## UART programming
+
+Connect to UART with terminal emulator on programming header at 115200 bps. Hit RETURN a few times 
+to wake and enter 'O' command to enter bootloader mode. Then disconnect terminal emulator and use
+./scripts/flash.sh script to upload new firmware.
+

@@ -136,7 +136,7 @@ void displayStatus () {
 
 	tfp_printf ("; mode=%x\r\n",params_union.params.operating_mode);
 	tfp_printf ("; node_addr=%x\r\n",params_union.params.node_addr);
-	tfp_printf ("; poll_interval=%x\r\n",params_union.params.poll_interval);
+	tfp_printf ("; poll_interval=%x (10s units)\r\n",params_union.params.poll_interval);
 	tfp_printf ("; listen_period=%x\r\n",params_union.params.listen_period_cs);
 	tfp_printf ("; link_loss_timeout=%x\r\n",params_union.params.link_loss_timeout_s);
 	tfp_printf ("; eeprom_addr=%x\r\n",eeprom_get_addr());
@@ -720,7 +720,7 @@ int main(void) {
 			// Writing into WKT counter automatically starts wakeup timer. WKT timer
 			// is driven by 10kHz low power oscillator. However this is +/- 40%.
 			// Finding 7.5kHz closer to the mark.
-			uint32_t wakeup_time = 9000  * params_union.params.poll_interval;
+			uint32_t wakeup_time = 9000  * params_union.params.poll_interval * 10;
 
 			// If battery low then sleep for extended period
 			if (battery_v <= params_union.params.low_battery_v) {;
