@@ -1,8 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-//#define VERSION "RFM69 0.6.1"
-#define VERSION "RFM69/9x 0.7.3"
+#define VERSION "RFM69/9x 0.7.4"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -73,6 +72,8 @@
 // Enable this in addition to BOARD_LPC812_V1
 //#define BOARD_V1B_HACK
 
+// Character used as comment (for both incoming commands and output)
+#define COMMENT_CHAR (';')
 
 //
 // Optional features are enabled by defining macro FEATURE_xxxxxx.

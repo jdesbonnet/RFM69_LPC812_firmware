@@ -1145,22 +1145,12 @@ int main(void) {
 
 				// If none of the above cases match, output packet to UART
 				{
-
-					MyUARTSendStringZ("p ");
-
-					print_hex8(rx_buffer.header.to_addr);
-					MyUARTSendByte(' ');
-					print_hex8(rx_buffer.header.from_addr);
-					MyUARTSendByte(' ');
-
-
+					tfp_printf("p %x %x", rx_buffer.header.to_addr, rx_buffer.header.from_addr);
 					int i;
 					for (i = 2; i < frame_len; i++) {
-						print_hex8(rx_buffer.buffer[i]);
+						tfp_printf(" %x",rx_buffer.buffer[i]);
 					}
-					MyUARTSendByte(' ');
-					print_hex8(rssi);
-					MyUARTSendCRLF();
+					tfp_printf(" %x\r\n",rssi);
 				}
 
 			} else {
@@ -1177,6 +1167,9 @@ int main(void) {
 			//} // end frame len valid check
 		}
 
+		//
+		// Check for command from UART?
+		//
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
 
@@ -1189,10 +1182,7 @@ int main(void) {
 			}
 #endif
 
-			MyUARTSendCRLF();
-
-
-
+			tfp_printf("\r\n");
 
 			uint8_t *uart_buf = MyUARTGetBuf();
 
@@ -1213,15 +1203,25 @@ int main(void) {
 				uart_buf++;
 			}
 
-			int ii;
-			for (ii = 0; ii < argc; ii++) {
-				debug("arg[%d]=%s",ii,args[ii]);
+#if DEBUG
+			// Show command line args
+			{
+				int ii;
+				for (ii = 0; ii < argc; ii++) {
+					debug("arg[%d]=%s",ii,args[ii]);
+				}
 			}
+#endif
 
 			// TODO: using an array of functions may be more space efficient than
 			// switch statement.
 
 			switch (*args[0]) {
+
+			// Comment line: no action
+			case COMMENT_CHAR: {
+				break;
+			}
 
 			// Enter bootloader mode
 			case 'A' : {
