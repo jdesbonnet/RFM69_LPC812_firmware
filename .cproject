@@ -161,18 +161,6 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.crt.advproject.config.exe.release.1391379947.1154920379" name="eeprom.c" rcbsApplicability="disable" resourcePath="src/eeprom.c" toolsToInvoke="com.crt.advproject.gcc.exe.release.281484154.1974920326">
-						<tool id="com.crt.advproject.gcc.exe.release.281484154.1974920326" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.release.281484154">
-							<option id="com.crt.advproject.gcc.exe.release.option.optimization.level.1068382418" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.release.option.optimization.level" value="gnu.c.optimization.level.size" valueType="enumerated"/>
-							<inputType id="com.crt.advproject.compiler.input.765597729" superClass="com.crt.advproject.compiler.input"/>
-						</tool>
-						<tool customBuildStep="true" id="org.eclipse.cdt.managedbuilder.ui.rcbs.665960208" name="Resource Custom Build Step">
-							<inputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.inputtype.208217477" name="Resource Custom Build Step Input Type">
-								<additionalInput kind="additionalinputdependency" paths=""/>
-							</inputType>
-							<outputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.outputtype.1949276818" name="Resource Custom Build Step Output Type"/>
-						</tool>
-					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
