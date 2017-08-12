@@ -103,7 +103,7 @@
 //#define FEATURE_EVENT_COUNTER
 
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
+#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
@@ -123,7 +123,7 @@
 #define FEATURE_WATCHDOG_TIMER
 
 // Measure battery V using comparator with Vref and Vcc through voltage ladder
-//#define FEATURE_VBAT
+#define FEATURE_VBAT
 
 // GPS on second UART port.
 //#define FEATURE_GPS_ON_USART1
