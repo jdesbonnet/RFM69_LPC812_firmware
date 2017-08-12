@@ -27,6 +27,9 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.4, 7 Aug 2017
+ * Ignore UART commands starting with the comment character (';')
+
 ## 0.7.3, 27 Feb 2017
  * Change poll_interval time unit from seconds to 10 seconds to facilitate sleep interals up to 2550 seconds. 
 
