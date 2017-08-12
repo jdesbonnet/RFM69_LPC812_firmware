@@ -1,4 +1,3 @@
-#include "LPC8xx.h"
 #include "config.h"
 
 /**
@@ -15,7 +14,7 @@ void SwitchMatrix_Init()
     // Pin Assign (ref Table 109)
     // U0_TXD (bits 7:0) set to 0x4 (PIO0_4)
     // U0_RXD (bits 15:8) set to 0x0 (PIO0_0)
-    LPC_SWM->PINASSIGN0 = 0xffff0004UL;
+    LPC_SWM->PINASSIGN[0] = 0xffff0004UL;
 
     // Pin Enable
     // Bit 2: SWCLK set to 0 (enable)

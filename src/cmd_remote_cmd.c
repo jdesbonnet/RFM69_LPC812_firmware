@@ -54,12 +54,12 @@ int cmd_remote_cmd (int argc, uint8_t **argv) {
 	//
 
 	// LED on
-	LPC_GPIO_PORT->PIN0 |= (1<<LED_PIN);
+	LPC_GPIO_PORT->PIN[0] |= (1<<LED_PIN);
 
 	rfm69_frame_tx (tx_buffer.buffer,cmd_len+3);
 
 	// LED off
-	LPC_GPIO_PORT->PIN0 &= ~(1<<LED_PIN);
+	LPC_GPIO_PORT->PIN[0] &= ~(1<<LED_PIN);
 
 	return E_OK;
 }

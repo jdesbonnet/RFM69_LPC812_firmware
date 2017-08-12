@@ -1,10 +1,6 @@
-
-#include <string.h>
-
-#include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
-
 #include "config.h"
 #include "myuart.h"
+#include <string.h>
 
 #include "params.h"
 #include "frame_buffer.h"

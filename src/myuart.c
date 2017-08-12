@@ -7,11 +7,8 @@
 
 #include <string.h>
 
-#include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
-
 #include "config.h"
 #include "myuart.h"
-#include "lpc8xx_util.h"
 
 static volatile uint8_t uart_rxbuf[UART_BUF_SIZE];
 static volatile uint32_t uart_rxi=0;
@@ -29,11 +26,38 @@ static volatile uint32_t uart_buf_flags=0;
 ** Returned value:		None
 **
 *****************************************************************************/
-void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
+void MyUARTxInit(LPC_USART_T *UARTx, uint32_t baudrate)
 {
+
 
 	//LPC_USART_TypeDef *UARTx = LPC_USART0;
 
+	// Assign pins: use same assignment as serial bootloader
+	/*
+	Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_SWM);
+	Chip_SWM_MovablePinAssign(SWM_U0_TXD_O, PIN_UART_TXD);
+	Chip_SWM_MovablePinAssign(SWM_U0_RXD_I, PIN_UART_RXD);
+	Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_SWM);
+	*/
+
+
+#define NEW_UART_INIT
+
+
+#ifdef NEW_UART_INIT
+	Chip_UART_Init(LPC_USART0);
+	Chip_UART_ConfigData(LPC_USART0,
+			UART_CFG_DATALEN_8
+			| UART_CFG_PARITY_NONE
+			| UART_CFG_STOPLEN_1);
+
+	Chip_Clock_SetUSARTNBaseClockRate((UART_BAUD_RATE * 16), true);
+	Chip_UART_SetBaud(LPC_USART0, UART_BAUD_RATE);
+	Chip_UART_TXEnable(LPC_USART0);
+	Chip_UART_Enable(LPC_USART0);
+#endif
+
+#ifdef OLD_UART_INIT
 	uint32_t UARTSysClk;
 
 	//UARTClock_Init( UARTx );
@@ -56,9 +80,9 @@ void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<3);
 	//LPC_SYSCON->PRESETCTRL |= (0x1<<3);
 	if (UARTx == LPC_USART0) {
-		lpc8xx_peripheral_reset(3);
+		lpc8xx_peripheral_reset(RESET_USART0);
 	} else if (UARTx == LPC_USART1) {
-		lpc8xx_peripheral_reset(4);
+		lpc8xx_peripheral_reset(RESET_USART1);
 	}
 
 	UARTSysClk = SystemCoreClock/LPC_SYSCON->UARTCLKDIV;
@@ -79,6 +103,8 @@ void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate)
 	LPC_SYSCON->UARTFRGMULT = (((UARTSysClk / 16) * (LPC_SYSCON->UARTFRGDIV + 1)) / (baudrate * (UARTx->BRG + 1))) - (LPC_SYSCON->UARTFRGDIV + 1);
 
 	UARTx->STAT = UART_STAT_CTS_DELTA | UART_STAT_DELTA_RXBRK;		/* Clear all status bits. */
+
+#endif
 
 	// Enable UART interrupt
 	if (UARTx == LPC_USART0) {
@@ -116,13 +142,6 @@ void MyUARTSendDrain () {
 	while ( ! (LPC_USART0->STAT & (1<<3)) );
 }
 
-void MyUARTSendString (uint8_t *buf, uint32_t len) {
-	int i;
-	for (i = 0; i < len; i++) {
-		MyUARTSendByte(buf[i]);
-	}
-}
-
 /**
  * Send zero-terminated string.
  */
@@ -136,7 +155,6 @@ void MyUARTSendStringZ (char *buf) {
 
 RAM_FUNC
 void MyUARTSendCRLF(void) {
-	//MyUARTSendStringZ((uint8_t *)"\r\n");
 	MyUARTSendByte('\r');
 	MyUARTSendByte('\n');
 }

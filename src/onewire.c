@@ -3,8 +3,8 @@
  *
  */
 
-#include "LPC8xx.h"
-#include "lpc8xx_gpio.h"
+
+#include "config.h"
 
 #include "onewire.h"
 #include "crc8.h"
@@ -22,19 +22,25 @@ void ow_init(int port, int pin) {
 
 void ow_low() {
 	// set direction output
-	GPIOSetDir(ow_port, ow_pin, 1);
+	//GPIOSetDir(ow_port, ow_pin, 1);
+	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT, ow_port, ow_pin);
 	// set low
-	GPIOSetBitValue(ow_port, ow_pin, 0);
+	//GPIOSetBitValue(ow_port, ow_pin, 0);
+	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, ow_port, ow_pin);
 }
 
 void ow_high() {
 	// set direction input (high Z) and let pull-up R bring high
-	GPIOSetDir(ow_port, ow_pin, 0);
+	//GPIOSetDir(ow_port, ow_pin, 0);
+	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, ow_port, ow_pin);
 }
 
 int ow_read() {
-	GPIOSetDir(ow_port, ow_pin, 0);
-	return GPIOGetPinValue(ow_port, ow_pin);
+	//GPIOSetDir(ow_port, ow_pin, 0);
+	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, ow_port, ow_pin);
+
+	//return GPIOGetPinValue(ow_port, ow_pin);
+	Chip_GPIO_GetPinState(LPC_GPIO_PORT, ow_port, ow_pin);
 }
 
 /**

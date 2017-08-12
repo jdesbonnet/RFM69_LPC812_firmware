@@ -12,6 +12,8 @@
 #include "LPC8xx.h"
 #endif
 
+#include "chip.h"
+
 // Need this for bit constants
 //#include "lpc8xx_uart.h"
 
@@ -45,7 +47,7 @@
 #define UART_BUF_FLAG_EOL (0x01<<0)
 
 void MyUARTInit(uint32_t baudrate);
-void MyUARTxInit(LPC_USART_TypeDef *UARTx, uint32_t baudrate);
+void MyUARTxInit(LPC_USART_T *UARTx, uint32_t baudrate);
 void MyUARTSendByte(uint8_t v);
 void MyUARTSendString(uint8_t *buf, uint32_t len);
 void MyUARTSendStringZ(char *buf);

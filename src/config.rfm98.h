@@ -1,7 +1,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69/9x 0.7.5a"
+//#define VERSION "RFM69 0.6.1"
+#define VERSION "RFM69/9x 0.7.1a"
 
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
@@ -28,11 +29,11 @@
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
 //#define DEFAULT_MODE MODE_RADIO_OFF
-//#define DEFAULT_MODE MODE_LOW_POWER_POLL
-#define DEFAULT_MODE MODE_AWAKE
+#define DEFAULT_MODE MODE_LOW_POWER_POLL
+//#define DEFAULT_MODE MODE_AWAKE
 
-// Poll interval is currently a uint8_t, so max is 255
-#define DEFAULT_POLL_INTERVAL 90
+
+#define DEFAULT_POLL_INTERVAL 3
 
 // Time unit:
 #define DEFAULT_WATCHDOG_TIMEOUT 100000
@@ -49,17 +50,14 @@
 // Minimum voltage require to operate radio (0.1V units)
 #define DEFAULT_MIN_BATTERY_V (22)
 
-#define DEFAULT_TX_POWER (15)  // RFM9x 0 - 15
-#define DEFAULT_LORA_BW   (7)  // RFM9x LoRa BW 0 - 9
-#define DEFAULT_LORA_CR   (4)  // RFM9x LoRa CodingRate 0 - 5
-#define DEFAULT_LORA_SF  (12)  // RFM9x LoRa SpreadingFactor  6 - 12
+
 
 #define WWDT_CLOCK_SPEED_HZ (2000)
 
 // MCU used (only LPC812 supported, LPC824 later. LPC810 dropped due to lack of flash)
 #define LPC812
 
-// Radio module used: can be one of RADIO_RFM69 or RADIO_RFM9x (LoRa)
+// Radio module used
 //#define RADIO_RFM69
 #define RADIO_RFM9x
 
@@ -72,8 +70,6 @@
 // Enable this in addition to BOARD_LPC812_V1
 //#define BOARD_V1B_HACK
 
-// Character used as comment (for both incoming commands and output)
-#define COMMENT_CHAR (';')
 
 //
 // Optional features are enabled by defining macro FEATURE_xxxxxx.
@@ -93,9 +89,6 @@
 
 // Diagnostic LED
 #define FEATURE_LED
-
-#define FEATURE_DIO0
-//#define FEATURE_DIO1
 
 // Experimental application to count rain tip bucket
 //#define FEATURE_EVENT_COUNTER
@@ -121,16 +114,13 @@
 #define FEATURE_WATCHDOG_TIMER
 
 // Measure battery V using comparator with Vref and Vcc through voltage ladder
-//#define FEATURE_VBAT
+#define FEATURE_VBAT
 
 // GPS on second UART port.
 //#define FEATURE_GPS_ON_USART1
 
 // WS2812B RGB LED driver
 //#define FEATURE_WS2812B
-
-// Experiment relay feature
-#define FEATURE_RELAY
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
@@ -173,8 +163,7 @@
 //#define EVENT_COUNTER_PIN 16
 #define LED_PIN 17
 #define UART_RXD_PIN 0
-#define UART_TXD_PIN 4
-#define DS18B20_PIN 14
+//#define DS18B20_PIN 14
 //#define WS2812B_PIN 14
 #endif
 
@@ -183,7 +172,6 @@
 #ifdef BOARD_V1B_HACK
 #define BOARD_V1B_HACK_MCU_ID 0x5034039
 #define UART_RXD_PIN 11
-#define UART_TXD_PIN 4
 #endif
 
 #endif
@@ -201,9 +189,6 @@
 // UART speed ('baud rate')
 //#define UART_BPS (9600)
 #define UART_BPS (115200)
-#define UART_BAUD_RATE UART_BPS
-#define PIN_UART_RXD UART_RXD_PIN
-#define PIN_UART_TXD UART_TXD_PIN
 
 // Max size of NMEA sentence: standard specifies 79 + '$' + CRLF
 #define GPS_NMEA_SIZE 84
@@ -221,7 +206,6 @@
 #endif
 
 #include <cr_section_macros.h>
-#include "chip.h"
 
 #include <stdint.h>
 #include <string.h>

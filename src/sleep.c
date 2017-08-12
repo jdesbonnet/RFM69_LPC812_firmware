@@ -5,12 +5,11 @@
  *      Author: joe
  */
 
-#include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
+
+#include "config.h"
 #include "lpc8xx_pmu.h"
 #include "lpc8xx_util.h"
-
 #include "sleep.h"
-#include "config.h"
 
 /**
  * Condition peripherals and external pins for optimal power consumption while in sleep/power-down.
@@ -24,10 +23,13 @@ void sleep_set_pins_for_powerdown () {
 #ifdef FEATURE_LED
 	// Setting LED pin into input with pull down R seems to eliminate the
 	// last 60uA of unexplained current use.
-	LPC_GPIO_PORT->DIR0 &= ~(1<<LED_PIN);
+	//LPC_GPIO_PORT->DIR0 &= ~(1<<LED_PIN);
 	// Pulldown resistor on PIO0_17 (pin LED_PIN)
 	// TODO: PIO0_17 IOCON hard coded
-	LPC_IOCON->PIO0_17=(0x1<<3);
+	//LPC_IOCON->PIO0_17=(0x1<<3);
+
+	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
+	Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
 #endif
 
 #ifdef FEATURE_WS2812B
@@ -44,7 +46,8 @@ void sleep_set_pins_for_powerdown () {
 void sleep_set_pins_for_wake () {
 
 #ifdef FEATURE_LED
-	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	//LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT, 0, LED_PIN);
 #endif
 
 	// Reinit SPI
@@ -136,6 +139,7 @@ void prepareForPowerDown () {
 	  //LPC_SYSCON->PRESETCTRL &= ~(0x1 << 9);
 	  //LPC_SYSCON->PRESETCTRL |= (0x1 << 9);
 	  lpc8xx_peripheral_reset(9);
+
 
 
 	  // Use WTK clock source 1 (10kHz, low power, low accuracy).

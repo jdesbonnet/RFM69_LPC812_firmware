@@ -85,6 +85,7 @@ uint8_t wake_list[4] = {0,0,0,0};
 	volatile uint32_t systick_counter = 0;
 	void SysTick_Handler(void) {
 		systick_counter++; // every 10ms
+		tfp_printf("T");
 	}
 
 /**
@@ -224,7 +225,8 @@ void transmit_status_packet() {
 #ifdef FEATURE_DS18B20
 		if (params_union.params.ds18b20_mode != 0) {
 			// Pullup resistor on DS18B20 data pin PIO0_14
-			LPC_IOCON->PIO0_14 = (0x2 << 3);
+			//LPC_IOCON->PIO0_14 = (0x2 << 3);
+			LPC_IOCON->PIO0[14]= (0x2 << 3);
 			ow_init(0, DS18B20_PIN);
 			delayMilliseconds(20);
 			int32_t temperature = ds18b20_temperature_read();
@@ -342,6 +344,7 @@ int main(void) {
 
     SysTick_Config( SYSTICK_DELAY );
 
+
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
 	 * This setups up the pins in a way that's convenient for our physical circuit layout.
@@ -375,8 +378,10 @@ int main(void) {
 
 
 	// Reset GPIO
-	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
-	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
+	//LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	Chip_GPIO_Init(LPC_GPIO_PORT);
+
 
 	// Experimental: turn off clock to other modules. Saves ~50uA.
 	// Turn off clock to GPIO
@@ -497,7 +502,8 @@ int main(void) {
 
 	// Pulldown resistor on PIO0_6 (pin DIO0)
 	// TODO: PIO0_6 IOCON hard coded
-	LPC_IOCON->PIO0_6=(0x1<<3);
+	//LPC_IOCON->PIO0_6=(0x1<<3);
+	LPC_IOCON->PIO0[6]=(0x1<<3);
 
 	//LPC_GPIO_PORT->DIR0 |= (1<<DIO0_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<DIO0_PIN);
@@ -550,8 +556,8 @@ int main(void) {
 #ifdef FEATURE_UART_INTERRUPT
 	// Experimental wake on activity on UART RXD (RXD is normally shared with PIO0_0)
 	LPC_SYSCON->PINTSEL[0] = UART_RXD_PIN; // PIO0_0 aka RXD
-	LPC_PIN_INT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
-	LPC_PIN_INT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
+	LPC_PININT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
+	LPC_PININT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
 #endif
 
@@ -582,7 +588,8 @@ int main(void) {
 #ifdef FEATURE_DS18B20
 	// Pullup resistor on DS18B20 data pin PIO0_14
 	ow_init(0,DS18B20_PIN);
-	LPC_IOCON->PIO0_14=(0x2<<3); // pull up
+	//LPC_IOCON->PIO0_14=(0x2<<3); // pull up
+	LPC_IOCON->PIO0[14]=(0x2<<3); // pull up
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -592,7 +599,8 @@ int main(void) {
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 	//GPIOSetDir(0,LED_PIN,1);
-	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	//LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	LPC_GPIO_PORT->DIR[0] |= (1<<LED_PIN);
 #endif
 
 	//
@@ -1564,7 +1572,7 @@ int main(void) {
 RAM_FUNC
 void PININT0_IRQHandler (void) {
 	// Clear interrupt
-	LPC_PIN_INT->IST = 1<<0;
+	LPC_PININT->IST = 1<<0;
 	//LPC_USART0->TXDATA='*';
 	interrupt_source = UART_INTERRUPT;
 }
@@ -1633,7 +1641,7 @@ void CMP_IRQHandler (void) {
  */
 void PININT3_IRQHandler (void) {
 	// Clear interrupt
-	LPC_PIN_INT->IST = 1<<3;
+	LPC_PININT->IST = 1<<3;
 	interrupt_source = DIO0_INTERRUPT;
 }
 #endif

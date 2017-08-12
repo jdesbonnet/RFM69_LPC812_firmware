@@ -1,7 +1,7 @@
 //*****************************************************************************
 // LPC8xx Microcontroller Startup code for use with LPCXpresso IDE
 //
-// Version : 140109
+// Version : 141204
 //*****************************************************************************
 //
 // Copyright(C) NXP Semiconductors, 2013-2014
@@ -131,7 +131,7 @@ extern void _vStackTop(void);
 //
 //*****************************************************************************
 extern void (* const g_pfnVectors[])(void);
-__attribute__ ((section(".isr_vector")))
+__attribute__ ((used,section(".isr_vector")))
 void (* const g_pfnVectors[])(void) = {
     // Core Level - CM0plus
     &_vStackTop, // The initial stack pointer
