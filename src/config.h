@@ -3,6 +3,8 @@
 
 #define VERSION "RFM69/9x 0.7.5a"
 
+#define TICKRATE_HZ 100
+
 // Experimental directive to load function in RAM to facilitate OTA update
 #define RAM_FUNC __attribute__( ( long_call, section(".data.ramfunc") ) )
 #define ALWAYS_INLINE __attribute__((always_inline))

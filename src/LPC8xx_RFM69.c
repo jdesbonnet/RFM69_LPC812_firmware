@@ -82,11 +82,10 @@ uint8_t wake_list[4] = {0,0,0,0};
 #endif
 
 
-	volatile uint32_t systick_counter = 0;
-	void SysTick_Handler(void) {
-		systick_counter++; // every 10ms
-		tfp_printf("T");
-	}
+volatile uint32_t systick_counter = 0;
+void SysTick_Handler(void) {
+	systick_counter++;
+}
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
@@ -341,8 +340,8 @@ int main(void) {
 	// Read parameter block from eeprom
 	eeprom_read(params_union.params_buffer);
 
-
-    SysTick_Config( SYSTICK_DELAY );
+	// Enable SysTick interrupt
+	SysTick_Config(Chip_Clock_GetSystemClockRate()/TICKRATE_HZ);
 
 
 	/*
