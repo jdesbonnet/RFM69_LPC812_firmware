@@ -3,7 +3,7 @@
  * one 64 byte page from flash memory.
  */
 
-#include <LPC8xx.h>
+#include "config.h"
 #include <stdint.h>
 #include <string.h>
 #include "config.h"

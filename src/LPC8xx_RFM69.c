@@ -82,10 +82,10 @@ uint8_t wake_list[4] = {0,0,0,0};
 #endif
 
 
-	volatile uint32_t systick_counter = 0;
-	void SysTick_Handler(void) {
-		systick_counter++; // every 10ms
-	}
+volatile uint32_t systick_counter = 0;
+void SysTick_Handler(void) {
+	systick_counter++;
+}
 
 /**
  * Print error code 'code' while executing command 'cmd' to UART.
@@ -209,10 +209,11 @@ void transmit_status_packet() {
 	//delayMilliseconds(5);
 #endif
 
-	// Battery in 0.1V units
+	// Battery in 0.1V units or 0 if feature disabled.
 	uint8_t battery_v = readBattery_dV();
 
-	if (battery_v >= params_union.params.min_battery_v) {
+	// Transmit if battery voltage > min_battery_v OR if battery voltage testing disabled (v==0).
+	if (battery_v == 0 || battery_v >= params_union.params.min_battery_v) {
 		tx_buffer.header.to_addr = 0;
 		tx_buffer.header.msg_type = 'z';
 		tx_buffer.payload[0] = sleep_counter++;
@@ -224,7 +225,8 @@ void transmit_status_packet() {
 #ifdef FEATURE_DS18B20
 		if (params_union.params.ds18b20_mode != 0) {
 			// Pullup resistor on DS18B20 data pin PIO0_14
-			LPC_IOCON->PIO0_14 = (0x2 << 3);
+			//LPC_IOCON->PIO0_14 = (0x2 << 3);
+			LPC_IOCON->PIO0[14]= (0x2 << 3);
 			ow_init(0, DS18B20_PIN);
 			delayMilliseconds(20);
 			int32_t temperature = ds18b20_temperature_read();
@@ -339,8 +341,9 @@ int main(void) {
 	// Read parameter block from eeprom
 	eeprom_read(params_union.params_buffer);
 
+	// Enable SysTick interrupt
+	SysTick_Config(Chip_Clock_GetSystemClockRate()/TICKRATE_HZ);
 
-    SysTick_Config( SYSTICK_DELAY );
 
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
@@ -375,8 +378,10 @@ int main(void) {
 
 
 	// Reset GPIO
-	LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
-	LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
+	//LPC_SYSCON->PRESETCTRL |= (0x1<<10);
+	Chip_GPIO_Init(LPC_GPIO_PORT);
+
 
 	// Experimental: turn off clock to other modules. Saves ~50uA.
 	// Turn off clock to GPIO
@@ -497,7 +502,8 @@ int main(void) {
 
 	// Pulldown resistor on PIO0_6 (pin DIO0)
 	// TODO: PIO0_6 IOCON hard coded
-	LPC_IOCON->PIO0_6=(0x1<<3);
+	//LPC_IOCON->PIO0_6=(0x1<<3);
+	LPC_IOCON->PIO0[6]=(0x1<<3);
 
 	//LPC_GPIO_PORT->DIR0 |= (1<<DIO0_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<DIO0_PIN);
@@ -550,8 +556,8 @@ int main(void) {
 #ifdef FEATURE_UART_INTERRUPT
 	// Experimental wake on activity on UART RXD (RXD is normally shared with PIO0_0)
 	LPC_SYSCON->PINTSEL[0] = UART_RXD_PIN; // PIO0_0 aka RXD
-	LPC_PIN_INT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
-	LPC_PIN_INT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
+	LPC_PININT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
+	LPC_PININT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
 	NVIC_EnableIRQ((IRQn_Type)(PININT0_IRQn));
 #endif
 
@@ -582,7 +588,8 @@ int main(void) {
 #ifdef FEATURE_DS18B20
 	// Pullup resistor on DS18B20 data pin PIO0_14
 	ow_init(0,DS18B20_PIN);
-	LPC_IOCON->PIO0_14=(0x2<<3); // pull up
+	//LPC_IOCON->PIO0_14=(0x2<<3); // pull up
+	LPC_IOCON->PIO0[14]=(0x2<<3); // pull up
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -592,7 +599,8 @@ int main(void) {
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
 	//GPIOSetDir(0,LED_PIN,1);
-	LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	//LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	LPC_GPIO_PORT->DIR[0] |= (1<<LED_PIN);
 #endif
 
 	//
@@ -1145,22 +1153,12 @@ int main(void) {
 
 				// If none of the above cases match, output packet to UART
 				{
-
-					MyUARTSendStringZ("p ");
-
-					print_hex8(rx_buffer.header.to_addr);
-					MyUARTSendByte(' ');
-					print_hex8(rx_buffer.header.from_addr);
-					MyUARTSendByte(' ');
-
-
+					tfp_printf("p %x %x", rx_buffer.header.to_addr, rx_buffer.header.from_addr);
 					int i;
 					for (i = 2; i < frame_len; i++) {
-						print_hex8(rx_buffer.buffer[i]);
+						tfp_printf(" %x",rx_buffer.buffer[i]);
 					}
-					MyUARTSendByte(' ');
-					print_hex8(rssi);
-					MyUARTSendCRLF();
+					tfp_printf(" %x\r\n",rssi);
 				}
 
 			} else {
@@ -1177,6 +1175,9 @@ int main(void) {
 			//} // end frame len valid check
 		}
 
+		//
+		// Check for command from UART?
+		//
 		if (MyUARTGetBufFlags() & UART_BUF_FLAG_EOL) {
 
 
@@ -1189,10 +1190,7 @@ int main(void) {
 			}
 #endif
 
-			MyUARTSendCRLF();
-
-
-
+			tfp_printf("\r\n");
 
 			uint8_t *uart_buf = MyUARTGetBuf();
 
@@ -1213,15 +1211,25 @@ int main(void) {
 				uart_buf++;
 			}
 
-			int ii;
-			for (ii = 0; ii < argc; ii++) {
-				debug("arg[%d]=%s",ii,args[ii]);
+#if DEBUG
+			// Show command line args
+			{
+				int ii;
+				for (ii = 0; ii < argc; ii++) {
+					debug("arg[%d]=%s",ii,args[ii]);
+				}
 			}
+#endif
 
 			// TODO: using an array of functions may be more space efficient than
 			// switch statement.
 
 			switch (*args[0]) {
+
+			// Comment line: no action
+			case COMMENT_CHAR: {
+				break;
+			}
 
 			// Enter bootloader mode
 			case 'A' : {
@@ -1564,7 +1572,7 @@ int main(void) {
 RAM_FUNC
 void PININT0_IRQHandler (void) {
 	// Clear interrupt
-	LPC_PIN_INT->IST = 1<<0;
+	LPC_PININT->IST = 1<<0;
 	//LPC_USART0->TXDATA='*';
 	interrupt_source = UART_INTERRUPT;
 }
@@ -1633,7 +1641,7 @@ void CMP_IRQHandler (void) {
  */
 void PININT3_IRQHandler (void) {
 	// Clear interrupt
-	LPC_PIN_INT->IST = 1<<3;
+	LPC_PININT->IST = 1<<3;
 	interrupt_source = DIO0_INTERRUPT;
 }
 #endif

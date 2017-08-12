@@ -23,13 +23,20 @@ void rfm69_hard_reset(void) {
 #ifdef RESET_PIN
 
 	// Configure RESET_PIN as output
-	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	/*
+	uint32_t regVal = LPC_GPIO_PORT->DIR;
 	regVal |= (1<<RESET_PIN);
 	LPC_GPIO_PORT->DIR0 = regVal;
 
 	LPC_GPIO_PORT->SET0=(1<<RESET_PIN);
 	delay(20000);
 	LPC_GPIO_PORT->CLR0=(1<<RESET_PIN);
+	*/
+
+	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, RESET_PIN, true);
+	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, 0, RESET_PIN);
+	delay(20000);
+	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, 0, RESET_PIN);
 #endif
 }
 

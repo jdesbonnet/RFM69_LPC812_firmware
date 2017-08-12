@@ -1,6 +1,4 @@
-#include "LPC8xx.h"
 #include "config.h"
-#include "lpc8xx_gpio.h"
 #include "delay.h"
 #include "led.h"
 
@@ -10,22 +8,22 @@
 void ledBlink (int nblink) {
 	int i;
 	for (i = 0; i < nblink; i++)	{
-			GPIOSetBitValue(0,LED_PIN,1);
-			//loopDelay(200000);
+			ledOn();
 			delayMilliseconds(200);
-			GPIOSetBitValue(0,LED_PIN,0);
-			//loopDelay(200000);
+			ledOff();
 			delayMilliseconds(200);
 	}
 }
 
 __attribute__((always_inline))
 void ledOn() {
-	GPIOSetBitValue(0,LED_PIN,1);
+	//GPIOSetBitValue(0,LED_PIN,1);
+	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, 0, LED_PIN);
 }
 
 __attribute__((always_inline))
 void ledOff() {
-	GPIOSetBitValue(0,LED_PIN,0);
+	//GPIOSetBitValue(0,LED_PIN,0);
+	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, 0, LED_PIN);
 }
 

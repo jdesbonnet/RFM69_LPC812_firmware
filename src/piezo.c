@@ -1,13 +1,15 @@
 #include "config.h"
 
 /**
- * Use analog comparator with internal reference to find approx battery voltage. This
- * only works if powered directly from battery.
+ * Use analog comparator to look for vibrations on piezo sensor. Only
+ * two pins can be used for analog input: PIO0_0 and PIO0_1. PIO0_1 is
+ * used for the chip select line for the radio module SPI bus. PIO0_0
+ * is the UART RXD line. So if used cannot use UART.
  *
- * @return Battery voltage in mV, or 0 if disabled.
+ * @return Battery voltage in mV
  */
-int readBattery () {
-#ifdef FEATURE_VBAT
+int initPiezo () {
+
 	//
 	// Analog comparator configure
 	//
@@ -51,16 +53,4 @@ int readBattery () {
 
 	// 900mV*31/k
 	return 27900/k;
-
-#else
-	return 0;
-#endif
-
-}
-
-/**
- * Return battery V in 0.1V units.
- */
-uint8_t readBattery_dV() {
-	return (uint8_t)(readBattery()/100);
 }

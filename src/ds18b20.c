@@ -1,5 +1,4 @@
-#include "LPC8xx.h"
-#include "lpc8xx_gpio.h"
+#include "config.h"
 
 #include "onewire.h"
 #include "crc8.h"

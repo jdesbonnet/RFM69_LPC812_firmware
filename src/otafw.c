@@ -99,7 +99,7 @@ uint32_t ota_page_crc (uint8_t *addr) {
 
 	// Can do this byte by byte or by DWORD (latter more efficient)
 	for (i = 0; i < 64; i++) {
-		LPC_CRC->WR_DATA_BYTE = addr[i];
+		LPC_CRC->WRDATA8 = addr[i];
 	}
 
 	uint32_t crc32 = LPC_CRC->SUM;

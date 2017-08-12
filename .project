@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>LPC8xx_RFM69</name>
+	<name>LPC8xx_RFMxx</name>
 	<comment></comment>
 	<projects>
-		<project>CMSIS_CORE_LPC8xx</project>
-		<project>lpc800_driver_lib</project>
+		<project>lpc_chip_8xx</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

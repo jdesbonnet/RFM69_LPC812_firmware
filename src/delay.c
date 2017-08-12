@@ -1,5 +1,4 @@
-#include "LPC8xx.h"			/* LPC8xx Peripheral Registers */
-#include "delay.h"
+#include "config.h"
 
 extern volatile uint32_t systick_counter;
 

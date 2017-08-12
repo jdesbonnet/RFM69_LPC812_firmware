@@ -7,7 +7,6 @@
 #endif
 
 #include "config.h"
-#include "lpc8xx_gpio.h"
 
 #define PORT 0
 
@@ -21,17 +20,17 @@
 //#define MISO_READ() GPIOGetPinValue(PORT,MISO_PIN)
 
 
-#define SCK_HIGH() LPC_GPIO_PORT->SET0=(1<<SCK_PIN);
-#define SCK_LOW() LPC_GPIO_PORT->CLR0=(1<<SCK_PIN);
+#define SCK_HIGH() LPC_GPIO_PORT->SET[0]=(1<<SCK_PIN);
+#define SCK_LOW() LPC_GPIO_PORT->CLR[0]=(1<<SCK_PIN);
 
-#define SS_HIGH() LPC_GPIO_PORT->SET0=(1<<SS_PIN);
-#define SS_LOW() LPC_GPIO_PORT->CLR0=(1<<SS_PIN);
+#define SS_HIGH() LPC_GPIO_PORT->SET[0]=(1<<SS_PIN);
+#define SS_LOW() LPC_GPIO_PORT->CLR[0]=(1<<SS_PIN);
 
-#define MOSI_HIGH() LPC_GPIO_PORT->SET0=(1<<MOSI_PIN);
-#define MOSI_LOW() LPC_GPIO_PORT->CLR0=(1<<MOSI_PIN);
+#define MOSI_HIGH() LPC_GPIO_PORT->SET[0]=(1<<MOSI_PIN);
+#define MOSI_LOW() LPC_GPIO_PORT->CLR[0]=(1<<MOSI_PIN);
 
 
-#define MISO_READ() LPC_GPIO_PORT->PIN0&(1<<MISO_PIN)
+#define MISO_READ() LPC_GPIO_PORT->PIN[0]&(1<<MISO_PIN)
 
 /**
  * Initialize SPI using bigbang (without SSP0 peripheral).
@@ -51,16 +50,16 @@ void spi_init () {
 	// Note: more space efficient (by 4 bytes) to load into regVal for manipulation
 	//LPC_GPIO_PORT->DIR0 |= (1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN);
 	//LPC_GPIO_PORT->DIR0 &= ~(1<<MISO_PIN);
-	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	uint32_t regVal = LPC_GPIO_PORT->DIR[0];
 	regVal |= (1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN);
 	regVal &= ~(1<<MISO_PIN);
-	LPC_GPIO_PORT->DIR0 = regVal;
+	LPC_GPIO_PORT->DIR[0] = regVal;
 }
 
 void spi_deinit () {
-	uint32_t regVal = LPC_GPIO_PORT->DIR0;
+	uint32_t regVal = LPC_GPIO_PORT->DIR[0];
 	regVal &=  ~((1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN));
-	LPC_GPIO_PORT->DIR0 = regVal;
+	LPC_GPIO_PORT->DIR[0] = regVal;
 }
 
 /**

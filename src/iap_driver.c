@@ -17,9 +17,8 @@
  * use without further testing or modification.
  ****************************************************************************/
 
-#include <LPC8xx.h>
-#include "iap_driver.h"
 #include "config.h"
+#include "iap_driver.h"
 
 /*
  * The IAP funtion address in LPC11xx ROM
