@@ -250,6 +250,25 @@ void transmit_status_packet() {
 	}
 }
 
+void transmit_bp_packet(bp_record_t *bp) {
+
+#ifdef RADIO_RFM9x
+	rfm98_lora_mode(RFM98_OPMODE_LoRa_FSRX);
+#endif
+
+	tx_buffer.header.to_addr = 0;
+	tx_buffer.header.msg_type = 2;
+	tx_buffer.payload[0] = bp->systolic_pressure;
+	tx_buffer.payload[1] = bp->diastolic_pressure;
+	tx_buffer.payload[2] = bp->heart_rate;
+
+	ledOn();
+	rfm_frame_tx(tx_buffer.buffer, 6);
+	ledOff();
+
+}
+
+
 /**
  * Note: this currently requires Watchdog timer operating.
  */
@@ -775,6 +794,18 @@ int main(void) {
 
 			// Indicator to host there is a short time window to issue command
 			tfp_printf("z\r\n");
+
+#ifdef FEATURE_ABPM
+			{
+				bp_record_t bp;
+				abpm_init();
+				int bp_status = abpm_measure(&bp);
+				if (bp_status != 0) {
+					tfp_printf("; error listening for BP record\r\n");
+				}
+				transmit_bp_packet(&bp);
+			}
+#endif
 
 		}
 #else

@@ -30,8 +30,8 @@
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
 //#define DEFAULT_MODE MODE_RADIO_OFF
-//#define DEFAULT_MODE MODE_LOW_POWER_POLL
-#define DEFAULT_MODE MODE_AWAKE
+#define DEFAULT_MODE MODE_LOW_POWER_POLL
+//#define DEFAULT_MODE MODE_AWAKE
 
 // Poll interval is currently a uint8_t, so max is 255
 #define DEFAULT_POLL_INTERVAL 90
@@ -134,6 +134,9 @@
 // Experiment relay feature
 #define FEATURE_RELAY
 
+// Ambulatory BP monitor feature
+#define FEATURE_ABPM
+
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
 //
@@ -197,7 +200,10 @@
 #define MOSI_PIN 1 // package pin 5
 #endif
 
-
+// Blood Pressure Monitor pins (SO20 package pins 8,9,10)
+#define PIN_BPM_SCL 10
+#define PIN_BPM_SDA 11
+#define PIN_BPM_START 16
 
 
 // UART speed ('baud rate')
@@ -234,11 +240,14 @@
 #include "err.h"
 #include "delay.h"
 #include "battery.h"
+#include "abpm.h"
+
 #ifdef RADIO_RFM9x
 #include "rfm98.h"
 #else
 #include "rfm69.h"
 #endif
+
 
 
 #endif // end CONFIG_H_

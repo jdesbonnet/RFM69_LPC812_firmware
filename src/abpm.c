@@ -7,21 +7,6 @@
  Description : main definition
 ===============================================================================
 */
-#define __USE_LPCOPEN
-#define NO_BOARD_LIB
-
-#if defined (__USE_LPCOPEN)
-#if defined(NO_BOARD_LIB)
-#include "chip.h"
-#else
-#include "board.h"
-#endif
-#endif
-
-
-#define PIN_SCL 10
-#define PIN_SDA 11
-#define PIN_START 14
 
 #include "config.h"
 #include "abpm.h"
@@ -57,19 +42,6 @@ static void abpm_setup_pin_for_interrupt (int interrupt_pin, int interrupt_chann
 	}
 }
 
-/**
- * Microsecond delay.
- */
-static void abpm_delay_us(uint32_t delay) {
-
-	// Clock is 30MHz
-	delay *= 30;
-
-	// TODO: can be optimized by triggering interrupt
-	// then wait for interrupt instead of tight loop.
-	uint32_t start = LPC_SCT->COUNT_U;
-	while ( (LPC_SCT->COUNT_U - start) < delay) ;
-}
 
 /**
  * Assert START button by pulling low and going into input (high Z)
@@ -81,11 +53,11 @@ static void abpm_delay_us(uint32_t delay) {
 void abpm_press_start_button (int state) {
 	if (state == 1) {
 		// Pin to 0V and switch to output
-		Chip_GPIO_SetPinState(LPC_GPIO_PORT,0,PIN_START,0);
-		Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,0,PIN_START);
+		Chip_GPIO_SetPinState(LPC_GPIO_PORT,0,PIN_BPM_START,0);
+		Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,0,PIN_BPM_START);
 	} else {
 		// Pin to input (high Z)
-		Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT,0,PIN_START);
+		Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT,0,PIN_BPM_START);
 	}
 }
 
@@ -146,10 +118,10 @@ void PININT7_IRQHandler(void)
 void abpm_init ()  {
 	// Configure I2C lines to trigger interrupts on both
 	// rising and falling edges.
-	abpm_setup_pin_for_interrupt(PIN_SCL, 4, 1);
-	abpm_setup_pin_for_interrupt(PIN_SCL, 5, 0);
-	abpm_setup_pin_for_interrupt(PIN_SDA, 6, 1);
-	abpm_setup_pin_for_interrupt(PIN_SDA, 7, 0);
+	abpm_setup_pin_for_interrupt(PIN_BPM_SCL, 4, 1);
+	abpm_setup_pin_for_interrupt(PIN_BPM_SCL, 5, 0);
+	abpm_setup_pin_for_interrupt(PIN_BPM_SDA, 6, 1);
+	abpm_setup_pin_for_interrupt(PIN_BPM_SDA, 7, 0);
 
 
 	// Enable interrupts in the NVIC
@@ -161,10 +133,10 @@ void abpm_init ()  {
 	// START button in input/high-z normally. Note that this
 	// pin is at 4.4V: using 5V tolerance feature. Button is
 	// 'pressed' by pulling low.
-	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT,0,PIN_START);
+	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT,0,PIN_BPM_START);
 
-    scl_pin_state = Chip_GPIO_GetPinState(LPC_GPIO_PORT,0,PIN_SCL);
-    sda_pin_state = Chip_GPIO_GetPinState(LPC_GPIO_PORT,0,PIN_SDA);
+    scl_pin_state = Chip_GPIO_GetPinState(LPC_GPIO_PORT,0,PIN_BPM_SCL);
+    sda_pin_state = Chip_GPIO_GetPinState(LPC_GPIO_PORT,0,PIN_BPM_SDA);
 }
 
 /**
@@ -172,22 +144,16 @@ void abpm_init ()  {
  */
 void abpm_stop () {
 	abpm_press_start_button(1);
-	delay_ms(500);
+	delayMilliseconds(500);
 	abpm_press_start_button(0);
-	delay_ms(500);
+	delayMilliseconds(500);
 }
 
 
-void abpm_bus_snoop () {
-	tfp_printf("I2C bus snoop...\r\n");
+int abpm_bus_snoop (bp_record_t *bp) {
+	tfp_printf("; BPM I2C bus snoop...\r\n");
 
-
-	// Now snoop the I2C bus waiting for memory write operation that writes
-	// the BP record to EEPROM.
-
-    tfp_printf("monitoring I2C bus...\r\n");
-
-
+	uint32_t start_time = systick_counter;
 
 	int i = 0;
 
@@ -207,13 +173,13 @@ void abpm_bus_snoop () {
 	uint8_t bp_record[12];
 	int bp_record_ptr = 0;
 
-	while (1) {
+	while (systick_counter - start_time < 60*TICKRATE_HZ) {
 
 		if (LPC_USART0->STAT & 1) {
 			char c = LPC_USART0->RXDATA;
 			switch (c) {
 			case 'S': {
-				tfp_printf("stop BP...\r\n");
+				tfp_printf("; stop BP...\r\n");
 				abpm_stop();
 				return;
 			}
@@ -279,9 +245,11 @@ void abpm_bus_snoop () {
 
 						int heart_rate = bp_record[8];
 
-						tfp_printf("%d %d %d\r\n", systolic, diastolic, heart_rate);
-
-						return;
+						tfp_printf("; BP %d %d %d\r\n", systolic, diastolic, heart_rate);
+						bp->systolic_pressure = systolic;
+						bp->diastolic_pressure = diastolic;
+						bp->heart_rate = heart_rate;
+						return 0;
 
 					}
 
@@ -295,7 +263,7 @@ void abpm_bus_snoop () {
 			//tfp_printf("i2cptr=%d systick=%d last_clock=%d\r\n", i2c_buf, systick_counter, last_clock);
 		}
 	}
-	return 0;
+	return -1;
 }
 
 /**
@@ -303,18 +271,18 @@ void abpm_bus_snoop () {
  *
  */
 
-void abpm_measure () {
+int abpm_measure (bp_record_t *bp) {
 	// Press for 1 sec to wake, release for 1 sec
 	// and press again to start measurement
 	abpm_press_start_button(1);
-	delay_ms(500);
+	delayMilliseconds(500);
 	abpm_press_start_button(0);
-	delay_ms(500);
+	delayMilliseconds(500);
 	abpm_press_start_button(1);
-	delay_ms(500);
+	delayMilliseconds(500);
 	abpm_press_start_button(0);
-	delay_ms(500);
+	delayMilliseconds(500);
 
-	abpm_bus_snoop();
+	return abpm_bus_snoop(bp);
 }
 
