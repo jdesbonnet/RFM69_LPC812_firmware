@@ -209,10 +209,11 @@ void transmit_status_packet() {
 	//delayMilliseconds(5);
 #endif
 
-	// Battery in 0.1V units
+	// Battery in 0.1V units or 0 if feature disabled.
 	uint8_t battery_v = readBattery_dV();
 
-	if (battery_v >= params_union.params.min_battery_v) {
+	// Transmit if battery voltage > min_battery_v OR if battery voltage testing disabled (v==0).
+	if (battery_v == 0 || battery_v >= params_union.params.min_battery_v) {
 		tx_buffer.header.to_addr = 0;
 		tx_buffer.header.msg_type = 'z';
 		tx_buffer.payload[0] = sleep_counter++;

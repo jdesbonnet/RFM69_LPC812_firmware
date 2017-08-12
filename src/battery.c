@@ -4,7 +4,7 @@
  * Use analog comparator with internal reference to find approx battery voltage. This
  * only works if powered directly from battery.
  *
- * @return Battery voltage in mV
+ * @return Battery voltage in mV, or 0 if disabled.
  */
 int readBattery () {
 #ifdef FEATURE_VBAT
