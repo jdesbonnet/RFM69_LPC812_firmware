@@ -258,12 +258,15 @@ void transmit_bp_packet(bp_record_t *bp) {
 
 	tx_buffer.header.to_addr = 0;
 	tx_buffer.header.msg_type = 2;
-	tx_buffer.payload[0] = bp->systolic_pressure;
-	tx_buffer.payload[1] = bp->diastolic_pressure;
-	tx_buffer.payload[2] = bp->heart_rate;
+	tx_buffer.payload[0] = 'B';
+	tx_buffer.payload[1] = 'P';
+
+	tx_buffer.payload[2] = bp->systolic_pressure;
+	tx_buffer.payload[3] = bp->diastolic_pressure;
+	tx_buffer.payload[4] = bp->heart_rate;
 
 	ledOn();
-	rfm_frame_tx(tx_buffer.buffer, 6);
+	rfm_frame_tx(tx_buffer.buffer, 8);
 	ledOff();
 
 }
@@ -750,7 +753,8 @@ int main(void) {
 			uint32_t wakeup_time = 9000  * params_union.params.poll_interval * 10;
 
 			// If battery low then sleep for extended period
-			if (battery_v <= params_union.params.low_battery_v) {;
+			if (battery_v <= params_union.params.low_battery_v) {
+				debug("low battery mode");
 				wakeup_time *= 8;
 			}
 

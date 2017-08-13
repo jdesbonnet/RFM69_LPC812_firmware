@@ -27,6 +27,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.5, 12 Aug 2017
+ * Integrate LPCOpen library.
+ * Ambulatory Blood Pressure Monitor module.
+
 ## 0.7.4, 7 Aug 2017
  * Ignore UART commands starting with the comment character (';')
 

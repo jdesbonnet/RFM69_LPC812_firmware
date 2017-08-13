@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69/9x 0.7.5a"
+#define VERSION "RFM69/9x 0.7.5"
 
 #define TICKRATE_HZ 100
 
@@ -34,6 +34,7 @@
 //#define DEFAULT_MODE MODE_AWAKE
 
 // Poll interval is currently a uint8_t, so max is 255
+// Unit: 10 seconds.
 #define DEFAULT_POLL_INTERVAL 90
 
 // Time unit:

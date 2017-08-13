@@ -153,6 +153,10 @@ void abpm_stop () {
 int abpm_bus_snoop (bp_record_t *bp) {
 	tfp_printf("; BPM I2C bus snoop...\r\n");
 
+	bp->systolic_pressure = 0xff;
+	bp->diastolic_pressure = 0xff;
+	bp->heart_rate = 0xff;
+
 	uint32_t start_time = systick_counter;
 
 	int i = 0;
