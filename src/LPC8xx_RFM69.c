@@ -144,7 +144,8 @@ void displayStatus () {
 #ifdef FEATURE_EVENT_COUNTER
 	tfp_printf ("; event_counter=%x\r\n", event_counter);
 #endif
-	tfp_printf ("; ds18b20_mode=%x\r\n",params_union.params.ds18b20_mode);
+	tfp_printf ("; ds18b20_en=%x\r\n",is_feature_enabled(F_DS18B20));
+	tfp_printf ("; abpm_en=%x\r\n",is_feature_enabled(F_ABPM));
 	tfp_printf ("; low_battery_v=%d\r\n",params_union.params.low_battery_v);
 	tfp_printf ("; min_battery_v=%d\r\n",params_union.params.min_battery_v);
 
@@ -167,12 +168,11 @@ void displayStatus () {
 
 	int32_t t;
 
-	//t = rfm69_temperature();
-	//tfp_printf("; rfm69_temperature=%d\r\n", t);
-
 #ifdef FEATURE_DS18B20
-	t = (1000*ds18b20_temperature_read())/16;
-	tfp_printf("; ds18b20_temperature_mC=%d\r\n", t);
+	if (is_feature_enabled(F_DS18B20)) {
+		t = (1000*ds18b20_temperature_read())/16;
+		tfp_printf("; ds18b20_temperature_mC=%d\r\n", t);
+	}
 #endif
 
 	tfp_printf("; END\r\n");
@@ -223,7 +223,7 @@ void transmit_status_packet() {
 		tx_buffer.payload[2] = battery_v;
 
 #ifdef FEATURE_DS18B20
-		if (params_union.params.ds18b20_mode != 0) {
+		if (is_feature_enabled(F_DS18B20)) {
 			// Pullup resistor on DS18B20 data pin PIO0_14
 			//LPC_IOCON->PIO0_14 = (0x2 << 3);
 			LPC_IOCON->PIO0[14]= (0x2 << 3);
@@ -800,14 +800,8 @@ int main(void) {
 			tfp_printf("z\r\n");
 
 #ifdef FEATURE_ABPM
-			{
-				bp_record_t bp;
-				abpm_init();
-				int bp_status = abpm_measure(&bp);
-				if (bp_status != 0) {
-					tfp_printf("; error listening for BP record\r\n");
-				}
-				transmit_bp_packet(&bp);
+			if (is_feature_enabled(F_ABPM)) {
+				cmd_bp_measure(0,NULL);
 			}
 #endif
 
@@ -1064,9 +1058,12 @@ int main(void) {
 					tx_buffer.payload[3] = (event_counter&0xff);
 #endif
 
-					int32_t temperature = ds18b20_temperature_read();
-					tx_buffer.payload[4] = temperature>>8;
-					tx_buffer.payload[5] = temperature&0xff;
+					if (is_feature_enabled(F_DS18B20)) {
+						int32_t temperature = ds18b20_temperature_read();
+						tx_buffer.payload[4] = temperature>>8;
+						tx_buffer.payload[5] = temperature&0xff;
+					}
+
 					rfm_frame_tx(tx_buffer.buffer, 3+6);
 					break;
 				}
@@ -1083,7 +1080,7 @@ int main(void) {
 					break;
 				}
 
-				// Remote RFM69 register read (0x58)
+				// Remote RFMxx register read (0x58)
 				case PKT_RADIO_REG_READ : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t read_len = rx_buffer.payload[1];
@@ -1099,7 +1096,7 @@ int main(void) {
 					break;
 				}
 
-				// Remote RFM69 register write
+				// Remote RFMxx register write
 				case PKT_RADIO_REG_WRITE : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t write_len = frame_len - 4;
@@ -1278,7 +1275,7 @@ int main(void) {
 				break;
 			}
 
-			// Reset RFM69 with default configuration
+			// Reset RFMxx with default configuration
 			case 'C' :
 			{
 				rfm_config();
@@ -1356,15 +1353,6 @@ int main(void) {
 			case 'L' : {
 				// +1 on len to include zero terminator
 				memcpy(current_loc,args[1],MyUARTGetStrLen(args[1])+1);
-				break;
-			}
-
-			// NMEA (only interested in $GPGLL)
-			case '$' : {
-				// +1 on len to include zero terminator
-				if (MyUARTGetStrLen(args[0]) && args[0][4]=='L' && args[0][5]=='L') {
-					memcpy(current_loc,args[0],MyUARTGetStrLen(args[0])+1);
-				}
 				break;
 			}
 
@@ -1509,6 +1497,15 @@ int main(void) {
 			}
 #endif
 
+			// NMEA (only interested in $GPGLL)
+			case '$' : {
+				// +1 on len to include zero terminator
+				if (MyUARTGetStrLen(args[0]) && args[0][4]=='L' && args[0][5]=='L') {
+					memcpy(current_loc,args[0],MyUARTGetStrLen(args[0])+1);
+				}
+				break;
+			}
+
 			// Experimental write to memory. Write 8 bits at a time as writing more
 			// might trigger a fault if not correctly aligned.
 			// > 32bit-addr byte-value
@@ -1544,6 +1541,13 @@ int main(void) {
 				displayStatus();
 				break;
 			}
+
+#ifdef FEATURE_ABPM
+			case '+' : {
+				cmd_bp_measure(argc,args);
+				break;
+			}
+#endif
 
 			default : {
 				report_error(*args[0], E_INVALID_CMD);

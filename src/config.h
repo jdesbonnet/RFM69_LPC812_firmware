@@ -234,6 +234,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "feature.h"
 #include "rfm.h"
 #include "printf.h"
 #include "debug.h"

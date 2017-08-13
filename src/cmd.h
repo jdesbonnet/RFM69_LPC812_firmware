@@ -13,4 +13,6 @@ int cmd_node_query (int argc, uint8_t **argv);
 int cmd_gps (int argc, uint8_t **argv);
 int cmd_param (int argc, uint8_t **argv);
 int cmd_wake_node (int argc, uint8_t **argv);
+int cmd_bp_measure (int argc, uint8_t **argv);
+
 #endif
