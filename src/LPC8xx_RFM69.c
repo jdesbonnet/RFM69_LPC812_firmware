@@ -231,7 +231,13 @@ void transmit_status_packet() {
 					(temperature * 1000) / 16);
 			tx_buffer.payload[3] = temperature >> 8;
 			tx_buffer.payload[4] = temperature & 0xff;
+		} else {
+			tx_buffer.payload[3] = 0xff;
+			tx_buffer.payload[4] = 0xff;
 		}
+#else
+		tx_buffer.payload[3] = 0xff;
+		tx_buffer.payload[4] = 0xff;
 #endif
 
 		// Transmit 'z' periodic wake packet
@@ -729,7 +735,7 @@ int main(void) {
 		// Test for MODE_OFF or MODE_LOW_POWER_POLL (LSB==0 for those two modes)
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
-			tfp_printf("; z\r\n");
+			debug("sleeping");
 
 			uint8_t battery_v = readBattery_dV();
 
@@ -807,7 +813,7 @@ int main(void) {
 			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
 
-			// Indicator to host there is a short time window to issue command
+			// Wake indicator to host: there is a short time window to issue command
 			tfp_printf("z\r\n");
 		}
 #else

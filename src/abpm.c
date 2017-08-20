@@ -184,6 +184,8 @@ int abpm_bus_snoop (bp_record_t *bp) {
 
 	int i = 0;
 
+
+
 	// Bit in current byte counter, when 8 we have a byte, 9th bit is ack.
 	int bit_count = 0;
 
@@ -201,6 +203,8 @@ int abpm_bus_snoop (bp_record_t *bp) {
 	int bp_record_ptr = 0;
 
 	start_btn_interrupt = 0;
+
+	i2c_buf_ptr = 0;
 
 	while (systick_counter - start_time < 60*TICKRATE_HZ) {
 

@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69/9x 0.7.6"
+#define VERSION "RFM69/9x 0.7.7"
 
 #define TICKRATE_HZ 100
 
@@ -30,8 +30,8 @@
 //#define DEFAULT_NODE_ADDR 0x46 // 5th
 
 //#define DEFAULT_MODE MODE_RADIO_OFF
-#define DEFAULT_MODE MODE_LOW_POWER_POLL
-//#define DEFAULT_MODE MODE_AWAKE
+//#define DEFAULT_MODE MODE_LOW_POWER_POLL
+#define DEFAULT_MODE MODE_AWAKE
 
 // Poll interval is currently a uint8_t, so max is 255
 // Unit: 10 seconds.
@@ -133,7 +133,7 @@
 //#define FEATURE_WS2812B
 
 // Experiment relay feature
-#define FEATURE_RELAY
+//#define FEATURE_RELAY
 
 // Ambulatory BP monitor feature
 #define FEATURE_ABPM

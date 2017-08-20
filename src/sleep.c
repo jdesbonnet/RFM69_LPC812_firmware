@@ -18,6 +18,9 @@ void sleep_set_pins_for_powerdown () {
 
 	// Condition pins to minimize current use during sleep
 
+	// TODO: sleep current has gone way up since 0.7.3. LED glowing dimly after conditioning
+	// for sleep, yet code seems identical to 0.7.3/
+
 	spi_deinit();
 
 #ifdef FEATURE_LED
@@ -25,13 +28,12 @@ void sleep_set_pins_for_powerdown () {
 	// last 60uA of unexplained current use.
 	//LPC_GPIO_PORT->DIR0 &= ~(1<<LED_PIN);
 	LPC_GPIO_PORT->DIR[0] &= ~(1<<LED_PIN);
+	//Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
 
 	// Pulldown resistor on PIO0_17 (pin LED_PIN)
-	// TODO: PIO0_17 IOCON hard coded
 	//LPC_IOCON->PIO0_17=(0x1<<3);
-	LPC_IOCON->PIO0[17]=(0x1<<3);
+	LPC_IOCON->PIO0[LED_PIN]=(0x1<<3);
 
-	//Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
 	//Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
 #endif
 

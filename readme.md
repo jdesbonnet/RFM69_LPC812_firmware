@@ -27,6 +27,10 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.7, 20 Aug 2017
+ * Fix ABPM I2C snoop bug (i2c_ptr wasn't being reset).
+ * TODO: Recent changes seems to have caused deep sleep to use excessive current. Seems related to status LED.
+
 ## 0.7.6, 13 Aug 2017
  * ABPM: sense start/stop button.
 
