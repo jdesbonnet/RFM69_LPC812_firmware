@@ -24,12 +24,15 @@ void sleep_set_pins_for_powerdown () {
 	// Setting LED pin into input with pull down R seems to eliminate the
 	// last 60uA of unexplained current use.
 	//LPC_GPIO_PORT->DIR0 &= ~(1<<LED_PIN);
+	LPC_GPIO_PORT->DIR[0] &= ~(1<<LED_PIN);
+
 	// Pulldown resistor on PIO0_17 (pin LED_PIN)
 	// TODO: PIO0_17 IOCON hard coded
 	//LPC_IOCON->PIO0_17=(0x1<<3);
+	LPC_IOCON->PIO0[17]=(0x1<<3);
 
-	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
-	Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
+	//Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
+	//Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
 #endif
 
 #ifdef FEATURE_WS2812B
@@ -108,6 +111,10 @@ void prepareForPowerDown () {
 
 #ifdef FEATURE_UART_INTERRUPT
 	  LPC_SYSCON->STARTERP0 |= (1<<0); // PININT0 (UART RXD)
+#endif
+
+#ifdef FEATURE_ABPM
+	  LPC_SYSCON->STARTERP0 |= (1<<2); // PININT2 (START/STOP button)
 #endif
 
 #ifdef FEATURE_EVENT_COUNTER

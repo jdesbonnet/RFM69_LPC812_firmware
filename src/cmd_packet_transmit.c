@@ -1,22 +1,10 @@
-#ifdef __USE_CMSIS
-#include "LPC8xx.h"
-#endif
-
-#include <cr_section_macros.h>
-
-#include <string.h>
-#include <stdint.h>
-
 #include "config.h"
 #include "parse_util.h"
-#include "rfm69.h"
-#include "rfm98.h"
+#include "rfm.h"
 #include "cmd.h"
 #include "err.h"
 #include "myuart.h"
 #include "frame_buffer.h"
-
-//extern uint8_t node_addr;
 
 /**
  * Command to transmit arbitrary packet.

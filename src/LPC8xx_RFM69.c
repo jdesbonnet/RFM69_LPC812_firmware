@@ -59,15 +59,7 @@ params_union_type params_union;
 static uint32_t sleep_counter = 0;
 
 // When in deepsleep or power down this lets us know which wake event occurred
-typedef enum {
-	NO_INTERRUPT = 0,
-	WKT_INTERRUPT = 1,
-	UART_INTERRUPT = 2,
-	EVENT_COUNTER_INTERRUPT = 3,
-	PIEZO_SENSOR_INTERRUPT = 4,
-	DIO0_INTERRUPT = 5
-} interrupt_source_type;
-volatile interrupt_source_type interrupt_source;
+volatile wake_interrupt_source_t wake_interrupt_source;
 
 // Radio packet frame buffers
 frame_buffer_type tx_buffer;
@@ -120,19 +112,24 @@ void displayStatus () {
 
 	tfp_printf ("; firmware=%s\r\n", VERSION);
 
+	tfp_printf ("; features ");
 	// List optional features enabled
 #ifdef FEATURE_EVENT_COUNTER
-	tfp_printf ("; feature EVENT_COUNTER\r\n");
+	tfp_printf (" EVENT_COUNTER");
 #endif
 #ifdef FEATURE_DS18B20
-	tfp_printf ("; feature DS18B20\r\n");
+	tfp_printf (" DS18B20");
 #endif
 #ifdef FEATURE_WS2812B
-	tfp_printf ("; feature WS2812B\r\n");
+	tfp_printf (" WS2812B");
 #endif
 #ifdef FEATURE_GPS_ON_USART1
-	tfp_printf ("; feature GNSS\r\n");
+	tfp_printf (" GNSS");
 #endif
+#ifdef FEATURE_ABPM
+	tfp_printf (" ABPM");
+#endif
+	tfp_printf ("\r\n");
 
 	tfp_printf ("; mode=%x\r\n",params_union.params.operating_mode);
 	tfp_printf ("; node_addr=%x\r\n",params_union.params.node_addr);
@@ -480,6 +477,10 @@ int main(void) {
 			params_union.params.node_addr = 0x53; // RFM98
 			break;
 
+		case 0x19016034:
+			params_union.params.node_addr = 0x54; // RFM98/433MHz
+			break;
+
 		case 0x1901703c:
 			params_union.params.node_addr = 0x61; // RFM95 868
 
@@ -576,7 +577,7 @@ int main(void) {
 	tx_buffer.header.from_addr = params_union.params.node_addr;
 
 #ifdef FEATURE_UART_INTERRUPT
-	// Experimental wake on activity on UART RXD (RXD is normally shared with PIO0_0)
+	// Wake on activity on UART RXD (RXD is normally shared with PIO0_0)
 	LPC_SYSCON->PINTSEL[0] = UART_RXD_PIN; // PIO0_0 aka RXD
 	LPC_PININT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
 	LPC_PININT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
@@ -623,6 +624,10 @@ int main(void) {
 	//GPIOSetDir(0,LED_PIN,1);
 	//LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
 	LPC_GPIO_PORT->DIR[0] |= (1<<LED_PIN);
+#endif
+
+#ifdef FEATURE_ABPM
+	abpm_init();
 #endif
 
 	//
@@ -740,7 +745,7 @@ int main(void) {
 			MyUARTSendDrain();
 
 			// Reset source of wake event
-			interrupt_source = 0;
+			wake_interrupt_source = 0;
 
 			sleep_set_pins_for_powerdown();
 
@@ -754,7 +759,7 @@ int main(void) {
 
 			// If battery low then sleep for extended period
 			if (battery_v <= params_union.params.low_battery_v) {
-				debug("low battery mode");
+				debug("low battery mode, extending sleep period");
 				wakeup_time *= 8;
 			}
 
@@ -784,7 +789,7 @@ int main(void) {
 			//delayMilliseconds() didn't work!
 			//delayMilliseconds(10);
 
-			if (interrupt_source == UART_INTERRUPT) {
+			if (wake_interrupt_source == UART_INTERRUPT) {
 				tfp_printf("; UART interrupt, awake\r\n");
 				// Probably crud in UART rx buffer : clear it.
 				MyUARTBufReset();
@@ -793,18 +798,17 @@ int main(void) {
 				}
 			}
 
+#ifdef FEATURE_ABPM
+			if (wake_interrupt_source == START_BTN_INTERRUPT) {
+				tfp_printf("; START BTN interrupt, awake\r\n");
+			}
+#endif
+
 			// Undo DeepSleep/PowerDown flag so that next WFI goes into regular sleep.
 			SCB->SCR &= ~NVIC_LP_SLEEPDEEP;
 
 			// Indicator to host there is a short time window to issue command
 			tfp_printf("z\r\n");
-
-#ifdef FEATURE_ABPM
-			if (is_feature_enabled(F_ABPM)) {
-				cmd_bp_measure(0,NULL);
-			}
-#endif
-
 		}
 #else
 		// If not using DEEPSLEEP, use regular SLEEP mode until next interrupt arrives
@@ -822,14 +826,21 @@ int main(void) {
 				transmit_status_packet();
 				listen_for_status_response();
 			} else {
-				tfp_printf("; battery too low to tx/rx\r\n");
+				tfp_printf("; battery V too low to tx/rx\r\n");
 				report_error((uint8_t)'z', E_BATTERY_V_TOO_LOW);
 			}
 #else
 			transmit_status_packet();
 			listen_for_status_response();
 #endif
+
+#ifdef FEATURE_ABPM
+			if (is_feature_enabled(F_ABPM)) {
+				cmd_bp_measure(0,NULL);
+			}
+#endif
 		}
+
 
 #ifdef RADIO_RFM9x
 		if (params_union.params.operating_mode != MODE_AWAKE) {
@@ -1612,15 +1623,11 @@ RAM_FUNC
 void PININT0_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PININT->IST = 1<<0;
-	//LPC_USART0->TXDATA='*';
-	interrupt_source = UART_INTERRUPT;
+	wake_interrupt_source = UART_INTERRUPT;
 }
 #endif
 
 void WDT_IRQHandler (void) {
-	//MyUARTSendStringZ("q 2\r\n");
-	//MyUARTSendDrain();
-	//loopDelay(20000);
 }
 
 #ifdef FEATURE_EVENT_COUNTER
@@ -1642,7 +1649,7 @@ void PININT1_IRQHandler (void) {
 		event_time = systick_counter;
 	}
 
-	interrupt_source = EVENT_COUNTER_INTERRUPT;
+	wake_interrupt_source = EVENT_COUNTER_INTERRUPT;
 }
 
 /**
@@ -1652,7 +1659,7 @@ void PININT2_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PIN_INT->IST = 1<<2;
 	//LPC_USART0->TXDATA='X';
-	interrupt_source = PIEZO_SENSOR_INTERRUPT;
+	wake_interrupt_source = PIEZO_SENSOR_INTERRUPT;
 }
 
 
@@ -1681,12 +1688,12 @@ void CMP_IRQHandler (void) {
 void PININT3_IRQHandler (void) {
 	// Clear interrupt
 	LPC_PININT->IST = 1<<3;
-	interrupt_source = DIO0_INTERRUPT;
+	wake_interrupt_source = DIO0_INTERRUPT;
 }
 #endif
 
 void WKT_IRQHandler(void)
 {
 	LPC_WKT->CTRL |= 0x02;			/* clear interrupt flag */
-	interrupt_source = WKT_INTERRUPT;
+	wake_interrupt_source = WKT_INTERRUPT;
 }

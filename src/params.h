@@ -13,7 +13,9 @@ typedef struct __attribute__((packed)) {
 	uint8_t node_addr;
 	uint8_t operating_mode;
 	uint8_t listen_period_cs;
-	uint8_t poll_interval;      // index 3: poll interval in seconds
+
+	// index 3: poll interval in seconds
+	uint8_t poll_interval;
 
 	// index 4
 	uint8_t gps_echo;

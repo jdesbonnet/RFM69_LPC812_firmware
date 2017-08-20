@@ -12,19 +12,17 @@
 #include "abpm.h"
 
 extern volatile uint32_t systick_counter;
-
+extern volatile wake_interrupt_source_t wake_interrupt_source;
 
 // Variables global within scope of this file
 static volatile int sda_pin_state=1;
 static volatile int scl_pin_state=1;
+static volatile int start_btn_interrupt;
 static char i2c_buf[1024];
 static volatile int i2c_buf_ptr=0;
 static uint32_t last_clock = 0;
 
 static void abpm_setup_pin_for_interrupt (int interrupt_pin, int interrupt_channel, int riseOrFallEdge) {
-
-	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, interrupt_pin);
-	Chip_IOCON_PinSetMode(LPC_IOCON,interrupt_pin,PIN_MODE_PULLUP);
 
 	/* Configure interrupt channel for the GPIO pin in SysCon block */
 	Chip_SYSCTL_SetPinInterrupt(interrupt_channel, interrupt_pin);
@@ -32,7 +30,6 @@ static void abpm_setup_pin_for_interrupt (int interrupt_pin, int interrupt_chann
 	/* Configure GPIO pin as input pin */
 	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, interrupt_pin);
 
-	/* Configure channel 7 interrupt as edge sensitive and falling edge interrupt */
 	Chip_PININT_SetPinModeEdge(LPC_PININT, PININTCH(interrupt_channel));
 
 	if (riseOrFallEdge == 0) {
@@ -62,6 +59,17 @@ void abpm_press_start_button (int state) {
 }
 
 
+/**
+ * @brief	START/STOP button falling edge
+ * @return	Nothing
+ */
+void PININT2_IRQHandler(void)
+{
+	//tfp_printf ("; START/STOP\r\n");
+	wake_interrupt_source = START_BTN_INTERRUPT;
+	start_btn_interrupt = 1;
+	Chip_PININT_ClearIntStatus(LPC_PININT, PININTCH2);
+}
 
 /**
  * @brief	SCL rising edge
@@ -116,6 +124,21 @@ void PININT7_IRQHandler(void)
 }
 
 void abpm_init ()  {
+
+	// START button in input/high-z normally. Note that this
+	// pin is at 4.4V: using 5V tolerance feature. Button is
+	// 'pressed' by pulling low.
+	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, PIN_BPM_START);
+
+	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, PIN_BPM_SCL);
+	Chip_IOCON_PinSetMode(LPC_IOCON,PIN_BPM_SCL,PIN_MODE_PULLUP);
+
+	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, PIN_BPM_SDA);
+	Chip_IOCON_PinSetMode(LPC_IOCON,PIN_BPM_SDA,PIN_MODE_PULLUP);
+
+	// START button
+	abpm_setup_pin_for_interrupt(PIN_BPM_START, 2, 0);
+
 	// Configure I2C lines to trigger interrupts on both
 	// rising and falling edges.
 	abpm_setup_pin_for_interrupt(PIN_BPM_SCL, 4, 1);
@@ -124,16 +147,16 @@ void abpm_init ()  {
 	abpm_setup_pin_for_interrupt(PIN_BPM_SDA, 7, 0);
 
 
+
+
 	// Enable interrupts in the NVIC
+	NVIC_EnableIRQ(PININT2_IRQn);
+
 	NVIC_EnableIRQ(PININT4_IRQn);
 	NVIC_EnableIRQ(PININT5_IRQn);
 	NVIC_EnableIRQ(PININT6_IRQn);
 	NVIC_EnableIRQ(PININT7_IRQn);
 
-	// START button in input/high-z normally. Note that this
-	// pin is at 4.4V: using 5V tolerance feature. Button is
-	// 'pressed' by pulling low.
-	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT,0,PIN_BPM_START);
 
     scl_pin_state = Chip_GPIO_GetPinState(LPC_GPIO_PORT,0,PIN_BPM_SCL);
     sda_pin_state = Chip_GPIO_GetPinState(LPC_GPIO_PORT,0,PIN_BPM_SDA);
@@ -177,17 +200,13 @@ int abpm_bus_snoop (bp_record_t *bp) {
 	uint8_t bp_record[12];
 	int bp_record_ptr = 0;
 
+	start_btn_interrupt = 0;
+
 	while (systick_counter - start_time < 60*TICKRATE_HZ) {
 
-		if (LPC_USART0->STAT & 1) {
-			char c = LPC_USART0->RXDATA;
-			switch (c) {
-			case 'S': {
-				tfp_printf("; stop BP...\r\n");
-				abpm_stop();
-				return;
-			}
-			}
+		if (start_btn_interrupt == 1) {
+			tfp_printf("; BP stopped\r\n");
+			return -2;
 		}
 
 

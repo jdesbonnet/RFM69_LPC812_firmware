@@ -1,8 +1,8 @@
 #ifndef FEATURE_H_
 #define FEATURE_H_
 typedef enum {
-	F_DS18B20,
-	F_ABPM
+	F_DS18B20 = 0,
+	F_ABPM = 1
 } feature_t;
 
 int is_feature_enabled (feature_t feature);

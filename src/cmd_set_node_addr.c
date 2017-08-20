@@ -1,30 +1,19 @@
-#ifdef __USE_CMSIS
-#include "LPC8xx.h"
-#endif
-
-//#include <cr_section_macros.h>
-
 #include <string.h>
 
 #include "parse_util.h"
 #include "cmd.h"
 #include "err.h"
 #include "frame_buffer.h"
-#include "myuart.h"
 
 /**
- * Set node address
+ * Query/set node address
  * Args: <node-addr>
  */
 extern frame_buffer_type tx_buffer;
 int cmd_set_node_addr (int argc, uint8_t **argv) {
 
 	if (argc == 1) {
-		MyUARTSendStringZ("n ");
-		MyUARTPrintHex(tx_buffer.header.from_addr);
-		//MyUARTPrintHex(params.params.node_addr);
-
-		MyUARTSendCRLF();
+		tfp_printf("n %x\r\n",tx_buffer.header.from_addr);
 		return E_OK;
 	}
 	if (argc != 2) {

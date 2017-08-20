@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69/9x 0.7.5"
+#define VERSION "RFM69/9x 0.7.6"
 
 #define TICKRATE_HZ 100
 
@@ -46,10 +46,10 @@
 // Time to listen for response after transmitting a packet (in 10ms units)
 #define DEFAULT_LISTEN_TIME_CS 50
 
-// Enter low battery mode under this voltage (0.1V units)
+// Enter low battery mode under this voltage (0.1V units). Use 2.5V for LiFePO4.
 #define DEFAULT_LOW_BATTERY_V (25)
 
-// Minimum voltage require to operate radio (0.1V units)
+// Minimum voltage require to operate radio (0.1V units). Use 2.2V for LiFePO4.
 #define DEFAULT_MIN_BATTERY_V (22)
 
 #define DEFAULT_TX_POWER (15)  // RFM9x 0 - 15
@@ -202,6 +202,7 @@
 #endif
 
 // Blood Pressure Monitor pins (SO20 package pins 8,9,10)
+// BPM board connections: TP15=SCL, TP18=SDA, TP4=START, TP10=gnd
 #define PIN_BPM_SCL 10
 #define PIN_BPM_SDA 11
 #define PIN_BPM_START 16
@@ -243,6 +244,7 @@
 #include "delay.h"
 #include "battery.h"
 #include "abpm.h"
+#include "interrupts.h"
 
 #ifdef RADIO_RFM9x
 #include "rfm98.h"

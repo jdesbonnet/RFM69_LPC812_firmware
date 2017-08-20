@@ -1,18 +1,6 @@
-#ifdef __USE_CMSIS
-#include "LPC8xx.h"
-#endif
-
-#include <cr_section_macros.h>
-
-#include <string.h>
-
+#include "config.h"
 #include "myuart.h"
-#include "print_util.h"
 #include "parse_util.h"
-#include "rfm69.h"
-#include "cmd.h"
-#include "err.h"
-
 
 extern uint8_t node_addr;
 

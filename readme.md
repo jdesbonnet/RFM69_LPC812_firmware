@@ -27,6 +27,9 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.6, 13 Aug 2017
+ * ABPM: sense start/stop button.
+
 ## 0.7.5, 12 Aug 2017
  * Integrate LPCOpen library.
  * Ambulatory Blood Pressure Monitor module.
