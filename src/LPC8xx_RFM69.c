@@ -6,20 +6,6 @@
  Copyright   : BSD licence. TODO: add licence to header.
  Description : TODO
 ===============================================================================
-
-TODO:
-For v0.2.0:
-* Move to 4 byte header. Having an extra byte for special flags (like ack at MAC level).
-* Also use struct: might enable greater code density.
-*
-* Change radio level remote register read/write with a remote command execution: ie take
-* bytes from radio packet and inject into UART receive buffer and trigger a command, as if
-* arriving from UART. To enable responses etc, have command to forward UART command responses
-* and errors via radio to one or more nodes. This can then replace the following features:
-* o Packet Forward (just exec a T command remotely)
-* o Register Read/Write
-* o Heartbeat interval set
-*
 */
 
 
@@ -1210,14 +1196,6 @@ int main(void) {
 					tfp_printf(" %x\r\n",rssi);
 				}
 
-			} else {
-
-#ifdef FEATURE_DEBUG
-				MyUARTSendStringZ("; Ignoring packet from ");
-				MyUARTPrintHex(to_addr);
-				MyUARTSendCRLF();
-#endif
-
 			}
 
 
@@ -1234,9 +1212,9 @@ int main(void) {
 			// Any command will set mode to MODE_AWAKE if in MODE_ALL_OFF or MODE_LOW_POWER_POLL
 			// TODO: will probably want to exclude remote commands
 			//setOpMode(MODE_AWAKE);
-			if (params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
-				params_union.params.operating_mode = MODE_AWAKE;
-			}
+			//if (params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
+			//	params_union.params.operating_mode = MODE_AWAKE;
+			//}
 #endif
 
 			tfp_printf("\r\n");
@@ -1594,6 +1572,7 @@ int main(void) {
 
 
 #ifdef FEATURE_LINK_LOSS_RESET
+		// TODO: is this needed any more? Duplicates function of WWDT?
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 			uint32_t last_frame_age = systick_counter - last_frame_time;
 			//tfp_printf("; last_frame_age=%d\r\n",last_frame_age);

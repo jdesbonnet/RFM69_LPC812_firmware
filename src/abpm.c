@@ -137,7 +137,8 @@ void abpm_init ()  {
 	Chip_IOCON_PinSetMode(LPC_IOCON,PIN_BPM_SDA,PIN_MODE_PULLUP);
 
 	// START button
-	abpm_setup_pin_for_interrupt(PIN_BPM_START, 2, 0);
+	// TODO: suspect this is causing intermittent wake
+	//abpm_setup_pin_for_interrupt(PIN_BPM_START, 2, 0);
 
 	// Configure I2C lines to trigger interrupts on both
 	// rising and falling edges.
@@ -150,7 +151,7 @@ void abpm_init ()  {
 
 
 	// Enable interrupts in the NVIC
-	NVIC_EnableIRQ(PININT2_IRQn);
+	//NVIC_EnableIRQ(PININT2_IRQn);
 
 	NVIC_EnableIRQ(PININT4_IRQn);
 	NVIC_EnableIRQ(PININT5_IRQn);
