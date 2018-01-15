@@ -546,7 +546,7 @@ int main(void) {
 	#ifdef RADIO_RFM69
 	//LPC_GPIO_PORT->DIR0 |= (1<<RESET_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<RESET_PIN);
-	LPC_IOCON->PIO0_15=(0x1<<3); // pull down?
+	LPC_IOCON->PIO0[15]=(0x1<<3); // pull down?
 	#endif
 #endif
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
@@ -722,6 +722,7 @@ int main(void) {
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
 			debug("sleeping");
+			debug_show_registers();
 
 			uint8_t battery_v = readBattery_dV();
 

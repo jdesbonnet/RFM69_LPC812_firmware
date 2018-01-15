@@ -76,7 +76,7 @@ void SwitchMatrix_LPC812_PCB1b_Init()
 {
 	// UART0 TXD to PIO0_4 (pin package 5). This is location for ISP programming
 	// UART0 RXD rerouted to PIO0_11 (pin package 11).
-    LPC_SWM->PINASSIGN0 = 0xffff0b04UL;
+    LPC_SWM->PINASSIGN[0] = 0xffff0b04UL;
 
     /* Pin Assign 1 bit Configuration */
     /* SWCLK */

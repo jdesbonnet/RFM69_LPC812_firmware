@@ -33,7 +33,7 @@
 #define MISO_READ() LPC_GPIO_PORT->PIN[0]&(1<<MISO_PIN)
 
 /**
- * Initialize SPI using bigbang (without SSP0 peripheral).
+ * Initialize SPI using bitbang (without SSP0 peripheral).
  */
 void spi_init () {
 
@@ -47,16 +47,16 @@ void spi_init () {
 	//GPIOSetDir(PORT, MOSI_PIN, 1);
 	//GPIOSetDir(PORT, MISO_PIN, 0); // input
 
-	// Note: more space efficient (by 4 bytes) to load into regVal for manipulation
-	//LPC_GPIO_PORT->DIR0 |= (1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN);
-	//LPC_GPIO_PORT->DIR0 &= ~(1<<MISO_PIN);
 	uint32_t regVal = LPC_GPIO_PORT->DIR[0];
+	// configure as output
 	regVal |= (1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN);
+	// configure as input
 	regVal &= ~(1<<MISO_PIN);
 	LPC_GPIO_PORT->DIR[0] = regVal;
 }
 
 void spi_deinit () {
+	// Configure SS, SCK, MOSI as inputs. MISO already input.
 	uint32_t regVal = LPC_GPIO_PORT->DIR[0];
 	regVal &=  ~((1<<SS_PIN) | (1<<SCK_PIN) | (1<<MOSI_PIN));
 	LPC_GPIO_PORT->DIR[0] = regVal;
@@ -107,17 +107,14 @@ uint8_t spi_transfer_byte (uint8_t out) {
 	while (j) {
 			// Set MOSI
 			if (out & j) {
-				//LPC_GPIO0->DATA |= (1<<9);
 				MOSI_HIGH();
 			} else {
-				//LPC_GPIO0->DATA &= ~(1<<9);
 				MOSI_LOW();
 			}
 
 			j >>= 1;
 
 			// Rising clock edge
-			//LPC_GPIO0->DATA |= (1<<6);
 			SCK_HIGH();
 
 			spi_delay();
@@ -128,7 +125,6 @@ uint8_t spi_transfer_byte (uint8_t out) {
 				in |= 1;
 			}
 
-			//LPC_GPIO0->DATA &= ~(1<<6);
 			SCK_LOW();
 	}
 
