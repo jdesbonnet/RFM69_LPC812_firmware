@@ -52,7 +52,8 @@ int ow_bit_read () {
 	// The read slot starts with the bus diven low.
 	// We have 15µs from the falling edge read the bus.
 	ow_low();
-	delay_microseconds(1); // Must be held low for at least 1µs
+	//delay_microseconds(1); // Must be held low for at least 1µs
+	delay_nop_loop(2);
 
 	// Bring bus high again. And read within the 15µs time interval
 	// (already a few µs used by by now...)
@@ -95,16 +96,16 @@ void ow_bit_write (int b) {
 	ow_low();
 	if (b) {
 		// having trouble getting this in the 1-15µs range. Need better delay mechanism.
-		delay_nop_loop(1); // max 15µs, min 1µs (?)
+		delay_nop_loop(2); // max 15µs, min 1µs (?)
 		ow_high();
 		delay_microseconds(60);
 	} else {
-		delay_microseconds(66);
+		delay_microseconds(61);
 		ow_high();
 	}
 
 	// Recovery time
-	delay_microseconds(5);
+	delay_microseconds(2);
 }
 void ow_byte_write (int data) {
 	int i;
