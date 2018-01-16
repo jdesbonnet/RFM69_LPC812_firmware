@@ -27,7 +27,7 @@ void sleep_set_pins_for_powerdown () {
 	// Setting LED pin into input with pull down R seems to eliminate the
 	// last 60uA of unexplained current use.
 
-	//LPC_GPIO_PORT->DIR[0] &= ~(1<<LED_PIN);
+	LPC_GPIO_PORT->DIR[0] &= ~(1<<LED_PIN);
 	//LPC_GPIO_PORT->DIR[0] |= (1<<LED_PIN);
 
 	//Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
@@ -36,8 +36,8 @@ void sleep_set_pins_for_powerdown () {
 	// Pulldown resistor on PIO0_17 (pin LED_PIN)
 	//LPC_IOCON->PIO0_17=(0x1<<3);
 
-	//LPC_IOCON->PIO0[LED_PIN]=(0x1<<3);
-
+	//LPC_IOCON->PIO0[IOCON_PIO17]=(0x1<<3);
+	LPC_IOCON->PIO0[IOCON_PIO17]=8;
 	//Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
 #endif
 
@@ -45,7 +45,7 @@ void sleep_set_pins_for_powerdown () {
 	//LPC_GPIO_PORT->SET0 |= (1<<WS2812B_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<WS2812B_PIN);
 	LPC_GPIO_PORT->DIR0 &= ~(1<<WS2812B_PIN);
-	LPC_IOCON->PIO0_14=(0x2<<3);
+	LPC_IOCON->PIO0[IOCON_PIO14]=(0x2<<3);
 #endif
 }
 

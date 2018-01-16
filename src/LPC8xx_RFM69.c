@@ -209,7 +209,7 @@ void transmit_status_packet() {
 		if (is_feature_enabled(F_DS18B20)) {
 			// Pullup resistor on DS18B20 data pin PIO0_14
 			//LPC_IOCON->PIO0_14 = (0x2 << 3);
-			LPC_IOCON->PIO0[14]= (0x2 << 3);
+			LPC_IOCON->PIO0[IOCON_PIO14]= (0x2 << 3);
 			ow_init(0, DS18B20_PIN);
 			delayMilliseconds(20);
 			int32_t temperature = ds18b20_temperature_read();
@@ -343,6 +343,7 @@ int main(void) {
     		| (1<<6)  // GPIO
     		| (1<<9)  // Wake Timer (WKT)
     		| (1<<17) // Watchdog timer (note: it may not be necessary to have on all the time)
+			| (1<<18) // IOCON
     		;
 
     // Read MCU serial number
@@ -355,6 +356,8 @@ int main(void) {
 	// Enable SysTick interrupt
 	SysTick_Config(Chip_Clock_GetSystemClockRate()/TICKRATE_HZ);
 
+	// Is this necessary?
+	Chip_SystemInit();
 
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
@@ -508,6 +511,7 @@ int main(void) {
 
 #endif
 
+
 	spi_init();
 
 #ifdef DIO0_PIN
@@ -518,7 +522,7 @@ int main(void) {
 	// Pulldown resistor on PIO0_6 (pin DIO0)
 	// TODO: PIO0_6 IOCON hard coded
 	//LPC_IOCON->PIO0_6=(0x1<<3);
-	LPC_IOCON->PIO0[6]=(0x1<<3);
+	LPC_IOCON->PIO0[IOCON_PIO6]=(0x1<<3);
 
 	//LPC_GPIO_PORT->DIR0 |= (1<<DIO0_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<DIO0_PIN);
@@ -546,9 +550,22 @@ int main(void) {
 	#ifdef RADIO_RFM69
 	//LPC_GPIO_PORT->DIR0 |= (1<<RESET_PIN);
 	//LPC_GPIO_PORT->CLR0 |= (1<<RESET_PIN);
-	LPC_IOCON->PIO0[15]=(0x1<<3); // pull down?
+	LPC_IOCON->PIO0[IOCON_PIO15]=(0x1<<3); // pull down?
 	#endif
 #endif
+
+
+    // TODO debug
+	/*
+	Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLUP);
+	uint32_t *x;
+	x = 0x40044000;
+	*x=2<<3;
+	int y = LPC_IOCON->PIO0[IOCON_PIO17];
+    debug_show_registers();
+	*/
+
+
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
 	// RSSI_dBm = -rssi/2
 	// RFM9x: RSSI in dBm
@@ -604,7 +621,7 @@ int main(void) {
 	// Pullup resistor on DS18B20 data pin PIO0_14
 	ow_init(0,DS18B20_PIN);
 	//LPC_IOCON->PIO0_14=(0x2<<3); // pull up
-	LPC_IOCON->PIO0[14]=(0x2<<3); // pull up
+	LPC_IOCON->PIO0[IOCON_PIO14]=(0x2<<3); // pull up
 #endif
 
 	// Configure RFM69 registers for this application. I found that it was necessary
@@ -722,7 +739,6 @@ int main(void) {
 		if ( params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
 
 			debug("sleeping");
-			debug_show_registers();
 
 			uint8_t battery_v = readBattery_dV();
 
@@ -765,6 +781,8 @@ int main(void) {
 
 			LPC_WKT->COUNT = wakeup_time ;
 
+			debug_show_registers();
+
 			// DeepSleep until WKT interrupt (or PIN interrupt)
 			__WFI();
 
@@ -782,8 +800,10 @@ int main(void) {
 			//delayMilliseconds() didn't work!
 			//delayMilliseconds(10);
 
+			debug ("wake");
+
 			if (wake_interrupt_source == UART_INTERRUPT) {
-				tfp_printf("; UART interrupt, awake\r\n");
+				debug("UART interrupt, awake");
 				// Probably crud in UART rx buffer : clear it.
 				MyUARTBufReset();
 				if (params_union.params.operating_mode == MODE_LOW_POWER_POLL) {
