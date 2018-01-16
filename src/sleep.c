@@ -25,20 +25,23 @@ void sleep_set_pins_for_powerdown () {
 
 #ifdef FEATURE_LED
 	// Setting LED pin into input with pull down R seems to eliminate the
-	// last 60uA of unexplained current use.
+	// last 60uA of unexplained current use. Bit cleared means input.
 
 	LPC_GPIO_PORT->DIR[0] &= ~(1<<LED_PIN);
-	//LPC_GPIO_PORT->DIR[0] |= (1<<LED_PIN);
 
 	//Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, LED_PIN, false);
 
+
+
+	// This does not work... why?!
+	Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
+
+
 	// Set pin mode (section 6.5.1 IOCON register)
 	// Pulldown resistor on PIO0_17 (pin LED_PIN)
-	//LPC_IOCON->PIO0_17=(0x1<<3);
+	LPC_IOCON->PIO0[IOCON_PIO17]=(0x1<<3);
+	//LPC_IOCON->PIO0[IOCON_PIO17]=8;
 
-	//LPC_IOCON->PIO0[IOCON_PIO17]=(0x1<<3);
-	LPC_IOCON->PIO0[IOCON_PIO17]=8;
-	//Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLDN);
 #endif
 
 #ifdef FEATURE_WS2812B

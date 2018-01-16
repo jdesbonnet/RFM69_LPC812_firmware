@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69/9x 0.7.7"
+#define VERSION "RFM69/9x 0.7.8"
 
 #define TICKRATE_HZ 100
 

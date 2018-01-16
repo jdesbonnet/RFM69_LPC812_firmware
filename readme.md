@@ -27,6 +27,9 @@ Joe Desbonnet, jdesbonnet@gmail.com
 
 # Release History:
 
+## 0.7.8, 15 Jan 2018
+ * LPCopen version now sleeping with appro 2.5uA current (bug in 0.7.7 due to IOCON clock being off).
+
 ## 0.7.7, 20 Aug 2017
  * Fix ABPM I2C snoop bug (i2c_ptr wasn't being reset).
  * TODO: Recent changes seems to have caused deep sleep to use excessive current. Seems related to status LED.

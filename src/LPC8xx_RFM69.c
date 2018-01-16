@@ -356,9 +356,6 @@ int main(void) {
 	// Enable SysTick interrupt
 	SysTick_Config(Chip_Clock_GetSystemClockRate()/TICKRATE_HZ);
 
-	// Is this necessary?
-	Chip_SystemInit();
-
 	/*
 	 * LPC8xx features a SwitchMatrix which allows most functions to be mapped to most pins.
 	 * This setups up the pins in a way that's convenient for our physical circuit layout.
@@ -781,11 +778,8 @@ int main(void) {
 
 			LPC_WKT->COUNT = wakeup_time ;
 
-			debug_show_registers();
-
 			// DeepSleep until WKT interrupt (or PIN interrupt)
 			__WFI();
-
 
 
 			// WKT in 100us increments, want sleep_clock in 10ms increments
