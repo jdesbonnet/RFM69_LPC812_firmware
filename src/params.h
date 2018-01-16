@@ -21,6 +21,8 @@ typedef struct __attribute__((packed)) {
 	uint8_t gps_echo;
 
 	// index 5: bit flags indicating what features are enabled. See feature_t.
+	// bit 0: DS18B20
+	// bit 1: ABPM
 	uint8_t feature_enable;
 
 	uint16_t link_loss_timeout_s;  // index 6,7

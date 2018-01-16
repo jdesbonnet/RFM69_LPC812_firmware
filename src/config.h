@@ -73,7 +73,7 @@
 
 // One board was populated without the trace cut: reroute RXD.
 // Enable this in addition to BOARD_LPC812_V1
-//#define BOARD_V1B_HACK
+#define BOARD_V1B_HACK
 
 // Character used as comment (for both incoming commands and output)
 #define COMMENT_CHAR (';')
@@ -101,10 +101,13 @@
 //#define FEATURE_DIO1
 
 // Experimental application to count rain tip bucket
-//#define FEATURE_EVENT_COUNTER
+#define FEATURE_EVENT_COUNTER
+
+// Experimental analog comparator function
+//#define FEATURE_ACMP
 
 // DS18B20 one wire temperature sensor
-//#define FEATURE_DS18B20
+#define FEATURE_DS18B20
 
 // When sleeping trigger PIN interrupt on RXD line
 #define FEATURE_UART_INTERRUPT
