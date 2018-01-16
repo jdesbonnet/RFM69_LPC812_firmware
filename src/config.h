@@ -106,6 +106,9 @@
 // Experimental analog comparator function
 //#define FEATURE_ACMP
 
+// SCT timer used for hi-res delays
+#define FEATURE_SCT_TIMER
+
 // DS18B20 one wire temperature sensor
 #define FEATURE_DS18B20
 

@@ -81,6 +81,10 @@ void report_error (uint8_t cmd, int32_t code) {
  */
 void displayStatus () {
 
+	tfp_printf("; sysclk_f=%d Hz\r\n", Chip_Clock_GetSystemClockRate());
+
+	//tfp_printf("; SCT=%d\r\n", LPC_SCT->COUNT_U);
+
 #ifdef RADIO_RFM9x
 	tfp_printf("; radio=RFM98\r\n");
 #endif
@@ -667,13 +671,6 @@ int main(void) {
 		// Error communicating with RFM69: 4 blinks
 		ledBlink(4);
 		test_result |= 1<<0;
-	}
-#endif
-
-
-#ifdef FEATURE_DS18B20
-	if (ow_reset() == 0) {
-		test_result |= 1<<1;
 	}
 #endif
 

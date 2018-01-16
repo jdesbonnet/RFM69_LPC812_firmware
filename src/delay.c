@@ -14,6 +14,33 @@ void delay_init () {
 
 	// Number of ns per iteration
 	//delayLoopCalibration = ((timeTick - startCalib) * 10000000) / 1<<20 ;
+
+#ifdef FEATURE_SCT_TIMER
+		Chip_SCT_Init(LPC_SCT);
+
+		/* Stop the SCT before configuration */
+		Chip_SCTPWM_Stop(LPC_SCT);
+
+		// Match/capture mode register. (ref UM10800 section 16.6.11, Table 232, page 273)
+		// Determines if match/capture operate as match or capture. Want all match.
+		LPC_SCT->REGMODE_U = 0;
+
+		// Set SCT Counter to count 32-bits and reset to 0 after reaching MATCH0
+		Chip_SCT_Config(LPC_SCT, SCT_CONFIG_32BIT_COUNTER );
+
+		Chip_SCT_ClearControl(LPC_SCT, SCT_CTRL_HALT_L | SCT_CTRL_HALT_H);
+#endif
+
+}
+
+void delay_sct_clock_cycles (uint32_t delay) {
+	uint32_t start = LPC_SCT->COUNT_U;
+	while ( (LPC_SCT->COUNT_U - start) < delay) ;
+}
+
+void delay_deinit () {
+	Chip_SCTPWM_Stop(LPC_SCT);
+	Chip_SCT_DeInit(LPC_SCT);
 }
 
 /**
@@ -49,17 +76,39 @@ void delayMicroseconds(uint32_t t_us) {
 	//uint32_t niter = (delayLoopCalibration*10000)/t_us;
 	//uint32_t niter = (t_us * 1000) / delayLoopCalibration;
 	//delay(niter);
-	uint32_t niter = t_us*15/10; // manual calibration
+
+#ifdef FEATURE_SCT_TIMER
+
+	uint32_t clock_cycles = t_us * (Chip_Clock_GetSystemClockRate()/1000000);
+
+	// TODO: can be optimized by triggering interrupt
+	// then wait for interrupt instead of tight loop.
+	uint32_t start = LPC_SCT->COUNT_U;
+	while ( (LPC_SCT->COUNT_U - start) < clock_cycles) ;
+
+#else
+	uint32_t niter = t_us*35/10; // manual calibration
 	delay(niter);
+#endif
+
 }
 
-
+void delay_nop_loop (uint32_t i) {
+	while (--i!=0) {
+		__NOP();
+	}
+}
 
 void loopDelay(uint32_t i) {
 	while (--i!=0) {
 		__NOP();
 	}
 }
+
+/**
+ * Use WKT (wake up timer) to delay. WKT is configured
+ * to run at about 10kHz (+/- 40%).
+ */
 void wktDelay(uint32_t i) {
 	LPC_WKT->COUNT = i;
 	__WFI();

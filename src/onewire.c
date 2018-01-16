@@ -22,17 +22,15 @@ void ow_init(int port, int pin) {
 
 void ow_low() {
 	// set direction output
-	//GPIOSetDir(ow_port, ow_pin, 1);
 	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT, ow_port, ow_pin);
 	// set low
-	//GPIOSetBitValue(ow_port, ow_pin, 0);
 	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, ow_port, ow_pin);
 }
 
 void ow_high() {
 	// set direction input (high Z) and let pull-up R bring high
-	//GPIOSetDir(ow_port, ow_pin, 0);
 	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, ow_port, ow_pin);
+	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, ow_port, ow_pin);
 }
 
 int ow_read() {
@@ -40,7 +38,7 @@ int ow_read() {
 	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, ow_port, ow_pin);
 
 	//return GPIOGetPinValue(ow_port, ow_pin);
-	Chip_GPIO_GetPinState(LPC_GPIO_PORT, ow_port, ow_pin);
+	return Chip_GPIO_GetPinState(LPC_GPIO_PORT, ow_port, ow_pin);
 }
 
 /**
@@ -50,28 +48,23 @@ int ow_read() {
  * @return 0 or 1
  */
 int ow_bit_read () {
-	//GPIOSetBitValue(0,2, 0);//debug
 
-	// The read slow starts with the bus is diven low.
+	// The read slot starts with the bus diven low.
 	// We have 15µs from the falling edge read the bus.
 	ow_low();
-	delay(1); // Must be held low for at least 1µs
+	delayMicroseconds(1); // Must be held low for at least 1µs
 
 	// Bring bus high again. And read within the 15µs time interval
 	// (already a few µs used by by now...)
 	ow_high();
-	delay(1);
+	delayMicroseconds(1);
 
-	//GPIOSetBitValue(0,2, 1); //debug
 	int b = ow_read();
-	//GPIOSetBitValue(0,2, 0); //debug
 
 	// Read slots must be a minimum of 60µs in duration with a minimum of 1µs
 	// recovery time between slots. Rather than monitor bus to check for end
 	// of slot, just delay for a period well exceeding the 60µs slot time.
 	delayMicroseconds(65);
-
-	//GPIOSetBitValue(0,2, 1); //debug
 
 	return b;
 }
@@ -90,6 +83,8 @@ int ow_reset() {
 	ow_high();
 
 	delayMicroseconds(410);
+
+	debug ("ow detect %d",detect);
 
 	return ~detect;
 }

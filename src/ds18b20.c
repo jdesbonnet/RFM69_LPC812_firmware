@@ -28,7 +28,12 @@ uint64_t ds18b20_rom_read () {
  * Return temperature Tc = t / 16;
  */
 int32_t ds18b20_temperature_read () {
+
+	// TODO: does not belong here
+	delay_init();
+
 	if ( ! ow_reset() ) {
+		debug("; error on ow_reset\r\n");
 		return -9999;
 	}
 
@@ -45,7 +50,7 @@ int32_t ds18b20_temperature_read () {
 	delayMilliseconds(900);
 
 	if ( ! ow_reset() ) {
-		tfp_printf("; error !ow_reset\r\n");
+		debug("; error on ow_reset\r\n");
 		return -9999;
 	}
 	// Skip ROM command
@@ -58,7 +63,7 @@ int32_t ds18b20_temperature_read () {
 
 	int16_t data =0;
 	data = ow_byte_read();
-	data |= ow_byte_read()<<8;
+	data |= (ow_byte_read()<<8);
 
 	// Read data (up to 9 bytes, but only interested in first two)
 	//uint64_t data = ow_uint64_read();
