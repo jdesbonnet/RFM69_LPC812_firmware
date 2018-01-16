@@ -168,9 +168,9 @@ void abpm_init ()  {
  */
 void abpm_stop () {
 	abpm_press_start_button(1);
-	delayMilliseconds(500);
+	delay_milliseconds(500);
 	abpm_press_start_button(0);
-	delayMilliseconds(500);
+	delay_milliseconds(500);
 }
 
 
@@ -303,13 +303,13 @@ int abpm_measure (bp_record_t *bp) {
 	// Press for 1 sec to wake, release for 1 sec
 	// and press again to start measurement
 	abpm_press_start_button(1);
-	delayMilliseconds(500);
+	delay_milliseconds(500);
 	abpm_press_start_button(0);
-	delayMilliseconds(500);
+	delay_milliseconds(500);
 	abpm_press_start_button(1);
-	delayMilliseconds(500);
+	delay_milliseconds(500);
 	abpm_press_start_button(0);
-	delayMilliseconds(500);
+	delay_milliseconds(500);
 
 	return abpm_bus_snoop(bp);
 }

@@ -27,7 +27,7 @@ void rfm98_hard_reset(void) {
 
 	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, RESET_PIN, true);
 	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, 0, RESET_PIN);
-	delay(20000);
+	delay_nop_loop(20000);
 	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, 0, RESET_PIN);
 #endif
 }
@@ -40,9 +40,9 @@ void rfm98_config() {
 	rfm98_hard_reset();
 
 	rfm_register_write(RFM98_OPMODE, RFM98_OPMODE_LoRa_SLEEP);
-	delayMilliseconds(10);
+	delay_milliseconds(10);
 	rfm_register_write(RFM98_OPMODE, RFM98_OPMODE_LoRaMode );
-	delayMilliseconds(10);
+	delay_milliseconds(10);
 
 	// Set max power
 	// move to RFM98_CONFIG
@@ -193,7 +193,7 @@ int rfm98_temperature() {
 	// Doesn't seen to work
 
 	rfm_register_write(1,RFM98_OPMODE_FSK_STDBY);
-	delayMilliseconds(1);
+	delay_milliseconds(1);
 	rfm_register_write(1,RFM98_OPMODE_FSK_FSRX);
 
 	// TempMonitorOff=0
@@ -201,7 +201,7 @@ int rfm98_temperature() {
 	regVal &= ~1;
 	rfm_register_write(0x3b,regVal);
 
-	delayMicroseconds(160);
+	delay_microseconds(160);
 
 	// TempMonitorOn=1
 	regVal |= 1;

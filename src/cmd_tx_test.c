@@ -52,7 +52,7 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 		rfm98_frame_tx(tx_buffer.buffer,14);
 		ledOff();
 
-		delayMilliseconds(delay);
+		delay_milliseconds(delay);
 
 		if (reset) {
 			NVIC_SystemReset();

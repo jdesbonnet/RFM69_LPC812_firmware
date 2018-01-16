@@ -9,9 +9,9 @@ void ledBlink (int nblink) {
 	int i;
 	for (i = 0; i < nblink; i++)	{
 			ledOn();
-			delayMilliseconds(200);
+			delay_milliseconds(200);
 			ledOff();
-			delayMilliseconds(200);
+			delay_milliseconds(200);
 	}
 }
 

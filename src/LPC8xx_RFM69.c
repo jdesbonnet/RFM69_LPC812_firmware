@@ -215,7 +215,7 @@ void transmit_status_packet() {
 			//LPC_IOCON->PIO0_14 = (0x2 << 3);
 			LPC_IOCON->PIO0[IOCON_PIO14]= (0x2 << 3);
 			ow_init(0, DS18B20_PIN);
-			delayMilliseconds(20);
+			delay_milliseconds(20);
 			int32_t temperature = ds18b20_temperature_read();
 			tfp_printf("; ds18b20_temperature_mC=%d\r\n",
 					(temperature * 1000) / 16);
@@ -390,11 +390,10 @@ int main(void) {
 #endif
 
 
-
+	// Delay init (configures SCT etc for timing).
+	delay_init();
 
 	// Reset GPIO
-	//LPC_SYSCON->PRESETCTRL &= ~(0x1<<10);
-	//LPC_SYSCON->PRESETCTRL |= (0x1<<10);
 	Chip_GPIO_Init(LPC_GPIO_PORT);
 
 
@@ -638,7 +637,7 @@ int main(void) {
 
 	// Configure RFM69 registers for this application. I found that it was necessary
 	// to delay a short period after powerup before configuring registers.
-	delay(300000);
+	delay_nop_loop(300000);
 
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
@@ -903,7 +902,7 @@ int main(void) {
 						// Send it twice: CAD seems to prevent reception of first packet
 						// TODO: not sure why that's the case. TODO: sent a NOP first (shorter).
 						rfm_frame_tx(tx_buffer.buffer, 3+3);
-						delayMilliseconds(10);
+						delay_milliseconds(10);
 						rfm_frame_tx(tx_buffer.buffer, 3+3);
 						wake_list[ii]=0;
 
@@ -952,7 +951,7 @@ int main(void) {
 				memcpy(tx_buffer.payload+4,rx_buffer.payload,frame_len-3);
 
 				// Delay a random period of time. Use WWDT timer LS byte
-				delayMilliseconds( 40 + (LPC_WWDT->TV & 0xff) * 10 );
+				delay_milliseconds( 40 + (LPC_WWDT->TV & 0xff) * 10 );
 
 				rfm_frame_tx(tx_buffer.buffer, frame_len+1);
 			}

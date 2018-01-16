@@ -52,19 +52,19 @@ int ow_bit_read () {
 	// The read slot starts with the bus diven low.
 	// We have 15µs from the falling edge read the bus.
 	ow_low();
-	delayMicroseconds(1); // Must be held low for at least 1µs
+	delay_microseconds(1); // Must be held low for at least 1µs
 
 	// Bring bus high again. And read within the 15µs time interval
 	// (already a few µs used by by now...)
 	ow_high();
-	delayMicroseconds(1);
+	delay_microseconds(1);
 
 	int b = ow_read();
 
 	// Read slots must be a minimum of 60µs in duration with a minimum of 1µs
 	// recovery time between slots. Rather than monitor bus to check for end
 	// of slot, just delay for a period well exceeding the 60µs slot time.
-	delayMicroseconds(65);
+	delay_microseconds(65);
 
 	return b;
 }
@@ -75,14 +75,14 @@ int ow_bit_read () {
  */
 int ow_reset() {
 	ow_low();
-	delayMicroseconds(480);
+	delay_microseconds(480);
 	ow_high();
-	delayMicroseconds(70);
+	delay_microseconds(70);
 
 	int detect = ow_read();
 	ow_high();
 
-	delayMicroseconds(410);
+	delay_microseconds(410);
 
 	debug ("ow detect %d",detect);
 
@@ -95,16 +95,16 @@ void ow_bit_write (int b) {
 	ow_low();
 	if (b) {
 		// having trouble getting this in the 1-15µs range. Need better delay mechanism.
-		delay(1); // max 15µs, min 1µs (?)
+		delay_nop_loop(1); // max 15µs, min 1µs (?)
 		ow_high();
-		delayMicroseconds(60);
+		delay_microseconds(60);
 	} else {
-		delayMicroseconds(66);
+		delay_microseconds(66);
 		ow_high();
 	}
 
 	// Recovery time
-	delayMicroseconds(5);
+	delay_microseconds(5);
 }
 void ow_byte_write (int data) {
 	int i;

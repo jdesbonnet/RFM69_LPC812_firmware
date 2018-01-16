@@ -26,5 +26,5 @@ void debug_show_registers () {
 		debug("PIO[%d] DIR=%d IOCON=0x%x %x",i, ((LPC_GPIO_PORT->DIR[0]&(1<<i))==0?0:1), *iocon_ptr, iocon_ptr);
 	}
 
-	delayMicroseconds(20000);
+	delay_microseconds(20000);
 }

@@ -40,14 +40,14 @@ int32_t ds18b20_temperature_read () {
 	// Skip ROM command
 	ow_byte_write (0xCC);
 
-	delayMicroseconds(10);
+	delay_microseconds(10);
 
 	// Issue Convert command
 	ow_byte_write (0x44);
 
 	// TODO: this is a very long delay, MCU could go into a deep sleep for this.
 	//delayMicroseconds(800);
-	delayMilliseconds(900);
+	delay_milliseconds(900);
 
 	if ( ! ow_reset() ) {
 		debug("; error on ow_reset\r\n");
@@ -56,7 +56,7 @@ int32_t ds18b20_temperature_read () {
 	// Skip ROM command
 	ow_byte_write (0xCC);
 
-	delayMicroseconds(10);
+	delay_microseconds(10);
 
 	// Issue command to read scratch pad
 	ow_byte_write (0xBE);

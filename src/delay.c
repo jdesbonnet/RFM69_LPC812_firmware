@@ -7,7 +7,7 @@ uint32_t delayLoopCalibration=1000; /* guesstimate in case delay_init() not call
 void delay_init () {
 	// Calibrate our simple spin-loop delay using the SysTick timer
 	uint32_t startCalib = systick_counter;
-	delay(1<<20);
+	delay_nop_loop(1<<20);
 
 	// Number of delay loop iterations per 10ms
 	delayLoopCalibration =  1<<20 / (systick_counter - startCalib) ;
@@ -46,7 +46,7 @@ void delay_deinit () {
 /**
  * Short delay spin-loop.
  */
-void delay (uint32_t d) {
+void delay_nop_loop (uint32_t d) {
 	while (--d != 0) {
 			__NOP();
 	}
@@ -56,7 +56,7 @@ void delay (uint32_t d) {
  * Delay for t_ms milliseconds. Uses the SysTick timer which has a resolution of
  * 10ms, so < 10ms will result in no delay.
  */
-void delayMilliseconds(uint32_t t_ms) {
+void delay_milliseconds(uint32_t t_ms) {
 	uint32_t t_cs = t_ms/10;
 	if (t_cs==0) {
 		return;
@@ -71,7 +71,7 @@ void delayMilliseconds(uint32_t t_ms) {
 /**
  * Delay for t_us microseconds.
  */
-void delayMicroseconds(uint32_t t_us) {
+void delay_microseconds(uint32_t t_us) {
 	// This calculation is going to be noticable for very short delays
 	//uint32_t niter = (delayLoopCalibration*10000)/t_us;
 	//uint32_t niter = (t_us * 1000) / delayLoopCalibration;
@@ -88,28 +88,16 @@ void delayMicroseconds(uint32_t t_us) {
 
 #else
 	uint32_t niter = t_us*35/10; // manual calibration
-	delay(niter);
+	delay_nop_loop(niter);
 #endif
 
-}
-
-void delay_nop_loop (uint32_t i) {
-	while (--i!=0) {
-		__NOP();
-	}
-}
-
-void loopDelay(uint32_t i) {
-	while (--i!=0) {
-		__NOP();
-	}
 }
 
 /**
  * Use WKT (wake up timer) to delay. WKT is configured
  * to run at about 10kHz (+/- 40%).
  */
-void wktDelay(uint32_t i) {
+void delay_wkt(uint32_t i) {
 	LPC_WKT->COUNT = i;
 	__WFI();
 }

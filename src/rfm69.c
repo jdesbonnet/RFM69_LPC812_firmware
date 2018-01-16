@@ -35,7 +35,7 @@ void rfm69_hard_reset(void) {
 
 	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, 0, RESET_PIN, true);
 	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, 0, RESET_PIN);
-	delay(20000);
+	delay_nop_loop(20000);
 	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, 0, RESET_PIN);
 #endif
 }
@@ -129,7 +129,7 @@ uint8_t rfm69_temperature () {
 
 	// Should monitor register Temp1 bit 2 for transition to 0, but a dumb delay is more
 	// space efficient (down to last few bytes of flash!)
-	delayMilliseconds(20);
+	delay_milliseconds(20);
 	uint8_t temperature = rfm_register_read(0x4F);
 
 	// Restore mode
