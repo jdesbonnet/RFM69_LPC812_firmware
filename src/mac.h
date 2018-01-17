@@ -40,4 +40,6 @@ typedef enum {
 	PKT_MEM_READ_RESPONSE = 0x1c,
 	PKT_MEM_WRITE = 0x3e,
 } packet_type;
+
+int getNodeAddrFromMpuId (void);
 #endif

@@ -429,58 +429,13 @@ int main(void) {
 
 #ifdef BOARD_V1B_HACK
 	if (mcu_unique_id[0] == BOARD_V1B_HACK_MCU_ID) {
-		MyUARTSendStringZ("; Board_V1B_Hack in effect (UART RXD on PIO0_11)\r\n");
+		debug("Board_V1B_Hack in effect (UART RXD on PIO0_11)");
 	}
 #endif
 
 	// Auto assign node ID based on MCU ID
-	// TODO: MCU unique ID is actually a 128bit value, but for convenience
-	// incorrectly assuming that first 32bits are unique.
-	// TODO: this is a temporary hack: move this configuration to a
-	// structure and initalize in config.h
 	if (params_union.params.node_addr == 0xFF) {
-		switch (mcu_unique_id[0]) {
-		case 0x18044043:
-			params_union.params.node_addr = 0x40;
-			break;
-		case 0x1902E033:
-			params_union.params.node_addr = 0x41;
-			break;
-		case 0x5034039: // V1B hack required
-			params_union.params.node_addr = 0x42;
-			break;
-		case 0x05034043:
-			params_union.params.node_addr = 0x43;
-			break;
-		case 0x5046049:
-			params_union.params.node_addr = 0x44;
-			break;
-		case 0x5046043:
-			params_union.params.node_addr = 0x45;
-			break;
-
-
-		case 0x19017037:
-			params_union.params.node_addr = 0x51; // RFM98
-			break;
-
-		case 0x1902e034:
-			params_union.params.node_addr = 0x52; // RFM98
-			break;
-
-		case 0x1900c037:
-			params_union.params.node_addr = 0x53; // RFM98
-			break;
-
-		case 0x19016034:
-			params_union.params.node_addr = 0x54; // RFM98/433MHz
-			break;
-
-		case 0x1901703c:
-			params_union.params.node_addr = 0x61; // RFM95 868
-
-		}
-
+		params_union.params.node_addr = getNodeAddrFromMpuId();
 	}
 
 
@@ -548,22 +503,10 @@ int main(void) {
 
 #ifdef RESET_PIN
 	#ifdef RADIO_RFM69
-	//LPC_GPIO_PORT->DIR0 |= (1<<RESET_PIN);
-	//LPC_GPIO_PORT->CLR0 |= (1<<RESET_PIN);
+	// TODO: hard coding PIO15 here. Need an PIN->IOCON reg map.
 	LPC_IOCON->PIO0[IOCON_PIO15]=(0x1<<3); // pull down?
 	#endif
 #endif
-
-
-    // TODO debug
-	/*
-	Chip_IOCON_PinSetMode(LPC_GPIO_PORT, LED_PIN,  PIN_MODE_PULLUP);
-	uint32_t *x;
-	x = 0x40044000;
-	*x=2<<3;
-	int y = LPC_IOCON->PIO0[IOCON_PIO17];
-    debug_show_registers();
-	*/
 
 
 	// Absolute value of the RSSI in dBm, 0.5dB steps.
@@ -586,7 +529,11 @@ int main(void) {
 	tx_buffer.header.from_addr = params_union.params.node_addr;
 
 #ifdef FEATURE_UART_INTERRUPT
+	//
 	// Wake on activity on UART RXD (RXD is normally shared with PIO0_0)
+	//
+
+	// TODO: update to use LPCOpen
 	LPC_SYSCON->PINTSEL[0] = UART_RXD_PIN; // PIO0_0 aka RXD
 	LPC_PININT->ISEL &= ~(0x1<<UART_RXD_PIN);	/* Edge trigger */
 	LPC_PININT->IENR |= (0x1<<UART_RXD_PIN);	/* Rising edge */
@@ -596,7 +543,6 @@ int main(void) {
 
 #ifdef FEATURE_EVENT_COUNTER
 	// Set tip bucket pin (EVENT_COUNTER_PIN) as input
-	//LPC_GPIO_PORT->DIR[0] &= ~(1<<EVENT_COUNTER_PIN);
 	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, EVENT_COUNTER_PIN);
 
 	// Pulldown resistor on PIO0_16 (tip bucket)
@@ -631,7 +577,6 @@ int main(void) {
 #ifdef FEATURE_DS18B20
 	// Pullup resistor on DS18B20 data pin PIO0_14
 	ow_init(0,DS18B20_PIN);
-	//LPC_IOCON->PIO0_14=(0x2<<3); // pull up
 	LPC_IOCON->PIO0[IOCON_PIO14]=(0x2<<3); // pull up
 #endif
 
@@ -641,8 +586,7 @@ int main(void) {
 
 #ifdef FEATURE_LED
 	// Optional Diagnostic LED. Configure pin for output and blink 3 times.
-	//GPIOSetDir(0,LED_PIN,1);
-	//LPC_GPIO_PORT->DIR0 |= (1<<LED_PIN);
+	// TODO: update to use LPCOpen
 	LPC_GPIO_PORT->DIR[0] |= (1<<LED_PIN);
 #endif
 
@@ -681,6 +625,7 @@ int main(void) {
 	}
 	tfp_printf("k %x\r\n",test_result);
 
+	// Configure radio
 	rfm_config();
 
 

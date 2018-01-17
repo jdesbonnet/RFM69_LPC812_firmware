@@ -97,7 +97,7 @@
 // Diagnostic LED
 #define FEATURE_LED
 
-#define FEATURE_DIO0
+//#define FEATURE_DIO0
 //#define FEATURE_DIO1
 
 // Experimental application to count rain tip bucket

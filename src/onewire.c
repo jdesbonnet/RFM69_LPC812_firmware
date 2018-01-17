@@ -85,8 +85,6 @@ int ow_reset() {
 
 	delay_microseconds(410);
 
-	debug ("ow detect %d",detect);
-
 	return ~detect;
 }
 
