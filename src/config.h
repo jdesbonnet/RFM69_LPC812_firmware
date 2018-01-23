@@ -63,13 +63,13 @@
 #define LPC812
 
 // Radio module used: can be one of RADIO_RFM69 or RADIO_RFM9x (LoRa)
-#define RADIO_RFM69
-//#define RADIO_RFM9x
+//#define RADIO_RFM69
+#define RADIO_RFM9x
 
 // What PCB board or pin layout?
 //#define BOARD_LPC812_V0 // Deadbug LPC812 made back in Sep 2014.
-#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
-//#define BOARD_LPC812_RFM98_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
+//#define BOARD_LPC812_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
+#define BOARD_LPC812_RFM98_V1  // First rev of LPC812 RFM69/98 PCB (Nov 2014).
 
 // One board was populated without the trace cut: reroute RXD.
 // Enable this in addition to BOARD_LPC812_V1
@@ -101,7 +101,7 @@
 //#define FEATURE_DIO1
 
 // Experimental application to count rain tip bucket
-#define FEATURE_EVENT_COUNTER
+//#define FEATURE_EVENT_COUNTER
 
 // Experimental analog comparator function
 //#define FEATURE_ACMP
@@ -142,7 +142,7 @@
 //#define FEATURE_RELAY
 
 // Ambulatory BP monitor feature
-//#define FEATURE_ABPM
+#define FEATURE_ABPM
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
@@ -249,6 +249,7 @@
 #include "err.h"
 #include "delay.h"
 #include "battery.h"
+#include "led.h"
 #include "abpm.h"
 #include "interrupts.h"
 

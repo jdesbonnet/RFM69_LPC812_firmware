@@ -96,10 +96,24 @@ int rfm_wait_for_bit_high (uint8_t reg_addr, uint8_t mask) {
 
 
 void rfm_frame_tx(uint8_t *buf, int len) {
+
+	// Double blink LED on transmission.This replaces the previous
+	// behavior of keeping LED on through entire transmit time (not
+	// power efficient).
+
+	led_on();
+	delay_milliseconds(5);
+	led_off();
+
 #ifdef RADIO_RFM9x
 	rfm98_frame_tx(buf,len);
 #else
 	rfm69_frame_tx(buf,len);
 #endif
+
+	led_on();
+	delay_milliseconds(5);
+	led_off();
+
 }
 

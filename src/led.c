@@ -5,25 +5,27 @@
 /**
  * Blink diagnostic LED. Optional feature (edit config.h to define hardware configuration).
  */
-void ledBlink (int nblink) {
+void led_blink (int nblink) {
 	int i;
 	for (i = 0; i < nblink; i++)	{
-			ledOn();
+			led_on();
 			delay_milliseconds(200);
-			ledOff();
+			led_off();
 			delay_milliseconds(200);
 	}
 }
 
-__attribute__((always_inline))
-void ledOn() {
-	//GPIOSetBitValue(0,LED_PIN,1);
+//__attribute__((always_inline))
+void led_on() {
+#ifdef FEATURE_LED
 	Chip_GPIO_SetPinOutHigh(LPC_GPIO_PORT, 0, LED_PIN);
+#endif
 }
 
-__attribute__((always_inline))
-void ledOff() {
-	//GPIOSetBitValue(0,LED_PIN,0);
+//__attribute__((always_inline))
+void led_off() {
+#ifdef FEATURE_LED
 	Chip_GPIO_SetPinOutLow(LPC_GPIO_PORT, 0, LED_PIN);
+#endif
 }
 

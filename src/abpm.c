@@ -4,7 +4,9 @@
  Author      : $(author)
  Version     :
  Copyright   : $(copyright)
- Description : main definition
+ Description : Ambulatory Blood Pressure Monitor (ABPM) function. Triggers
+ measurement on unit, then snoops on the I2C bus for a memory write of the
+ result. Uses pin interrupts to decode I2C protocol.
 ===============================================================================
 */
 
@@ -125,9 +127,13 @@ void PININT7_IRQHandler(void)
 
 void abpm_init ()  {
 
-	// START button in input/high-z normally. Note that this
-	// pin is at 4.4V: using 5V tolerance feature. Button is
-	// 'pressed' by pulling low.
+	// PIN_BPM_START is connected to the START button test pad
+	// on the BP unit PCB. This is normally at 4.4V. To assert
+	// the BP start measurement condition, PIN_BPM_START is
+	// pulled low by setting direction to output and state to
+	// low. It is then returned to input state. Using the LPC8xx
+	// 5V tolerance feature here, but do not want to expose
+	// output high (about 2.5V) to the 4.4V.
 	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, PIN_BPM_START);
 
 	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, 0, PIN_BPM_SCL);

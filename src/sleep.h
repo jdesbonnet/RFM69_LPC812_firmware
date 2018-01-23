@@ -10,7 +10,7 @@
 
 void sleep_set_pins_for_powerdown(void);
 void sleep_set_pins_for_wake (void);
-void prepareForPowerDown (void);
+void sleep_prepare (void);
 void prepareForPowerDown2 (void); // works
 void prepareForDeepPowerDown (void);
 

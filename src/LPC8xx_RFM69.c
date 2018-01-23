@@ -184,7 +184,10 @@ void eeprom_params_save (void) {
     eeprom_write(tmpbuf);
 }
 
-
+/**
+ * Transmit status frame at the end of every sleep period. Then listen for a short
+ * window for any commands from controller node.
+ */
 void transmit_status_packet() {
 
 
@@ -232,11 +235,8 @@ void transmit_status_packet() {
 
 		// Transmit 'z' periodic wake packet
 		//rfm_config(); // why is this needed?
-		ledOn();
-		rfm_frame_tx(tx_buffer.buffer, 8);
-		ledOff();
 
-		//debug("temp=%d", rfm98_temperature());
+		rfm_frame_tx(tx_buffer.buffer, 8);
 
 	} else {
 		tfp_printf("; bat too low to tx");
@@ -258,9 +258,9 @@ void transmit_bp_packet(bp_record_t *bp) {
 	tx_buffer.payload[3] = bp->diastolic_pressure;
 	tx_buffer.payload[4] = bp->heart_rate;
 
-	ledOn();
+	led_on();
 	rfm_frame_tx(tx_buffer.buffer, 8);
-	ledOff();
+	led_off();
 
 }
 
@@ -612,16 +612,16 @@ int main(void) {
 #else
 	if (rfm69_test() != 0) {
 		// Error communicating with RFM69: 4 blinks
-		ledBlink(4);
+		led_blink(4);
 		test_result |= 1<<0;
 	}
 #endif
 
 	if (test_result == 0){
 		// Normal: 2 blinks
-		ledBlink(2);
+		led_blink(2);
 	} else {
-		ledBlink(2+test_result);
+		led_blink(2+test_result);
 	}
 	tfp_printf("k %x\r\n",test_result);
 
@@ -708,7 +708,7 @@ int main(void) {
 			sleep_set_pins_for_powerdown();
 
 			// Setup power management registers so that WFI causes DEEPSLEEP
-			prepareForPowerDown();
+			sleep_prepare();
 
 			// Writing into WKT counter automatically starts wakeup timer. WKT timer
 			// is driven by 10kHz low power oscillator. However this is +/- 40%.
@@ -811,6 +811,7 @@ int main(void) {
 		}
 #endif
 
+		// Has a frame been received?
 		if ((params_union.params.operating_mode != MODE_RADIO_OFF) && IS_PACKET_READY()) {
 
 #ifdef RADIO_RFM9x
@@ -818,15 +819,15 @@ int main(void) {
 			snr = rfm98_last_packet_snr();
 #endif
 
-			// Yes, frame ready to be read from FIFO
-			ledOn();
+			// Blink LED while reading frame FIFO
+			led_on();
 
 #ifdef RADIO_RFM9x
 			int frame_len = rfm98_frame_rx(rx_buffer.buffer,RXTX_BUFFER_SIZE);
 #else
 			int frame_len = rfm69_frame_rx(rx_buffer.buffer,RXTX_BUFFER_SIZE);
 #endif
-			ledOff();
+			led_off();
 
 			last_frame_time = systick_counter;
 
@@ -856,6 +857,21 @@ int main(void) {
 					}
 				}
 			}
+
+#ifdef RADIO_RFM69
+			{
+			int ii;
+			tfp_printf("; FRAME: [ ");
+			for (ii = 0; ii < frame_len; ii++) {
+				tfp_printf(" %x", rx_buffer.buffer[ii]);
+			}
+			tfp_printf (" ] %d %d %d\r\n",
+					rfm98_last_packet_rssi(),
+					rfm98_last_packet_snr(),
+					rfm98_last_packet_crc_ok()
+					);
+			}
+#endif
 
 #ifdef RADIO_RFM9x
 			{
@@ -1046,7 +1062,7 @@ int main(void) {
 					tx_buffer.header.to_addr = rx_buffer.header.from_addr;
 					tx_buffer.header.msg_type = 'u';
 					rfm69_frame_tx(tx_buffer.buffer, 3);
-					ledBlink(3);
+					led_blink(3);
 					break;
 				}
 
@@ -1414,7 +1430,7 @@ int main(void) {
 
 			// Turn LED on/off
 			case 'U' : {
-				parse_hex(args[1]) == 0 ? ledOff() : ledOn();
+				parse_hex(args[1]) == 0 ? led_off() : led_on();
 				break;
 			}
 

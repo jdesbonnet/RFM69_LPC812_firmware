@@ -43,11 +43,11 @@ int cmd_remote_cmd (int argc, uint8_t **argv) {
 	// Transmit frame
 	//
 
-	ledOn();
+	led_on();
 
 	rfm69_frame_tx (tx_buffer.buffer,cmd_len+3);
 
-	ledOff();
+	led_off();
 
 	return E_OK;
 }

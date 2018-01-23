@@ -115,7 +115,7 @@ void ota_bootloader (uint8_t myaddr) {
 
 	tfp_printf("RAM resident bootloader\r\n");
 
-	ledOn();
+	led_on();
 
 	//ota_irq_disable();
 
@@ -123,7 +123,7 @@ void ota_bootloader (uint8_t myaddr) {
 	do {
 		if (IS_PACKET_READY()) {
 
-			ledOff();
+			led_off();
 #ifdef RADIO_RFM9x
 			int frame_len = rfm98_frame_rx(rx_buffer.buffer,RXTX_BUFFER_SIZE);
 			//rfm_register_write(RFM98_IRQFLAGS,0xff);
@@ -142,7 +142,7 @@ void ota_bootloader (uint8_t myaddr) {
 			}
 #endif
 
-			ledOn();
+			led_on();
 
 
 			// 0xff is the broadcast address

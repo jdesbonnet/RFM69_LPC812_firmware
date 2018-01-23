@@ -70,7 +70,7 @@ void sleep_set_pins_for_wake () {
  * Condition MCU (pin states etc) to minimize current consumption during
  * deep sleep modes.
  */
-void prepareForPowerDown () {
+void sleep_prepare () {
 
 	//
 	// UM10601 §5.7.6.2, p52: Programming Power-down mode.

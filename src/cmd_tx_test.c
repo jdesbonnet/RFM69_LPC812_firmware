@@ -48,9 +48,9 @@ int cmd_tx_test (int argc, uint8_t **argv) {
 
 		debug ("transmitting test packet %d of %d",i,n);
 
-		ledOn();
+		led_on();
 		rfm98_frame_tx(tx_buffer.buffer,14);
-		ledOff();
+		led_off();
 
 		delay_milliseconds(delay);
 
