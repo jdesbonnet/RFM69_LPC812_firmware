@@ -924,7 +924,7 @@ int main(void) {
 				// delay to keep it outside that listen period.
 				delay_milliseconds( 40 + (LPC_WWDT->TV & 0xff) * 10 );
 
-				rfm_frame_tx(tx_buffer.buffer, frame_len+1);
+				rfm_frame_tx(tx_buffer.buffer, frame_len+4);
 
 				// TODO: optional long sleep after relay as means to cut down on
 				// receiver up-time for solar powered relay station. (This assumes
