@@ -896,25 +896,40 @@ int main(void) {
 
 #ifdef FEATURE_RELAY
 			// Experimental relay feature.
-			// Only relay non-broadcast packets. Relay to broadcast address.
-			if (rx_buffer.header.to_addr != 0xff) {
+			// Only relay packet if recipient address is a non-broadcast
+			// address other than our own.
+			if ( (rx_buffer.header.to_addr != 0xff)
+					&& (rx_buffer.header.to_addr != params_union.params.node_addr) ) {
 				debug ("relay frame");
 				tx_buffer.header.to_addr = 0xff;
 				tx_buffer.header.msg_type = PKT_RELAY;
 
+
+				// First 4 bytes of relay package payload:
+				// Original sender, RSSI and SNR of received frame
+				// and message type.
 				tx_buffer.payload[0] = rx_buffer.header.from_addr;
 				tx_buffer.payload[1] = rssi;
 				tx_buffer.payload[2] = snr;
 				tx_buffer.payload[3] = rx_buffer.header.msg_type;
 
 
-				// copy packet into tx buffer
-				memcpy(tx_buffer.payload+4,rx_buffer.payload,frame_len-3);
+				// copy to relay into tx buffer
+				memcpy(tx_buffer.payload+4,rx_buffer.payload,frame_len);
 
 				// Delay a random period of time. Use WWDT timer LS byte
+				// as a random number generator. Want this relayed packet
+				// to be sent outside of the transmitting node's
+				// listen period so add a constant offset to the random
+				// delay to keep it outside that listen period.
 				delay_milliseconds( 40 + (LPC_WWDT->TV & 0xff) * 10 );
 
 				rfm_frame_tx(tx_buffer.buffer, frame_len+1);
+
+				// TODO: optional long sleep after relay as means to cut down on
+				// receiver up-time for solar powered relay station. (This assumes
+				// relaying for just one node on a regular cycle). Suggest 75% of
+				// sleep period.
 			}
 #endif
 
@@ -922,10 +937,11 @@ int main(void) {
 			if ( rx_buffer.header.to_addr == 0xff
 					|| rx_buffer.header.to_addr == tx_buffer.header.from_addr) {
 
-				// bit 7: ack request
+				// bit 7 of message type indicates ack request
 				if (rx_buffer.header.msg_type & 0x80) {
 					tx_buffer.header.msg_type = PKT_ACK;
 					tx_buffer.payload[0] = rssi;
+					// TODO: what about SNR?
 					rfm69_frame_tx(tx_buffer.buffer, 4);
 				}
 
@@ -937,7 +953,7 @@ int main(void) {
 				case PKT_NOP:
 					break;
 
-				// Experimental remote packet transmit / relay
+				// Experimental remote packet transmit / forward / relay
 				case PKT_RELAY : {
 					int payload_len = frame_len - 3;
 					memcpy(tx_buffer.payload,rx_buffer.payload,payload_len);
@@ -975,6 +991,7 @@ int main(void) {
 					break;
 				}
 
+				// Return the firmware version
 				case PKT_VERSION_REQUEST :
 				{
 					tfp_printf("; received version request from %x\r\n",rx_buffer.header.from_addr);
@@ -989,6 +1006,7 @@ int main(void) {
 					break;
 				}
 
+				// Return the MCU ID
 				case PKT_MCU_ID_REQUEST:
 				{
 					tfp_printf("; received MCUID request from %x\r\n",rx_buffer.header.from_addr);
@@ -1031,6 +1049,8 @@ int main(void) {
 					break;
 				}
 #endif
+
+				// Return battery and other sensor information
 				case PKT_STATUS_REPORT :
 				{
 					debug ("; received status request from %x\r\n",rx_buffer.header.from_addr);
@@ -1056,6 +1076,7 @@ int main(void) {
 
 
 				// Remote request to LED blink
+				// TODO: is there a need to reply when we have ACK mechanism?
 				case PKT_LED_BLINK : {
 					//tx_buffer.header.to_addr = from_addr;
 					//is there any need for a reply? Just use ACK mechanism instead?
@@ -1083,6 +1104,7 @@ int main(void) {
 				}
 
 				// Remote RFMxx register write
+				// TODO: is there a need to reply when we have ACK mechanism?
 				case PKT_RADIO_REG_WRITE : {
 					uint8_t base_addr = rx_buffer.payload[0];
 					uint8_t write_len = frame_len - 4;
@@ -1099,6 +1121,7 @@ int main(void) {
 
 
 				// Experimental write to MCU memory (0x3E)
+				// TODO: this is a dangerous command, implement safety switch
 				case PKT_MEM_WRITE : {
 
 					// Return 32bit value from memory at payload+0
@@ -1142,6 +1165,7 @@ int main(void) {
 				}
 
 				// Experimental execute from memory (!?!)
+				// TODO: this is a dangerous command, implement safety switch
 				case PKT_EXEC_MEM : {
 					// Execute function at memory location payload+0
 					// Note on ARM Cortex M devices LSB always 1 for Thumb instruction set.
@@ -1156,12 +1180,14 @@ int main(void) {
 					break;
 				}
 
+				// TODO: this is a dangerous command, implement safety switch
 				case PKT_OTA_ENTER_BOOTLOADER : {
 					// Can never exit from here: only reset when complete
 					ota_bootloader(params_union.params.node_addr);
 					break;
 				}
 
+				// TODO: this is a dangerous command, implement safety switch
 				case PKT_ISP_ENTER_BOOTLOADER : {
 					iap_reinvoke_isp();
 				}
