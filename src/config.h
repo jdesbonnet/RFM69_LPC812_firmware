@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define VERSION "RFM69/9x 0.7.8"
+#define VERSION "RFM69/9x 0.7.9"
 
 #define TICKRATE_HZ 100
 
@@ -139,10 +139,10 @@
 //#define FEATURE_WS2812B
 
 // Experiment relay feature
-//#define FEATURE_RELAY
+#define FEATURE_RELAY
 
 // Ambulatory BP monitor feature
-#define FEATURE_ABPM
+//#define FEATURE_ABPM
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
@@ -186,7 +186,7 @@
 #define LED_PIN 17
 #define UART_RXD_PIN 0
 #define UART_TXD_PIN 4
-#define DS18B20_PIN 14
+#define DS18B20_PIN 16
 //#define WS2812B_PIN 14
 #endif
 
