@@ -27,8 +27,9 @@ int getNodeAddrFromMpuId (void){
 	case 0x19016034: return 0x54; // ABPM
 	case 0x19008027: return 0x55;
 
-	case 0x1901603a: return 0x56;
-	case 0x0502302d: return 0x57;
+	case 0x1901603a: return 0x56; // UG Onagh
+	case 0x0502302d: return 0x57; // Base station Onagh
+	case 0x0c012022: return 0x58;
 
 	// RFM95 868MHz radios
 	case 0x1901703c:return 0x61; // RFM95 868
