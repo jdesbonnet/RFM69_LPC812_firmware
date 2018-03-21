@@ -898,7 +898,8 @@ int main(void) {
 			// Experimental relay feature.
 			// Only relay packet if recipient address is a non-broadcast
 			// address other than our own.
-			if ( (rx_buffer.header.to_addr != 0xff)
+			if ( is_feature_enabled(F_RELAY)
+					&& (rx_buffer.header.to_addr != 0xff)
 					&& (rx_buffer.header.to_addr != params_union.params.node_addr) ) {
 				debug ("relay frame");
 				tx_buffer.header.to_addr = 0xff;
