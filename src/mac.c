@@ -33,8 +33,9 @@ int getNodeAddrFromMpuId (void){
 	case 0x0c012022: return 0x58;
 
 	// RFM95 868MHz radios
-	case 0x1901703c:return 0x61; // RFM95 868
-
+	case 0x1901703c: return 0x61; // RFM95 868
+	case 0x19016043: return 0x62;
+	case 0x19018041: return 0x63;
 	}
 
 	return 0xff;
