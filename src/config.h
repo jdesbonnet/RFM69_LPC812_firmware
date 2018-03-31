@@ -144,6 +144,9 @@
 // Ambulatory BP monitor feature
 //#define FEATURE_ABPM
 
+// Start with F=868MHz
+//#define FEATURE_868MHZ
+
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
 //

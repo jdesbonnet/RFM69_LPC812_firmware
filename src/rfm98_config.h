@@ -29,6 +29,14 @@ const uint8_t RFM98_CONFIG[][2] = {
 		RFM98_MODEMCONFIG2_SpreadFactor_VALUE(12)
 	},
 
+#ifdef FEATURE_868MHZ
+	{ RFM98_FRFMSB,
+			0xD9
+	},
+	{ RFM98_FRFMID,
+			0x00
+	},
+#endif
     // Configuration Terminator
     {255, 0}
   };
