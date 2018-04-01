@@ -673,6 +673,18 @@ int main(void) {
 		}
 #endif
 
+#ifdef FEATURE_RSSI_BLINK
+		// Experimental RSSI blink rate
+		{
+			int blink_rate = -rssi;
+			if ( (systick_counter/blink_rate)%2==0) {
+				led_on();
+			} else {
+				led_off();
+			}
+		}
+#endif
+
 		// TODO: can we avoid calling rfm69_mode() on every iteration?
 		// TODO: use macro to test flags
 		if (params_union.params.operating_mode == MODE_AWAKE) {
@@ -713,7 +725,8 @@ int main(void) {
 			// Writing into WKT counter automatically starts wakeup timer. WKT timer
 			// is driven by 10kHz low power oscillator. However this is +/- 40%.
 			// Finding 7.5kHz closer to the mark.
-			uint32_t wakeup_time = 9000  * params_union.params.poll_interval * 10;
+
+			uint32_t wakeup_time = 9000  * params_union.params.poll_interval * SLEEP_MULTIPLIER;
 
 			// If battery low then sleep for extended period
 			if (battery_v <= params_union.params.low_battery_v) {

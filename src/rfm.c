@@ -101,9 +101,13 @@ void rfm_frame_tx(uint8_t *buf, int len) {
 	// behavior of keeping LED on through entire transmit time (not
 	// power efficient).
 
+#ifdef FEATURE_LONG_TX_BLINK
+	led_on();
+#else
 	led_on();
 	delay_milliseconds(5);
 	led_off();
+#endif
 
 #ifdef RADIO_RFM9x
 	rfm98_frame_tx(buf,len);
@@ -111,9 +115,14 @@ void rfm_frame_tx(uint8_t *buf, int len) {
 	rfm69_frame_tx(buf,len);
 #endif
 
+#ifdef FEATURE_LONG_TX_BLINK
+	led_off();
+#else
 	led_on();
 	delay_milliseconds(5);
 	led_off();
+#endif
+
 
 }
 

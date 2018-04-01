@@ -78,6 +78,9 @@
 // Character used as comment (for both incoming commands and output)
 #define COMMENT_CHAR (';')
 
+// Allow for longer sleep periods. Use 1 for short intervals, use 10 range 10s - 1hour.
+#define SLEEP_MULTIPLIER 1
+
 //
 // Optional features are enabled by defining macro FEATURE_xxxxxx.
 //
@@ -145,7 +148,12 @@
 //#define FEATURE_ABPM
 
 // Start with F=868MHz
-//#define FEATURE_868MHZ
+#define FEATURE_868MHZ
+
+// Blink LED at a rate proportional to last received packet RSSI
+#define FEATURE_RSSI_BLINK
+
+#define FEATURE_LONG_TX_BLINK
 
 //
 // Pins used for SPI (note: pin numbers are are PIO0_x, *not* package pin numbers)
