@@ -1,5 +1,5 @@
 /**
- * RFM69HW (HopeRF) radio modem driver.
+ * RFM98 (HopeRF) radio modem driver.
  *
  * Joe Desbonnet, jdesbonnet@gmail.com
  */
